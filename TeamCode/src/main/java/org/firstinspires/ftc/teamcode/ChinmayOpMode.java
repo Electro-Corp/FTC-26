@@ -25,6 +25,8 @@ public class ChinmayOpMode extends LinearOpMode {
 
             if(tag != null && tag.ftcPose != null)
                 telemetry.addData("Distance", tag.ftcPose.range);
+            else
+                telemetry.addData("Not found", ":(");
             telemetry.update();
         }
     }
