@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @TeleOp(name="ChinmayOpMode", group="TeleOp")
 public class ChinmayOpMode extends LinearOpMode {
@@ -20,11 +20,15 @@ public class ChinmayOpMode extends LinearOpMode {
         waitForStart();
 
         while(opModeIsActive()){
-            AprilTagDetection tag = tBrain.closestTag();
+            AprilTagPoseFtc tag = tBrain.getClosestTag();
 
-
-            if(tag != null && tag.ftcPose != null)
-                telemetry.addData("Distance", tag.ftcPose.range);
+            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size());
+            if(tag != null) {
+                telemetry.addData("Range", tag.range);
+                telemetry.addData("Bearing", tag.bearing);
+            }else{
+                telemetry.addLine("No Pose avaliable");
+            }
             telemetry.update();
         }
     }
