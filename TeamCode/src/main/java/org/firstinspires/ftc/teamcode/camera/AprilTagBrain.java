@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AprilTagBrain {
-    private final Size res = new Size(640, 480);
+    private final Size res = new Size(800, 600);
     private AprilTagProcessor aprilTagProcessor;
     private VisionPortal visionPortal;
 
@@ -27,8 +27,14 @@ public class AprilTagBrain {
                 return false;
             }
         };
-        float co[] = {0.1208f, -0.261599f, 0, 0, 0.10308f, 0, 0, 0};
-        CameraCalibration calibration = new CameraCalibration(cci, new Size(res.getWidth(), res.getWidth()), 622.001f, 622.001f, 319.803f,241.251f, co, false, false);
+        float co[] = {0.085871f, -0.212438f, 0, 0, 0.0803528f, 0, 0, 0};
+        /*
+            Alt calib:
+            FX FY 643.474
+            OCX 448.969 OCY 315.204
+            K1 0.0997 K2 -0.255 K3 0.120
+         */
+        CameraCalibration calibration = new CameraCalibration(cci, new Size(res.getWidth(), res.getWidth()), 638.756f, 638.756f, 447.895f,319.37f, co, false, false);
         aprilTagProcessor.init(res.getWidth(), res.getHeight(), calibration);
         visionPortal = new VisionPortal.Builder().setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .addProcessor(aprilTagProcessor)
@@ -39,5 +45,9 @@ public class AprilTagBrain {
 
     public ArrayList<AprilTagDetection> getVisibleTags(){
         return aprilTagProcessor.getDetections();
+    }
+
+    public float getFPS(){
+        return visionPortal.getFps();
     }
 }
