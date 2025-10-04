@@ -61,10 +61,15 @@ public final class MecanumDrive {
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
+        //Pinpoint User Guide:
+        // https://www.gobilda.com/content/user_manuals/3110-0002-0001%20User%20Guide.pdf?srsltid=AfmBOoooA-nmDRL1Vwc3iK_W3McI0B9D_i0FjcrqDMKzX8rvsgaBHSKz
+
         // drive model parameters
-        public double inPerTick = 1;
+        public double inPerTick = 0.001981; //19.894 ticks per mm (according to doc above)
         public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 0;
+
+        // track width = 11.75", so 11.75 * (1 / 0.001981)
+        public double trackWidthTicks = 5928.9;
 
         // feedforward parameters (in tick units)
         public double kS = 0;
