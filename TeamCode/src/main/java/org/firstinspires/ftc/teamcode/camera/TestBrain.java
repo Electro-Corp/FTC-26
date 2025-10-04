@@ -26,12 +26,10 @@ public class TestBrain extends AprilTagBrain{
         double sizeOfClosest = Integer.MAX_VALUE;
 
         for(int i = 0; i < tags.size(); i++){
-            //if(tags.get(i).ftcPose != null) {
-                if (tags.get(i).ftcPose.range < sizeOfClosest) {
-                    sizeOfClosest = tags.get(i).ftcPose.range;
-                    indexOfClose = i;
-                }
-            //}
+            if (tags.get(i).ftcPose.range < sizeOfClosest) {
+                sizeOfClosest = tags.get(i).ftcPose.range;
+                indexOfClose = i;
+            }
         }
 
         return tags.get(indexOfClose).ftcPose;
