@@ -1,4 +1,9 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.opsmodes;
+
+/*
+    Camera following - but only when the camera is attached
+    to a DC Motor
+ */
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -6,7 +11,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @TeleOp(name="ChinmayOpMode", group="TeleOp")
@@ -35,7 +39,7 @@ public class ChinmayOpMode extends LinearOpMode {
         telemetry.speak("please end my suffering");
 
         while(opModeIsActive()){
-            AprilTagPoseFtc tag = tBrain.getClosestTag();
+            AprilTagPoseFtc tag = tBrain.getCloestTagPose();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size());
             if(tag != null) {

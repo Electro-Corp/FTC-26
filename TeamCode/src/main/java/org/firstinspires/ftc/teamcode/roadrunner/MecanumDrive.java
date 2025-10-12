@@ -61,7 +61,7 @@ public final class MecanumDrive {
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-        //Pinpoint User Guide:
+        // Pinpoint User Guide:
         // https://www.gobilda.com/content/user_manuals/3110-0002-0001%20User%20Guide.pdf?srsltid=AfmBOoooA-nmDRL1Vwc3iK_W3McI0B9D_i0FjcrqDMKzX8rvsgaBHSKz
 
         // drive model parameters
@@ -72,9 +72,9 @@ public final class MecanumDrive {
         public double trackWidthTicks = 5928.9;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.78389455974748;
-        public double kV = -0.0004153109974242036;
-        public double kA = 0.0004;
+        public double kS = 1.4710140289713847;
+        public double kV = 0.0004256932319495744;
+        public double kA = 0.0001;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -86,9 +86,9 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0.0;
-        public double lateralGain = 0.0;
-        public double headingGain = 10; // shared with turn
+        public double axialGain = 0.6;
+        public double lateralGain = 0.55;
+        public double headingGain = 5; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -240,8 +240,8 @@ public final class MecanumDrive {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // TODO: reverse motor directions if needed
-        rightFront.setDirection(DcMotorEx.Direction.REVERSE);
-        rightBack.setDirection(DcMotorEx.Direction.REVERSE);
+        leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -482,6 +482,11 @@ public final class MecanumDrive {
         c.setStrokeWidth(1);
         c.setStroke("#3F51B5");
         c.strokePolyline(xPoints, yPoints);
+    }
+
+    public void setPoseEstimate(Pose2d poseEstimate){
+        this.poseHistory.clear();
+        this.poseHistory.push(poseEstimate);
     }
 
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {

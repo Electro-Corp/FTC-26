@@ -13,7 +13,41 @@ public class TestBrain extends AprilTagBrain{
         super(hardwareMap);
     }
 
-    public AprilTagPoseFtc getClosestTag(){
+    public AprilTagDetection getClosestTag(){
+        ArrayList<AprilTagDetection> tags = this.getVisibleTags();
+
+        if(tags.isEmpty()){
+            return null;
+        }else if(tags.size() == 1){
+            return tags.get(0);
+        }
+
+        int indexOfClose = 0;
+        double sizeOfClosest = Integer.MAX_VALUE;
+
+        for(int i = 0; i < tags.size(); i++){
+            if (tags.get(i).ftcPose.range < sizeOfClosest) {
+                sizeOfClosest = tags.get(i).ftcPose.range;
+                indexOfClose = i;
+            }
+        }
+
+        return tags.get(indexOfClose);
+    }
+
+    public AprilTagDetection getTagID(int id){
+        ArrayList<AprilTagDetection> tags = this.getVisibleTags();
+
+        for(int i = 0; i < tags.size(); i++){
+            if (tags.get(i).id == id) {
+                return tags.get(i);
+            }
+        }
+
+        return null;
+    }
+
+    public AprilTagPoseFtc getCloestTagPose(){
         ArrayList<AprilTagDetection> tags = this.getVisibleTags();
 
         if(tags.isEmpty()){
@@ -33,5 +67,9 @@ public class TestBrain extends AprilTagBrain{
         }
 
         return tags.get(indexOfClose).ftcPose;
+    }
+
+    public int getClosestTagID(){
+        return getClosestTag().id;
     }
 }
