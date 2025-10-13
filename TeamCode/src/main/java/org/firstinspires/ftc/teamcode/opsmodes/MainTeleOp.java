@@ -75,36 +75,40 @@ public class MainTeleOp extends LinearOpMode {
     private double ROT_TOL = 2.0;
     private double incAmount = 0.1;
     private void aimAssist(){
-        isYPressed = gamepad2.y;
-        if(!isYPressed){
-            AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
-            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            if(tag != null) {
-                AprilTagPoseFtc tagPose = tag.ftcPose;
-                incAmount = (tagPose.bearing * tagPose.bearing) / 1000;
+        if(gamepad2.y) {
+            if (!isYPressed) {
+                AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
+                telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+                if (tag != null) {
+                    AprilTagPoseFtc tagPose = tag.ftcPose;
+                    incAmount = (tagPose.bearing * tagPose.bearing) / 1000;
 
-                Action trajAction = null;
+                    Action trajAction = null;
 
-                if (tagPose.bearing > 0 + ROT_TOL) {
-                    telemetry.addLine("tag.bearing > 0");
-                    // TODO: One thing to look out for is to see if the pose gets updated as the dead wheels move around..
-                    // TODO: i mean i would assume so otherwise it'd be kinda useless but yk never know with anything FIRST related...
-                    TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                            .turn(incAmount);
-                    trajAction = trajectory.build();
-                } else if (tagPose.bearing < 0 - ROT_TOL) {
-                    telemetry.addLine("tag.bearing < 0");
-                    TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                            .turn(-incAmount);
-                    trajAction = trajectory.build();
-                }
+                    if (tagPose.bearing > 0 + ROT_TOL) {
+                        telemetry.addLine("tag.bearing > 0");
+                        // TODO: One thing to look out for is to see if the pose gets updated as the dead wheels move around..
+                        // TODO: i mean i would assume so otherwise it'd be kinda useless but yk never know with anything FIRST related...
+                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+                                .turn(incAmount);
+                        trajAction = trajectory.build();
+                    } else if (tagPose.bearing < 0 - ROT_TOL) {
+                        telemetry.addLine("tag.bearing < 0");
+                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+                                .turn(-incAmount);
+                        trajAction = trajectory.build();
+                    }
 
-                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tagPose.x, tagPose.y, tagPose.z);
+                    telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tagPose.x, tagPose.y, tagPose.z);
 
-                if(trajAction != null){
-                    Actions.runBlocking(trajAction);
+                    if (trajAction != null) {
+                        Actions.runBlocking(trajAction);
+                    }
+                    isYPressed = true;
                 }
             }
+        }else{
+            isYPressed = false;
         }
     }
 
