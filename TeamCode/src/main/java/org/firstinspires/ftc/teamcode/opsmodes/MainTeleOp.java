@@ -30,6 +30,7 @@ public class MainTeleOp extends LinearOpMode {
     MecanumDrive drive = null;
 
     private Intake intake;
+    private Shooter shooter;
 
 
 
@@ -54,6 +55,8 @@ public class MainTeleOp extends LinearOpMode {
         tBrain = new TestBrain(hardwareMap);
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
+        intake = new Intake(hardwareMap);
+        shooter = new Shooter(hardwareMap);
 
     }
 
@@ -172,16 +175,25 @@ public class MainTeleOp extends LinearOpMode {
     }
 
     private void readGamepad(){
-        //control intake, gamepad 2 a is forward and b is reverse
-        if(gamepad2.a) {
+        //control intake, gamepad 2 left trigger is forward and left bumper is reverse
+        if(gamepad2.left_trigger >= .5) {
             intake.go();
         }
-        else if(gamepad2.b) {
+        else if(gamepad2.left_bumper) {
             intake.reverse();
         }
         else {
             intake.stop();
         }
+
+        //shooter
+        if(gamepad2.right_trigger >= .5) { //shoot far
+            shooter.shootDistance(20);
+        }
+        if(gamepad2.right_bumper) { //shoot close
+            shooter.shootDistance(5);
+        }
+        shooter.update();
     }
 
 }
