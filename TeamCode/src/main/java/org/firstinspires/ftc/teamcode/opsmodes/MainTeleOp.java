@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
+
 @TeleOp(name= "TeleOp")
 public class MainTeleOp extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
@@ -37,8 +38,8 @@ public class MainTeleOp extends LinearOpMode {
     private void initHardware() {
         leftFrontDrive = hardwareMap.get(DcMotorEx.class,"leftFront");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rightFront");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftRear");
-        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightRear");
+        leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightBack");
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -70,6 +71,15 @@ public class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
             aimAssist();
+
+            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+            AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
+            if (tag != null) {
+                telemetry.addData("Bearing to 24", tag.ftcPose.bearing);
+                telemetry.addData("Bearing (rad) to 24", Math.toRadians(tag.ftcPose.bearing));
+                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
+            }
+
             readGamepad();
             telemetry.update();
         }
@@ -77,41 +87,44 @@ public class MainTeleOp extends LinearOpMode {
 
     // Aiming Variables
     private boolean isYPressed = false;
-    private double ROT_TOL = 2.0;
+    private double ROT_TOL = 0.5;
     private double incAmount = 0.1;
     private void aimAssist(){
-        if(gamepad2.y) {
+        if(gamepad1.y) {
             if (!isYPressed) {
                 AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
                 telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
-                    incAmount = (tagPose.bearing * tagPose.bearing) / 1000;
+                    incAmount = Math.toRadians(tagPose.bearing);
 
                     Action trajAction = null;
 
-                    if (tagPose.bearing > 0 + ROT_TOL) {
-                        telemetry.addLine("tag.bearing > 0");
-                        // TODO: One thing to look out for is to see if the pose gets updated as the dead wheels move around..
-                        // TODO: i mean i would assume so otherwise it'd be kinda useless but yk never know with anything FIRST related...
-                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                                .turn(incAmount);
-                        trajAction = trajectory.build();
-                    } else if (tagPose.bearing < 0 - ROT_TOL) {
-                        telemetry.addLine("tag.bearing < 0");
-                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                                .turn(-incAmount);
-                        trajAction = trajectory.build();
-                    }
+                    TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+                        .turn(incAmount);
+                    trajAction = trajectory.build();
+//                    if (tagPose.bearing > 0 + ROT_TOL) {
+//                        telemetry.addLine("tag.bearing > 0");
+//                        // TODO: One thing to look out for is to see if the pose gets updated as the dead wheels move around..
+//                        // TODO: i mean i would assume so otherwise it'd be kinda useless but yk never know with anything FIRST related...
+//                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+//                                .turnTo(incAmount);
+//                        trajAction = trajectory.build();
+//                    } else if (tagPose.bearing < 0 - ROT_TOL) {
+//                        telemetry.addLine("tag.bearing < 0");
+//                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+//                                .turnTo(-incAmount);
+//                        trajAction = trajectory.build();
+//                    }
 
                     telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tagPose.x, tagPose.y, tagPose.z);
 
                     if (trajAction != null) {
                         Actions.runBlocking(trajAction);
                     }
-                    isYPressed = true;
                 }
             }
+            isYPressed = true;
         }else{
             isYPressed = false;
         }

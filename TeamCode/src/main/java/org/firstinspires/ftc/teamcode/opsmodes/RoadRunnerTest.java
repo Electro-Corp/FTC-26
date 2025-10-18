@@ -20,10 +20,11 @@ public class RoadRunnerTest extends LinearOpMode {
 
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(initPose)
-                        .strafeTo(new Vector2d(18, 00))
-                        .strafeTo(new Vector2d(18, -18))
-                        .strafeTo(new Vector2d(0, -18))
-                        .strafeTo(new Vector2d(0, 0));
+                        .turn(Math.PI / 2);
+                        //.strafeTo(new Vector2d(18, 00))
+                        //.strafeTo(new Vector2d(18, -18))
+                        //.strafeTo(new Vector2d(0, -18))
+                        //.strafeTo(new Vector2d(0, 0));
 
         waitForStart();
 
