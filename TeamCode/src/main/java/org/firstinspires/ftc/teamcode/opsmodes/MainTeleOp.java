@@ -29,6 +29,8 @@ public class MainTeleOp extends LinearOpMode {
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
+    private Intake intake;
+
 
 
     private void initHardware() {
@@ -65,6 +67,7 @@ public class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
             aimAssist();
+            readGamepad();
             telemetry.update();
         }
     }
@@ -166,6 +169,19 @@ public class MainTeleOp extends LinearOpMode {
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
 
+    }
+
+    private void readGamepad(){
+        //control intake, gamepad 2 a is forward and b is reverse
+        if(gamepad2.a) {
+            intake.go();
+        }
+        else if(gamepad2.b) {
+            intake.reverse();
+        }
+        else {
+            intake.stop();
+        }
     }
 
 }
