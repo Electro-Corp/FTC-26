@@ -34,7 +34,6 @@ public class MainTeleOp extends LinearOpMode {
     private Shooter shooter;
 
 
-
     private void initHardware() {
         leftFrontDrive = hardwareMap.get(DcMotorEx.class,"leftFront");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rightFront");
@@ -87,13 +86,11 @@ public class MainTeleOp extends LinearOpMode {
 
     // Aiming Variables
     private boolean isYPressed = false;
-    private double ROT_TOL = 0.5;
     private double incAmount = 0.1;
     private void aimAssist(){
         if(gamepad1.y) {
             if (!isYPressed) {
                 AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
-                telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
                     incAmount = Math.toRadians(tagPose.bearing);
@@ -103,29 +100,13 @@ public class MainTeleOp extends LinearOpMode {
                     TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
                         .turn(incAmount);
                     trajAction = trajectory.build();
-//                    if (tagPose.bearing > 0 + ROT_TOL) {
-//                        telemetry.addLine("tag.bearing > 0");
-//                        // TODO: One thing to look out for is to see if the pose gets updated as the dead wheels move around..
-//                        // TODO: i mean i would assume so otherwise it'd be kinda useless but yk never know with anything FIRST related...
-//                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-//                                .turnTo(incAmount);
-//                        trajAction = trajectory.build();
-//                    } else if (tagPose.bearing < 0 - ROT_TOL) {
-//                        telemetry.addLine("tag.bearing < 0");
-//                        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-//                                .turnTo(-incAmount);
-//                        trajAction = trajectory.build();
-//                    }
 
-                    telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tagPose.x, tagPose.y, tagPose.z);
-
-                    if (trajAction != null) {
-                        Actions.runBlocking(trajAction);
-                    }
+                    Actions.runBlocking(trajAction);
                 }
             }
             isYPressed = true;
-        }else{
+        }
+        else{
             isYPressed = false;
         }
     }
@@ -177,7 +158,7 @@ public class MainTeleOp extends LinearOpMode {
         telemetry.addData("LF", leftFrontPower);
         telemetry.addData("RF", rightFrontPower);
         telemetry.addData("LB", leftBackPower);
-        telemetry.addData("RF", rightBackPower);
+        telemetry.addData("RB", rightBackPower);
 
 
         leftFrontDrive.setPower(leftFrontPower);
