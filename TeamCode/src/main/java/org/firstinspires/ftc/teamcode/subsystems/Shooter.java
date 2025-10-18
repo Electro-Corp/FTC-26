@@ -36,6 +36,10 @@ public class Shooter {
         shooter.setVelocity(SPINNER_SPEED_FAR);
     }
 
+    public void shootThreeFar(){
+        for(int i = 0; i < 3; i++) shootFar();
+    }
+
     public void shootNear() {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
         shooter.setVelocity(SPINNER_SPEED_NEAR);
