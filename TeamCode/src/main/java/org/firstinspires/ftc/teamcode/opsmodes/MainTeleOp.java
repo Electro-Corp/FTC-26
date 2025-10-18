@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
-import static java.lang.Math.atan;
-import static java.lang.Math.atan2;
-
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -33,6 +30,9 @@ public class MainTeleOp extends LinearOpMode {
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
+    private Intake intake;
+    private Shooter shooter;
+
 
 
     private void initHardware() {
@@ -56,6 +56,8 @@ public class MainTeleOp extends LinearOpMode {
         tBrain = new TestBrain(hardwareMap);
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
+        intake = new Intake(hardwareMap);
+        shooter = new Shooter(hardwareMap);
 
     }
 
@@ -78,6 +80,7 @@ public class MainTeleOp extends LinearOpMode {
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
             }
 
+            readGamepad();
             telemetry.update();
         }
     }
@@ -90,6 +93,7 @@ public class MainTeleOp extends LinearOpMode {
         if(gamepad1.y) {
             if (!isYPressed) {
                 AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
+                telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
                     incAmount = Math.toRadians(tagPose.bearing);
@@ -181,6 +185,28 @@ public class MainTeleOp extends LinearOpMode {
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
 
+    }
+
+    private void readGamepad(){
+        //control intake, gamepad 2 left trigger is forward and left bumper is reverse
+        if(gamepad2.left_trigger >= .5) {
+            intake.go();
+        }
+        else if(gamepad2.left_bumper) {
+            intake.reverse();
+        }
+        else {
+            intake.stop();
+        }
+
+        //shooter
+        if(gamepad2.right_trigger >= .5) { //shoot far
+            shooter.shootDistance(20);
+        }
+        if(gamepad2.right_bumper) { //shoot close
+            shooter.shootDistance(5);
+        }
+        shooter.update();
     }
 
 }
