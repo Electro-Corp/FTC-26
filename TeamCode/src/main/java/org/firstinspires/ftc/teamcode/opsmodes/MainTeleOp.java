@@ -188,10 +188,10 @@ public class MainTeleOp extends LinearOpMode {
 
         //shooter
         if(gamepad2.right_trigger >= .5) { //shoot far
-            shooter.shootDistance(20);
+            shooter.shootFar();
         }
         if(gamepad2.right_bumper) { //shoot close
-            shooter.shootDistance(5);
+            shooter.shootNear();
         }
         shooter.update();
     }

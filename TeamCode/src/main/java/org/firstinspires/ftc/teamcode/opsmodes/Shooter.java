@@ -12,6 +12,8 @@ public class Shooter {
 
     private static final long SPIN_UP_TIME_MS = 1000;
     private static final long SPIN_AFTER_SHOOT_MS = 1500;
+    private static final double SPINNER_SPEED_NEAR = 100;
+    private static final double SPINNER_SPEED_FAR = 300;
 
     private final DcMotorEx shooter;
     private final Servo gate;
@@ -27,6 +29,16 @@ public class Shooter {
     public void shootDistance(double distance) {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
         shooter.setVelocity(distance * 10);
+    }
+
+    public void shootFar() {
+        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        shooter.setVelocity(SPINNER_SPEED_FAR);
+    }
+
+    public void shootNear() {
+        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        shooter.setVelocity(SPINNER_SPEED_NEAR);
     }
 
     public void update() {
