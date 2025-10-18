@@ -16,8 +16,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 
-@TeleOp(name= "TeleOp")
-public class MainTeleOp extends LinearOpMode {
+public abstract class MainTeleOp extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private DcMotorEx leftFrontDrive = null;
@@ -72,10 +71,10 @@ public class MainTeleOp extends LinearOpMode {
             aimAssist();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
+            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
             if (tag != null) {
-                telemetry.addData("Bearing to 24", tag.ftcPose.bearing);
-                telemetry.addData("Bearing (rad) to 24", Math.toRadians(tag.ftcPose.bearing));
+                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
+                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
             }
 
@@ -90,7 +89,7 @@ public class MainTeleOp extends LinearOpMode {
     private void aimAssist(){
         if(gamepad1.y) {
             if (!isYPressed) {
-                AprilTagDetection tag = tBrain.getTagID(24); // Only Red tag right now
+                AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
                     incAmount = Math.toRadians(tagPose.bearing);
@@ -189,5 +188,7 @@ public class MainTeleOp extends LinearOpMode {
         }
         shooter.update();
     }
+
+    protected abstract int GetMyTag();
 
 }
