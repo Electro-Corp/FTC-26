@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode.opsmodes;
     to a DC Motor
  */
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,6 +15,7 @@ import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @TeleOp(name="ChinmayOpMode", group="TeleOp")
+@Disabled
 public class ChinmayOpMode extends LinearOpMode {
     private int speed = 0;
 
