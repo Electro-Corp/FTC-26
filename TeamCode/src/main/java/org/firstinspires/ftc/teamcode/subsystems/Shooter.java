@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -10,10 +11,13 @@ public class Shooter {
         STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
     }
 
-    private static final long SPIN_UP_TIME_MS = 1000;
-    private static final long SPIN_AFTER_SHOOT_MS = 1500;
-    private static final double SPINNER_SPEED_NEAR = 100;
-    private static final double SPINNER_SPEED_FAR = 300;
+    private static final double GATE_CLOSED = 0.2915;
+    private static final double GATE_OPEN = 0.2255;
+
+    private static final long SPIN_UP_TIME_MS = 3000;
+    private static final long SPIN_AFTER_SHOOT_MS = 2000;
+    private static final double SPINNER_SPEED_NEAR = -3000;
+    private static final double SPINNER_SPEED_FAR = -6000;
 
     private final DcMotorEx shooter;
     private final Servo gate;
@@ -24,6 +28,8 @@ public class Shooter {
     public Shooter(HardwareMap hardwareMap) {
         shooter = hardwareMap.get(DcMotorEx.class, "shooter");
         gate = hardwareMap.get(Servo.class, "gate");
+
+        closeGate();
     }
 
     public void shootDistance(double distance) {
@@ -34,6 +40,11 @@ public class Shooter {
     public void shootFar() {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
         shooter.setVelocity(SPINNER_SPEED_FAR);
+    }
+
+    public void stopShoot(){
+        shooter.setPower(0.0);
+        closeGate();
     }
 
     public void shootThreeFar(){
@@ -67,12 +78,16 @@ public class Shooter {
         }
     }
 
+    public boolean isShooting(){
+        return state != ShooterState.STOPPED;
+    }
+
     private void setState(ShooterState newState) {
         state = newState;
         stateStartTime = System.currentTimeMillis();
     }
 
-    private void openGate() { gate.setPosition(0.5); }
+    private void openGate() { gate.setPosition(GATE_OPEN); }
 
-    private void closeGate() { gate.setPosition(0.0); }
+    private void closeGate() { gate.setPosition(GATE_CLOSED); }
 }

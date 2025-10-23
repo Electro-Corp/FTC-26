@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
+import android.graphics.Point;
+
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Trajectory;
@@ -30,7 +32,6 @@ public abstract class AutoRoot extends LinearOpMode {
         int id = getTargetTag();
 
         waitForStart();
-
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
                 .lineToX(18);
@@ -80,6 +81,7 @@ public abstract class AutoRoot extends LinearOpMode {
         Action currentAction = t.build();
         Actions.runBlocking(currentAction);
     }
+
 
     protected abstract int getTargetTag();
 }

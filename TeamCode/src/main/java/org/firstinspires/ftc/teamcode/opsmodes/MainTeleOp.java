@@ -52,9 +52,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
 
         // Aiming
-        tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(0,0,0);
-        drive = new MecanumDrive(hardwareMap, initPose);
+        //tBrain = new TestBrain(hardwareMap);
+        //initPose = new Pose2d(0,0,0);
+        //drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap);
 
@@ -69,15 +69,15 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         while (opModeIsActive()){
             updateDriveMotors();
-            aimAssist();
+            //aimAssist();
 
-            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+            /*telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
             AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
             if (tag != null) {
                 telemetry.addData("Bearing to target", tag.ftcPose.bearing);
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
-            }
+            }*/
 
             readGamepad();
             telemetry.update();
@@ -168,6 +168,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     }
 
+    boolean shooting = false;
     private void readGamepad(){
         //control intake, gamepad 2 left trigger is forward and left bumper is reverse
         if(gamepad2.left_trigger >= .5) {
@@ -180,11 +181,12 @@ public abstract class MainTeleOp extends LinearOpMode {
             intake.stop();
         }
 
+        shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_trigger >= .5) { //shoot far
+        if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
             shooter.shootFar();
         }
-        if(gamepad2.right_bumper) { //shoot close
+        if(gamepad2.right_bumper && !shooting) { //shoot close
             shooter.shootNear();
         }
         shooter.update();
