@@ -40,10 +40,15 @@ public abstract class MainTeleOp extends LinearOpMode {
         leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightBack");
 
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -165,16 +170,16 @@ public abstract class MainTeleOp extends LinearOpMode {
         rightFrontDrive.setPower(rightFrontPower);
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
-
     }
 
     boolean shooting = false;
     private void readGamepad(){
         //control intake, gamepad 2 left trigger is forward and left bumper is reverse
-        if(gamepad2.left_trigger >= .5) {
+        intake.setSpeed(-gamepad1.left_trigger);
+        if(gamepad1.left_trigger >= .2) {
             intake.go();
         }
-        else if(gamepad2.left_bumper) {
+        else if(gamepad1.y) {
             intake.reverse();
         }
         else {
@@ -183,10 +188,10 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
+        if(gamepad1.right_trigger >= .5 && !shooting) { //shoot far
             shooter.shootFar();
         }
-        if(gamepad2.right_bumper && !shooting) { //shoot close
+        if(gamepad1.b && !shooting) { //shoot close
             shooter.shootNear();
         }
         shooter.update();

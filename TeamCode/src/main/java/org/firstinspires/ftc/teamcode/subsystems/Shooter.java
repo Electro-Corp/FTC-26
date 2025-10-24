@@ -15,9 +15,9 @@ public class Shooter {
     private static final double GATE_OPEN = 0.2255;
 
     private static final long SPIN_UP_TIME_MS = 3000;
-    private static final long SPIN_AFTER_SHOOT_MS = 2000;
+    private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final double SPINNER_SPEED_NEAR = -3000;
-    private static final double SPINNER_SPEED_FAR = -6000;
+    private static final double SPINNER_SPEED_FAR = -50000;
 
     private final DcMotorEx shooter;
     private final Servo gate;
