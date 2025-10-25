@@ -14,6 +14,8 @@ public class Shooter {
     private static final double GATE_CLOSED = 0.2915;
     private static final double GATE_OPEN = 0.2255;
 
+    private boolean gateOpen = false;
+
     private static final long SPIN_UP_TIME_MS = 4000;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final double SPINNER_SPEED_NEAR = -3000;
@@ -44,7 +46,7 @@ public class Shooter {
 
     public void stopShoot(){
         shooter.setPower(0.0);
-        closeGate();
+        //closeGate();
         setState(ShooterState.STOPPED);
     }
 
@@ -62,13 +64,13 @@ public class Shooter {
         switch (state) {
             case WAITING_FOR_SPIN_UP:
                 if (elapsed >= SPIN_UP_TIME_MS) {
-                    openGate();
+                    //openGate();
                     setState(ShooterState.SHOOTING);
                 }
                 break;
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
-                    closeGate();
+                    //closeGate();
                     shooter.setVelocity(0);
                     setState(ShooterState.STOPPED);
                 }
@@ -88,7 +90,18 @@ public class Shooter {
         stateStartTime = System.currentTimeMillis();
     }
 
-    private void openGate() { gate.setPosition(GATE_OPEN); }
+    public void openGate() {
+        gate.setPosition(GATE_OPEN);
+        gateOpen = true;
+    }
 
-    private void closeGate() { gate.setPosition(GATE_CLOSED); }
+    public void closeGate() {
+        gate.setPosition(GATE_CLOSED);
+        gateOpen = false;
+    }
+
+    public void toggleGate(){
+        if(gateOpen) closeGate();
+        else openGate();
+    }
 }
