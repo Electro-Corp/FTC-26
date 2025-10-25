@@ -175,11 +175,11 @@ public abstract class MainTeleOp extends LinearOpMode {
     boolean shooting = false;
     private void readGamepad(){
         //control intake, gamepad 2 left trigger is forward and left bumper is reverse
-        intake.setSpeed(-gamepad1.left_trigger);
-        if(gamepad1.left_trigger >= .2) {
+        if(gamepad2.left_trigger >= .2) {
+            intake.setSpeed(-gamepad2.left_trigger);
             intake.go();
         }
-        else if(gamepad1.y) {
+        else if(gamepad2.left_bumper) {
             intake.reverse();
         }
         else {
@@ -188,11 +188,14 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         shooting = shooter.isShooting();
         //shooter
-        if(gamepad1.right_trigger >= .5 && !shooting) { //shoot far
+        if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
             shooter.shootFar();
         }
-        if(gamepad1.b && !shooting) { //shoot close
+        if(gamepad2.b && !shooting) { //shoot close
             shooter.shootNear();
+        }
+        if(gamepad2.a){
+            shooter.stopShoot();
         }
         shooter.update();
     }

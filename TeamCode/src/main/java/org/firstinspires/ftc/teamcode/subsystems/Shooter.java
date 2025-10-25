@@ -14,7 +14,7 @@ public class Shooter {
     private static final double GATE_CLOSED = 0.2915;
     private static final double GATE_OPEN = 0.2255;
 
-    private static final long SPIN_UP_TIME_MS = 3000;
+    private static final long SPIN_UP_TIME_MS = 4000;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final double SPINNER_SPEED_NEAR = -3000;
     private static final double SPINNER_SPEED_FAR = -50000;
@@ -45,6 +45,7 @@ public class Shooter {
     public void stopShoot(){
         shooter.setPower(0.0);
         closeGate();
+        setState(ShooterState.STOPPED);
     }
 
     public void shootThreeFar(){
