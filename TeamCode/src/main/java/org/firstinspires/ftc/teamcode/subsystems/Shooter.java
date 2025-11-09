@@ -11,8 +11,8 @@ public class Shooter {
         STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
     }
 
-    private static final double GATE_CLOSED = 0.2915;
-    private static final double GATE_OPEN = 0.2255;
+    private static final double GATE_CLOSED = 0.6;
+    private static final double GATE_OPEN = 0.8445;
 
     private boolean gateOpen = false;
 
