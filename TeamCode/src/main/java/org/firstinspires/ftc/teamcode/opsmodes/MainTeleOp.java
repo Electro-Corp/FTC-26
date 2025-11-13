@@ -57,9 +57,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
 
         // Aiming
-        //tBrain = new TestBrain(hardwareMap);
-        //initPose = new Pose2d(0,0,0);
-        //drive = new MecanumDrive(hardwareMap, initPose);
+        tBrain = new TestBrain(hardwareMap);
+        initPose = new Pose2d(0,0,0);
+        drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap);
 
@@ -74,15 +74,17 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         while (opModeIsActive()){
             updateDriveMotors();
-            //aimAssist();
 
-            /*telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+            telemetry.addData("Shooter Vel", shooter.getVelocity());
+            aimAssist();
+
+            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
             AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
             if (tag != null) {
                 telemetry.addData("Bearing to target", tag.ftcPose.bearing);
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
-            }*/
+            }
 
             readGamepad();
             telemetry.update();
@@ -93,12 +95,16 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean isYPressed = false;
     private double incAmount = 0.1;
     private void aimAssist(){
-        if(gamepad1.y) {
+        if(gamepad2.y) {
             if (!isYPressed) {
                 AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
-                    incAmount = Math.toRadians(tagPose.bearing);
+                    if(tagPose.bearing < 0) {
+                        incAmount = Math.toRadians(tagPose.bearing - 15) / 2;
+                    }else{
+                        incAmount = Math.toRadians(tagPose.bearing) / 2;
+                    }
 
                     Action trajAction = null;
 

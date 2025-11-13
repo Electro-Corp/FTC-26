@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Trajectory;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
@@ -25,6 +27,8 @@ public abstract class AutoRoot extends LinearOpMode {
     private Intake intake;
     private Shooter shooter;
 
+    private Thread shooterThread;
+
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
@@ -33,28 +37,41 @@ public abstract class AutoRoot extends LinearOpMode {
 
         waitForStart();
 
-        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                .lineToX(18);
-        runTrajectory(trajectory);
+        TrajectoryActionBuilder initTurn = drive.actionBuilder(drive.localizer.getPose())
+                        .turn(ang(45));
+        runTrajectory(initTurn);
 
-        align(id);
+        shooter.shootNear();
 
-        shooter.shootThreeFar();
-
-        trajectory = drive.actionBuilder(drive.localizer.getPose())
-                .turn(Math.PI / 2);
-        runTrajectory(trajectory);
+        waitForShooter();
 
         intake.go();
 
-        trajectory = drive.actionBuilder(drive.localizer.getPose())
-                .lineToX(18)
-                .turn(Math.toRadians(-135));
+        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+                    .turn(ang(-45))
+                    .strafeTo(new Vector2d(0, 18))
+                    .strafeTo(new Vector2d(-18, 18));
         runTrajectory(trajectory);
+
+        intake.stop();
 
         align(id);
 
-        shooter.shootThreeFar();
+        initTurn = drive.actionBuilder(drive.localizer.getPose())
+                .strafeTo(new Vector2d(-15, 18))
+                .turn(ang(45));
+        runTrajectory(initTurn);
+
+        shooter.shootFar();
+
+        waitForShooter();
+
+        shooter.stopShooterThread();
+    }
+
+    // Litearlly becuase im lazy
+    double ang(double a){
+        return Math.toRadians(a);
     }
 
     private void initHardware() {
@@ -63,6 +80,19 @@ public abstract class AutoRoot extends LinearOpMode {
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap);
+        shooterThread = new Thread(shooter);
+        shooterThread.start();
+    }
+
+    private void waitForShooter(){
+        // Block until shooter is done shooting or force stopped
+        while(shooter.getState() != Shooter.ShooterState.STOPPED && !isStopRequested()){
+            telemetry.addLine("Waiting for shooter to be done..");
+            telemetry.addData("Speed", shooter.getVelocity());
+            telemetry.addData("State", shooter.getState());
+            telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
+            telemetry.update();
+        }
     }
 
     private void align(int tagId){
@@ -78,6 +108,8 @@ public abstract class AutoRoot extends LinearOpMode {
     }
 
     private void runTrajectory(TrajectoryActionBuilder t){
+        telemetry.addLine("Running trajectory");
+        telemetry.update();
         Action currentAction = t.build();
         Actions.runBlocking(currentAction);
     }
