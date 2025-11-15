@@ -38,7 +38,8 @@ public abstract class AutoRoot extends LinearOpMode {
         waitForStart();
 
         TrajectoryActionBuilder initTurn = drive.actionBuilder(drive.localizer.getPose())
-                        .turn(ang(45));
+                .strafeTo(new Vector2d(-18, -18))
+                .turn(ang(-45));
         runTrajectory(initTurn);
 
         shooter.shootNear();
@@ -47,22 +48,22 @@ public abstract class AutoRoot extends LinearOpMode {
 
         intake.go();
 
-        TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                    .turn(ang(-45))
-                    .strafeTo(new Vector2d(0, 18))
-                    .strafeTo(new Vector2d(-18, 18));
-        runTrajectory(trajectory);
+        initTurn = drive.actionBuilder(drive.localizer.getPose())
+                .turn(ang(180))
+                .strafeTo(new Vector2d(-18 - 9, -18))
+                .strafeTo(new Vector2d(-18 - 9, 0));
+        runTrajectory(initTurn);
 
         intake.stop();
 
-        align(id);
-
         initTurn = drive.actionBuilder(drive.localizer.getPose())
-                .strafeTo(new Vector2d(-15, 18))
-                .turn(ang(45));
+                .strafeTo(new Vector2d(-18 - 9, -5))
+                .turn(ang(-180));
         runTrajectory(initTurn);
 
-        shooter.shootFar();
+        align(id);
+
+        shooter.shootNear();
 
         waitForShooter();
 

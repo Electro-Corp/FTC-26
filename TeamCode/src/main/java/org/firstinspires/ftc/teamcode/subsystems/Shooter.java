@@ -18,7 +18,7 @@ public class Shooter implements Runnable{
         STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
     }
 
-    private static final double GATE_CLOSED = 0.8015;
+    private static final double GATE_CLOSED = 0.8375;
     private static final double GATE_OPEN = 0.5665;
 
     private boolean gateOpen = false;

@@ -79,7 +79,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             aimAssist();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
+            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
             if (tag != null) {
                 telemetry.addData("Bearing to target", tag.ftcPose.bearing);
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
@@ -100,11 +100,11 @@ public abstract class MainTeleOp extends LinearOpMode {
                 AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
-                    if(tagPose.bearing < 0) {
-                        incAmount = Math.toRadians(tagPose.bearing - 15) / 2;
-                    }else{
-                        incAmount = Math.toRadians(tagPose.bearing) / 2;
-                    }
+                    //if(tagPose.bearing < 0) {
+                    //    incAmount = Math.toRadians(tagPose.bearing) / 2;
+                    //}else{
+                    incAmount = Math.toRadians(tagPose.bearing) / 2;
+                    //}
 
                     Action trajAction = null;
 
@@ -164,6 +164,13 @@ public abstract class MainTeleOp extends LinearOpMode {
             rightFrontPower /= max;
             leftBackPower /= max;
             rightBackPower /= max;
+        }
+
+        if (gamepad1.a) {
+            leftFrontPower *= 0.5;
+            rightFrontPower *= 0.5;
+            leftBackPower *= 0.5;
+            rightBackPower *= 0.5;
         }
 
         telemetry.addData("LF", leftFrontPower);
