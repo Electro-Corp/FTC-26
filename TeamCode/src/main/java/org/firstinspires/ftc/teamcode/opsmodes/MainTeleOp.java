@@ -205,10 +205,10 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.shootFar();
         }
         if(gamepad2.a){
-           shooter.openGate();
+           shooter.kickersShoot();
         }
         if(gamepad2.b){
-            shooter.closeGate();
+            shooter.kickersWait();
         }
         if(gamepad2.left_bumper){
             shooter.stopShoot();

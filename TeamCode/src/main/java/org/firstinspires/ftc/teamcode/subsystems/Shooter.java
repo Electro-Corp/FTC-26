@@ -18,10 +18,16 @@ public class Shooter implements Runnable{
         STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
     }
 
-    private static final double GATE_CLOSED = 0.8375;
-    private static final double GATE_OPEN = 0.5665;
+    private static final double L_KICKER_WAIT = 0.8375;
+    private static final double L_KICKER_SHOOT = 0.5665;
+    private static final double M_KICKER_WAIT = 0.8375;
+    private static final double M_KICKER_SHOOT = 0.5665;
+    private static final double R_KICKER_WAIT = 1;
+    private static final double R_KICKER_SHOOT = 0.5665;
 
-    private boolean gateOpen = false;
+    private boolean leftKickerShooting = false;
+    private boolean midKickerShooting = false;
+    private boolean rightKickerShooting = false;
 
     private static final long SPIN_UP_TIME_MS = 2500;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
@@ -29,7 +35,9 @@ public class Shooter implements Runnable{
     private static final double SPINNER_SPEED_FAR = -1545;
 
     private final DcMotorEx shooter;
-    private final Servo gate;
+    private final Servo leftKicker;
+    private final Servo midKicker;
+    private final Servo rightKicker;
 
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
@@ -38,9 +46,11 @@ public class Shooter implements Runnable{
 
     public Shooter(HardwareMap hardwareMap) {
         shooter = hardwareMap.get(DcMotorEx.class, "shooter");
-        gate = hardwareMap.get(Servo.class, "gate");
+        leftKicker = hardwareMap.get(Servo.class, "lKick");
+        midKicker = hardwareMap.get(Servo.class, "mKick");
+        rightKicker = hardwareMap.get(Servo.class,"rKick");
 
-        openGate();
+        kickersWait();
     }
 
     public double getVelocity(){
@@ -80,13 +90,13 @@ public class Shooter implements Runnable{
         switch (state) {
             case WAITING_FOR_SPIN_UP:
                 if (elapsed >= SPIN_UP_TIME_MS) {
-                    closeGate();
+                    kickersWait();
                     setState(ShooterState.SHOOTING);
                 }
                 break;
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
-                    openGate();
+                    kickersShoot();
                     shooter.setVelocity(0);
                     setState(ShooterState.STOPPED);
                 }
@@ -109,19 +119,61 @@ public class Shooter implements Runnable{
         stateStartTime = System.currentTimeMillis();
     }
 
-    public void openGate() {
-        gate.setPosition(GATE_OPEN);
-        gateOpen = true;
+    public void kickersShoot() {
+        leftKickerShoot();
+        midKickerShoot();
+        rightKickerShoot();
     }
 
-    public void closeGate() {
-        gate.setPosition(GATE_CLOSED);
-        gateOpen = false;
+    public void kickersWait() {
+        leftKickerWait();
+        midKickerWait();
+        rightKickerWait();
     }
 
-    public void toggleGate(){
-        if(gateOpen) closeGate();
-        else openGate();
+    public void leftKickerShoot() {
+        leftKicker.setPosition(L_KICKER_SHOOT);
+        leftKickerShooting = true;
+    }
+
+    public void midKickerShoot() {
+        midKicker.setPosition(M_KICKER_SHOOT);
+        midKickerShooting = true;
+    }
+
+    public void rightKickerShoot() {
+        rightKicker.setPosition(R_KICKER_SHOOT);
+        rightKickerShooting = true;
+    }
+
+    public void leftKickerWait() {
+        leftKicker.setPosition(L_KICKER_WAIT);
+        leftKickerShooting = false;
+    }
+
+    public void midKickerWait() {
+        midKicker.setPosition(M_KICKER_WAIT);
+        midKickerShooting = false;
+    }
+
+    public void rightKickerWait() {
+        rightKicker.setPosition(R_KICKER_WAIT);
+        rightKickerShooting = false;
+    }
+
+    public void toggleLeftKicker(){
+        if(leftKickerShooting) leftKickerWait();
+        else leftKickerShoot();
+    }
+
+    public void toggleMidKicker() {
+        if(midKickerShooting) midKickerWait();
+        else midKickerShoot();
+    }
+
+    public void toggleRightKicker() {
+        if(rightKickerShooting) rightKickerWait();
+        else rightKickerShoot();
     }
 
     public void stopShooterThread(){
