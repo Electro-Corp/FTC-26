@@ -22,9 +22,9 @@ public class ColorSensorCalib extends LinearOpMode {
             NormalizedRGBA rColors = rightColor.getNormalizedColors();
 
             telemetry.addLine("[SENSOR] [R] [G] [B]");
-            telemetry.addData("left", "%.3f %.3f %.3f", lColors.red, lColors.red, lColors.red);
-            telemetry.addData("mid", "%.3f %.3f %.3f", mColors.red, mColors.red, mColors.red);
-            telemetry.addData("right", "%.3f %.3f %.3f", rColors.red, rColors.red, rColors.red);
+            telemetry.addData("left", "%.3f %.3f %.3f", lColors.red, lColors.green, lColors.blue);
+            telemetry.addData("mid", "%.3f %.3f %.3f", mColors.red, mColors.green, mColors.blue);
+            telemetry.addData("right", "%.3f %.3f %.3f", rColors.red, rColors.green, rColors.blue);
         }
     }
 }
