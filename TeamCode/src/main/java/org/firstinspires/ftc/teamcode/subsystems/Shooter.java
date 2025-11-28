@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class Shooter implements Runnable{
@@ -19,19 +20,32 @@ public class Shooter implements Runnable{
         STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
     }
 
+    public enum BallColor{
+        PURPLE,
+        GREEN,
+        UNKNOWN
+    }
+
     private static final double L_KICKER_WAIT = 0.8375;
     private static final double L_KICKER_SHOOT = 0.5665;
     private static final double M_KICKER_WAIT = 0.8375;
-    private static final double M_KICKER_SHOOT = 0.5665;
-    private static final double R_KICKER_WAIT = 1;
-    private static final double R_KICKER_SHOOT = 0.5665;
+    private static final double M_KICKER_SHOOT = 0.3665;
+    private static final double R_KICKER_WAIT = 0.719;
+    private static final double R_KICKER_SHOOT = 0.4665;
+
+    private static final float COLOR_GAIN = 27.0f;
 
     private boolean leftKickerShooting = false;
     private boolean midKickerShooting = false;
     private boolean rightKickerShooting = false;
 
-    private static final long SPIN_UP_TIME_MS = 2500;
+    private boolean shouldLShoot = false;
+    private boolean shouldRShoot = false;
+    private boolean shouldMShoot = false;
+
+    private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
+    private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
     private static final double SPINNER_SPEED_NEAR = -1450;
     private static final double SPINNER_SPEED_FAR = -1545;
 
@@ -62,6 +76,9 @@ public class Shooter implements Runnable{
         leftColor = hardwareMap.get(NormalizedColorSensor.class, "leftColor");
         midColor = hardwareMap.get(NormalizedColorSensor.class, "midColor");
         rightColor = hardwareMap.get(NormalizedColorSensor.class, "rightColor");
+        leftColor.setGain(COLOR_GAIN);
+        midColor.setGain(COLOR_GAIN);
+        rightColor.setGain(COLOR_GAIN);
 
         kickersWait();
     }
@@ -115,9 +132,14 @@ public class Shooter implements Runnable{
                     shooterLeft.setVelocity(0);
                     shooterRight.setVelocity(0);
                     setState(ShooterState.STOPPED);
+                    resetWhatToShoot();
                 }
                 break;
             default:
+                if(elapsed >= PAUSE_UNTIL_GATE_OPEN){
+                    kickersWait();
+                    setState(ShooterState.STOPPED);
+                }
                 // STOPPED: no action needed
                 break;
         }
@@ -145,18 +167,24 @@ public class Shooter implements Runnable{
     }
 
     public void leftKickerShoot() {
-        leftKicker.setPosition(L_KICKER_SHOOT);
-        leftKickerShooting = true;
+        if(shouldLShoot) {
+            leftKicker.setPosition(L_KICKER_SHOOT);
+            leftKickerShooting = true;
+        }
     }
 
     public void midKickerShoot() {
-        midKicker.setPosition(M_KICKER_SHOOT);
-        midKickerShooting = true;
+        if(shouldMShoot) {
+            midKicker.setPosition(M_KICKER_SHOOT);
+            midKickerShooting = true;
+        }
     }
 
     public void rightKickerShoot() {
-        rightKicker.setPosition(R_KICKER_SHOOT);
-        rightKickerShooting = true;
+        if(shouldRShoot) {
+            rightKicker.setPosition(R_KICKER_SHOOT);
+            rightKickerShooting = true;
+        }
     }
 
     public void leftKickerWait() {
@@ -189,11 +217,48 @@ public class Shooter implements Runnable{
         else rightKickerShoot();
     }
 
+    public void setToShootAll(){
+        shouldLShoot = true;
+        shouldMShoot = true;
+        shouldRShoot = true;
+    }
+
+    public void resetWhatToShoot(){
+        shouldMShoot = false;
+        shouldRShoot = false;
+        shouldLShoot = false;
+    }
+
+    public void shootColorFar(BallColor color){
+        if(whatColor(leftColor.getNormalizedColors()) == color)
+            shouldLShoot = true;
+        else if(whatColor(rightColor.getNormalizedColors()) == color)
+            shouldRShoot = true;
+        else if(whatColor(midColor.getNormalizedColors()) == color)
+            shouldMShoot = true;
+        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        shooterLeft.setVelocity(SPINNER_SPEED_FAR);
+        shooterRight.setVelocity(-SPINNER_SPEED_FAR);
+    }
+
     public void stopShooterThread(){
         this.stop = true;
     }
 
     public ShooterState getState(){
         return state;
+    }
+
+
+    // Color sensor reading
+    private BallColor whatColor(NormalizedRGBA color){
+        if(color.green > 0.600){
+            if(color.blue > 0.800){
+                return BallColor.PURPLE;
+            }
+            return BallColor.GREEN;
+        }else{
+            return BallColor.UNKNOWN;
+        }
     }
 }

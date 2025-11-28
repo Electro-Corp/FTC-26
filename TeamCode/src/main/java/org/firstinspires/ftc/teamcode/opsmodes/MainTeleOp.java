@@ -202,13 +202,14 @@ public abstract class MainTeleOp extends LinearOpMode {
         shooting = shooter.isShooting();
         //shooter
         if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
+            shooter.setToShootAll();
             shooter.shootFar();
         }
         if(gamepad2.a){
-           shooter.kickersShoot();
+           shooter.shootColorFar(Shooter.BallColor.PURPLE);
         }
         if(gamepad2.b){
-            shooter.kickersWait();
+            shooter.shootColorFar(Shooter.BallColor.GREEN);
         }
         if(gamepad2.left_bumper){
             shooter.stopShoot();
