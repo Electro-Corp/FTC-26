@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class Shooter implements Runnable{
@@ -39,6 +40,11 @@ public class Shooter implements Runnable{
     private final Servo midKicker;
     private final Servo rightKicker;
 
+    // Color Sensors
+    private NormalizedColorSensor leftColor;
+    private NormalizedColorSensor midColor;
+    private NormalizedColorSensor rightColor;
+
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
 
@@ -49,6 +55,11 @@ public class Shooter implements Runnable{
         leftKicker = hardwareMap.get(Servo.class, "lKick");
         midKicker = hardwareMap.get(Servo.class, "mKick");
         rightKicker = hardwareMap.get(Servo.class,"rKick");
+
+        // Init color sensors
+        leftColor = hardwareMap.get(NormalizedColorSensor.class, "leftColor");
+        midColor = hardwareMap.get(NormalizedColorSensor.class, "midColor");
+        rightColor = hardwareMap.get(NormalizedColorSensor.class, "rightColor");
 
         kickersWait();
     }
