@@ -35,7 +35,8 @@ public class Shooter implements Runnable{
     private static final double SPINNER_SPEED_NEAR = -1450;
     private static final double SPINNER_SPEED_FAR = -1545;
 
-    private final DcMotorEx shooter;
+    private final DcMotorEx shooter_left;
+    private final DcMotorEx shooter_right;
     private final Servo leftKicker;
     private final Servo midKicker;
     private final Servo rightKicker;
@@ -51,7 +52,7 @@ public class Shooter implements Runnable{
     public long tickVelocity = 1;
 
     public Shooter(HardwareMap hardwareMap) {
-        shooter = hardwareMap.get(DcMotorEx.class, "shooter");
+        shooter_left = hardwareMap.get(DcMotorEx.class, "shooter");
         leftKicker = hardwareMap.get(Servo.class, "lKick");
         midKicker = hardwareMap.get(Servo.class, "mKick");
         rightKicker = hardwareMap.get(Servo.class,"rKick");
@@ -65,21 +66,21 @@ public class Shooter implements Runnable{
     }
 
     public double getVelocity(){
-        return shooter.getVelocity();
+        return shooter_left.getVelocity();
     }
 
     public void shootDistance(double distance) {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
-        shooter.setVelocity(distance * 10);
+        shooter_left.setVelocity(distance * 10);
     }
 
     public void shootFar() {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
-        shooter.setVelocity(SPINNER_SPEED_FAR);
+        shooter_left.setVelocity(SPINNER_SPEED_FAR);
     }
 
     public void stopShoot(){
-        shooter.setPower(0.0);
+        shooter_left.setPower(0.0);
         //closeGate();
         setState(ShooterState.STOPPED);
     }
@@ -90,7 +91,7 @@ public class Shooter implements Runnable{
 
     public void shootNear() {
         setState(ShooterState.WAITING_FOR_SPIN_UP);
-        shooter.setVelocity(SPINNER_SPEED_NEAR);
+        shooter_left.setVelocity(SPINNER_SPEED_NEAR);
     }
 
     private long lastPosition = 1;
@@ -108,7 +109,7 @@ public class Shooter implements Runnable{
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
                     kickersShoot();
-                    shooter.setVelocity(0);
+                    shooter_left.setVelocity(0);
                     setState(ShooterState.STOPPED);
                 }
                 break;
@@ -116,8 +117,8 @@ public class Shooter implements Runnable{
                 // STOPPED: no action needed
                 break;
         }
-        tickVelocity = (shooter.getCurrentPosition() - lastPosition / System.currentTimeMillis() - lastTime);
-        lastPosition = shooter.getCurrentPosition();
+        tickVelocity = (shooter_left.getCurrentPosition() - lastPosition / System.currentTimeMillis() - lastTime);
+        lastPosition = shooter_left.getCurrentPosition();
         lastTime = System.currentTimeMillis();
     }
 

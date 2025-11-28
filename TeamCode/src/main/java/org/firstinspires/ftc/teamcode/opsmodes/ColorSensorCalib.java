@@ -25,6 +25,7 @@ public class ColorSensorCalib extends LinearOpMode {
             telemetry.addData("left", "%.3f %.3f %.3f", lColors.red, lColors.green, lColors.blue);
             telemetry.addData("mid", "%.3f %.3f %.3f", mColors.red, mColors.green, mColors.blue);
             telemetry.addData("right", "%.3f %.3f %.3f", rColors.red, rColors.green, rColors.blue);
+            telemetry.update();
         }
     }
 }
