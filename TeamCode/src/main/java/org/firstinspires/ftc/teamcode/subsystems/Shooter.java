@@ -23,7 +23,18 @@ public class Shooter implements Runnable{
     public enum BallColor{
         PURPLE,
         GREEN,
-        UNKNOWN
+        UNKNOWN;
+
+        public String toString(){
+            switch(this){
+                case PURPLE:
+                    return "PURPLE";
+                case GREEN:
+                    return "GREEN";
+                default:
+                    return "NONE";
+            }
+        }
     }
 
     private static final double L_KICKER_WAIT = 0.8375;
@@ -63,8 +74,6 @@ public class Shooter implements Runnable{
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
 
-    public long tickVelocity = 1;
-
     public Shooter(HardwareMap hardwareMap) {
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
@@ -84,7 +93,7 @@ public class Shooter implements Runnable{
     }
 
     public double getVelocity(){
-        return shooterLeft.getVelocity();
+        return (shooterLeft.getVelocity() + shooterRight.getVelocity()) / 2;
     }
 
     public void shootDistance(double distance) {
@@ -102,12 +111,7 @@ public class Shooter implements Runnable{
     public void stopShoot(){
         shooterLeft.setPower(0.0);
         shooterRight.setPower(0.0);
-        //closeGate();
         setState(ShooterState.STOPPED);
-    }
-
-    public void shootThreeFar(){
-        for(int i = 0; i < 3; i++) shootFar();
     }
 
     public void shootNear() {
@@ -140,7 +144,6 @@ public class Shooter implements Runnable{
                     kickersWait();
                     setState(ShooterState.STOPPED);
                 }
-                // STOPPED: no action needed
                 break;
         }
     }
@@ -230,11 +233,13 @@ public class Shooter implements Runnable{
     }
 
     public void shootColorFar(BallColor color){
-        if(whatColor(leftColor.getNormalizedColors()) == color)
+        // if one replaced the "else if" with "if"'s
+        // multiple balls of the same color could be fired
+        if(whatColor(getLeftColor()) == color)
             shouldLShoot = true;
-        else if(whatColor(rightColor.getNormalizedColors()) == color)
+        else if(whatColor(getRightColor()) == color)
             shouldRShoot = true;
-        else if(whatColor(midColor.getNormalizedColors()) == color)
+        else if(whatColor(getMidColor()) == color)
             shouldMShoot = true;
         setState(ShooterState.WAITING_FOR_SPIN_UP);
         shooterLeft.setVelocity(SPINNER_SPEED_FAR);
@@ -251,7 +256,7 @@ public class Shooter implements Runnable{
 
 
     // Color sensor reading
-    private BallColor whatColor(NormalizedRGBA color){
+    public static BallColor whatColor(NormalizedRGBA color){
         if(color.green > 0.600){
             if(color.blue > 0.800){
                 return BallColor.PURPLE;
@@ -260,5 +265,17 @@ public class Shooter implements Runnable{
         }else{
             return BallColor.UNKNOWN;
         }
+    }
+
+    public NormalizedRGBA getLeftColor(){
+        return leftColor.getNormalizedColors();
+    }
+
+    public NormalizedRGBA getMidColor(){
+        return midColor.getNormalizedColors();
+    }
+
+    public NormalizedRGBA getRightColor(){
+        return rightColor.getNormalizedColors();
     }
 }
