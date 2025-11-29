@@ -93,7 +93,7 @@ public class Shooter implements Runnable{
     }
 
     public double getVelocity(){
-        return (shooterLeft.getVelocity() + shooterRight.getVelocity()) / 2;
+        return (shooterLeft.getVelocity() + Math.abs(shooterRight.getVelocity())) / 2;
     }
 
     public void shootDistance(double distance) {
@@ -232,7 +232,15 @@ public class Shooter implements Runnable{
         shouldLShoot = false;
     }
 
-    public void shootColorFar(BallColor color){
+    public boolean shootColorFar(BallColor color){
+        return shootColor(color, SPINNER_SPEED_FAR);
+    }
+
+    public boolean shootColorNear(BallColor color){
+        return shootColor(color, SPINNER_SPEED_NEAR);
+    }
+
+    public boolean shootColor(BallColor color, double speed){
         // if one replaced the "else if" with "if"'s
         // multiple balls of the same color could be fired
         if(whatColor(getLeftColor()) == color)
@@ -242,8 +250,9 @@ public class Shooter implements Runnable{
         else if(whatColor(getMidColor()) == color)
             shouldMShoot = true;
         setState(ShooterState.WAITING_FOR_SPIN_UP);
-        shooterLeft.setVelocity(SPINNER_SPEED_FAR);
-        shooterRight.setVelocity(-SPINNER_SPEED_FAR);
+        shooterLeft.setVelocity(speed);
+        shooterRight.setVelocity(-speed);
+        return shouldLShoot || shouldRShoot || shouldMShoot;
     }
 
     public void stopShooterThread(){

@@ -29,6 +29,9 @@ public abstract class AutoRoot extends LinearOpMode {
 
     private Thread shooterThread;
 
+    private Shooter.BallColor pattern[] = new Shooter.BallColor[3];
+    private int currentIndex = 0;
+
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
@@ -42,9 +45,7 @@ public abstract class AutoRoot extends LinearOpMode {
                 .turn(ang(-45));
         runTrajectory(initTurn);
 
-        shooter.shootNear();
-
-        waitForShooter();
+        shootThree();
 
         intake.go();
 
@@ -63,9 +64,7 @@ public abstract class AutoRoot extends LinearOpMode {
 
         align(id);
 
-        shooter.shootNear();
-
-        waitForShooter();
+        shootThree();
 
         shooter.stopShooterThread();
     }
@@ -113,6 +112,52 @@ public abstract class AutoRoot extends LinearOpMode {
         telemetry.update();
         Action currentAction = t.build();
         Actions.runBlocking(currentAction);
+    }
+
+    private void shootNext(){
+        if(!shooter.shootColorFar(pattern[currentIndex])){
+            // it didn't find the color. . .
+            // run the intake to try to put the
+            // balls over the color sensor
+            intake.go();
+            sleep(500); // don't waste *too* much time
+            intake.stop();
+            shooter.shootColorFar(pattern[currentIndex]);
+        }
+        if(currentIndex == 2) currentIndex = 0;
+        else currentIndex++;
+        waitForShooter();
+    }
+
+    private void shootThree(){
+        for(int i = 0; i < 3; i++){
+            shootNext();
+        }
+    }
+
+    private void generatePattern(int oId){
+        // take the obselisk id and figure out what
+        // it means. . . .
+        switch(oId){
+            case 21:
+                pattern[0] = Shooter.BallColor.GREEN;
+                pattern[1] = Shooter.BallColor.PURPLE;
+                pattern[2] = Shooter.BallColor.PURPLE;
+                break;
+            case 22:
+                pattern[0] = Shooter.BallColor.PURPLE;
+                pattern[1] = Shooter.BallColor.GREEN;
+                pattern[2] = Shooter.BallColor.PURPLE;
+                break;
+            case 23:
+                pattern[0] = Shooter.BallColor.PURPLE;
+                pattern[1] = Shooter.BallColor.PURPLE;
+                pattern[2] = Shooter.BallColor.GREEN;
+                break;
+            default:
+                // its not from the obselisk...
+                break;
+        }
     }
 
 

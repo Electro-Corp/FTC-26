@@ -101,11 +101,7 @@ public abstract class MainTeleOp extends LinearOpMode {
                 AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
-                    //if(tagPose.bearing < 0) {
-                    //    incAmount = Math.toRadians(tagPose.bearing) / 2;
-                    //}else{
                     incAmount = Math.toRadians(tagPose.bearing) / 2;
-                    //}
 
                     Action trajAction = null;
 
