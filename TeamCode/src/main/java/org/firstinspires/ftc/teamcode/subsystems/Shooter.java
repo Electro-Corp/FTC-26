@@ -232,6 +232,12 @@ public class Shooter implements Runnable{
         shouldLShoot = false;
     }
 
+    public void setShootSpecific(boolean a, boolean b, boolean c){
+        shouldLShoot = a;
+        shouldMShoot = b;
+        shouldRShoot = c;
+    }
+
     public boolean shootColorFar(BallColor color){
         return shootColor(color, SPINNER_SPEED_FAR);
     }

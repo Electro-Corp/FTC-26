@@ -126,6 +126,7 @@ public abstract class AutoRoot extends LinearOpMode {
         }
         if(currentIndex == 2) currentIndex = 0;
         else currentIndex++;
+        // Block until ball is fired
         waitForShooter();
     }
 
