@@ -17,7 +17,7 @@ public class ColorSensorCalib extends LinearOpMode {
         midColor = hardwareMap.get(NormalizedColorSensor.class, "midColor");
         rightColor = hardwareMap.get(NormalizedColorSensor.class, "rightColor");
 
-        float gain = 27.0f;
+        float gain = 7.5f;
 
         waitForStart();
 
@@ -50,8 +50,8 @@ public class ColorSensorCalib extends LinearOpMode {
     }
 
     private String whatColor(NormalizedRGBA color){
-        if(color.green > 0.600){
-            if(color.blue > 0.800){
+        if(color.green > 0.060){
+            if(color.blue > 0.060 && color.blue > color.green){
                 return "Purple";
             }
             return "Green";

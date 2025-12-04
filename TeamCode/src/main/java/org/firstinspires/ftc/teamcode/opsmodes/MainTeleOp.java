@@ -203,29 +203,29 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.shootFar();
         }
         // Uncomment later
-        /*if(gamepad2.a){
+        if(gamepad2.a){
            shooter.shootColorFar(Shooter.BallColor.PURPLE);
         }
         if(gamepad2.b){
             shooter.shootColorFar(Shooter.BallColor.GREEN);
-        }*/
+        }
         // Manual shoot three
-        if(gamepad2.x){
+        if(gamepad2.dpad_left){
             // Left
             shooter.setShootSpecific(true, false, false);
             shooter.shootFar();
         }
-        if(gamepad2.y){
+        if(gamepad2.dpad_up){
             // Center
             shooter.setShootSpecific(false, true, false);
             shooter.shootFar();
         }
-        if(gamepad2.b){
+        if(gamepad2.dpad_right){
             // Right
             shooter.setShootSpecific(false, false, true);
             shooter.shootFar();
         }
-        if(gamepad2.left_bumper){
+        if(gamepad2.right_bumper){
             shooter.stopShoot();
         }
         shooter.update();

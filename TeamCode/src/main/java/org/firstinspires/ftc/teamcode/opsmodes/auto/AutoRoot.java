@@ -40,14 +40,25 @@ public abstract class AutoRoot extends LinearOpMode {
 
         waitForStart();
 
-        TrajectoryActionBuilder initTurn = drive.actionBuilder(drive.localizer.getPose())
-                .strafeTo(new Vector2d(-18, -18))
-                .turn(ang(-45));
-        runTrajectory(initTurn);
+        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                .strafeTo(new Vector2d(-55, 0))
+                .turn(ang(50));
+        runTrajectory(traj);
+
+        for(int i = 21; i <= 23; i++){
+            if(tBrain.getTagID(i) != null){
+                generatePattern(i);
+            }
+            sleep(250);
+        }
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(ang(-50));
+        runTrajectory(traj);
 
         shootThree();
 
-        intake.go();
+        /*intake.go();
 
         initTurn = drive.actionBuilder(drive.localizer.getPose())
                 .turn(ang(180))
@@ -64,7 +75,7 @@ public abstract class AutoRoot extends LinearOpMode {
 
         align(id);
 
-        shootThree();
+        shootThree();*/
 
         shooter.stopShooterThread();
     }
@@ -157,6 +168,10 @@ public abstract class AutoRoot extends LinearOpMode {
                 break;
             default:
                 // its not from the obselisk...
+                // just do 21
+                pattern[0] = Shooter.BallColor.GREEN;
+                pattern[1] = Shooter.BallColor.PURPLE;
+                pattern[2] = Shooter.BallColor.PURPLE;
                 break;
         }
     }

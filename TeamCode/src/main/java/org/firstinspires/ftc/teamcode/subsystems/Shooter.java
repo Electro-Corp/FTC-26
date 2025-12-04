@@ -44,7 +44,7 @@ public class Shooter implements Runnable{
     private static final double R_KICKER_WAIT = 0.705;
     private static final double R_KICKER_SHOOT = 0.5305;
 
-    private static final float COLOR_GAIN = 27.0f;
+    private static final float COLOR_GAIN = 7.5f;
 
     private boolean leftKickerShooting = false;
     private boolean midKickerShooting = false;
@@ -272,8 +272,8 @@ public class Shooter implements Runnable{
 
     // Color sensor reading
     public static BallColor whatColor(NormalizedRGBA color){
-        if(color.green > 0.600){
-            if(color.blue > 0.800){
+        if(color.green > 0.060){
+            if(color.blue > 0.060 && color.blue > color.green){
                 return BallColor.PURPLE;
             }
             return BallColor.GREEN;
