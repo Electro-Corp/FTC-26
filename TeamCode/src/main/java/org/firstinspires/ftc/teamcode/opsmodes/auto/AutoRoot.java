@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
-public abstract class AutoRoot extends LinearOpMode {
+public abstract class AutoRoot extends LinearOpMode implements Runnable {
     TestBrain tBrain = null;
 
     Pose2d initPose = null;
@@ -27,18 +27,31 @@ public abstract class AutoRoot extends LinearOpMode {
     private Intake intake;
     private Shooter shooter;
 
-    private Thread shooterThread;
+    private Thread shooterThread, thisTeleThread;
+
+    private String readOrStatic = "NUN";
 
     private Shooter.BallColor pattern[] = new Shooter.BallColor[3];
-    private int currentIndex = 0;
+    private int currentIndex = 0, selectedId = -1;
+
+    public void run(){
+        while(!isStopRequested()){
+            updateTele();
+        }
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
 
         int id = getTargetTag();
+        thisTeleThread.start();
+
 
         waitForStart();
+
+        shooter.readColors();
+
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .strafeTo(new Vector2d(-55, 0))
@@ -52,11 +65,34 @@ public abstract class AutoRoot extends LinearOpMode {
             sleep(250);
         }
 
+        if(pattern.length < 1){
+            readOrStatic = "STATIC";
+            // its not from the obselisk...
+            // just do 21
+            pattern[0] = Shooter.BallColor.GREEN;
+            pattern[1] = Shooter.BallColor.PURPLE;
+            pattern[2] = Shooter.BallColor.PURPLE;
+        }else{
+            readOrStatic = "READ";
+        }
+
+        intake.go();
+
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .turn(ang(-50));
         runTrajectory(traj);
 
         shootThree();
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(ang(-200));
+        runTrajectory(traj);
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                        .strafeTo(new Vector2d(-90, 0));
+        runTrajectory(traj);
+
+        //intake.stop();
 
         /*intake.go();
 
@@ -92,18 +128,33 @@ public abstract class AutoRoot extends LinearOpMode {
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap);
         shooterThread = new Thread(shooter);
+
+        thisTeleThread = new Thread(this);
+
         shooterThread.start();
+        shooter.readColorsOnce = true;
     }
 
     private void waitForShooter(){
         // Block until shooter is done shooting or force stopped
         while(shooter.getState() != Shooter.ShooterState.STOPPED && !isStopRequested()){
-            telemetry.addLine("Waiting for shooter to be done..");
-            telemetry.addData("Speed", shooter.getVelocity());
-            telemetry.addData("State", shooter.getState());
-            telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
-            telemetry.update();
+           // block main thread
         }
+    }
+
+    private void updateTele(){
+        // Output pattern
+        if(pattern[0] != null)
+            telemetry.addData("Pattern", "%d: %s %s %s", selectedId, pattern[0].toString(), pattern[1].toString(), pattern[2].toString());
+        telemetry.addData("Static or Read", readOrStatic);
+        telemetry.addData("Static Loaded",  "%s %s %s", shooter.loadedColors[0].toString(), shooter.loadedColors[1].toString(), shooter.loadedColors[2].toString());
+        telemetry.addData("Live Loaded",  "%s %s %s", Shooter.whatColor(shooter.getLeftColor()).toString(), Shooter.whatColor(shooter.getMidColor()).toString(), Shooter.whatColor(shooter.getRightColor()).toString());
+        telemetry.addData("Next fire index", currentIndex);
+        telemetry.addData("Speed", shooter.getVelocity());
+        telemetry.addData("State", shooter.getState());
+        telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
+
+        telemetry.update();
     }
 
     private void align(int tagId){
@@ -119,21 +170,35 @@ public abstract class AutoRoot extends LinearOpMode {
     }
 
     private void runTrajectory(TrajectoryActionBuilder t){
-        telemetry.addLine("Running trajectory");
-        telemetry.update();
         Action currentAction = t.build();
         Actions.runBlocking(currentAction);
     }
 
     private void shootNext(){
-        if(!shooter.shootColorFar(pattern[currentIndex])){
-            // it didn't find the color. . .
-            // run the intake to try to put the
-            // balls over the color sensor
-            intake.go();
-            sleep(500); // don't waste *too* much time
-            intake.stop();
-            shooter.shootColorFar(pattern[currentIndex]);
+        if(!shooter.shootColorNear(pattern[currentIndex])){
+            if(shooter.secLastFir != -1) {
+                int val = 3 - (shooter.lastFired + shooter.secLastFir);
+                switch (val) {
+                    case 0:
+                        shooter.setShootSpecific(true, false, false);
+                        shooter.shootNear();
+                        break;
+                    case 1:
+                        shooter.setShootSpecific(false, true, false);
+                        shooter.shootNear();
+                        break;
+                    case 2:
+                        shooter.setShootSpecific(false, false, true);
+                        shooter.shootNear();
+                        break;
+                    default:
+                        shooter.shootColorNear(pattern[currentIndex]);
+                }
+                shooter.lastFired = -1;
+                shooter.secLastFir = -2;
+            }else{
+                shooter.shootColorNear(pattern[currentIndex]);
+            }
         }
         if(currentIndex == 2) currentIndex = 0;
         else currentIndex++;
@@ -152,26 +217,24 @@ public abstract class AutoRoot extends LinearOpMode {
         // it means. . . .
         switch(oId){
             case 21:
+                selectedId = oId;
                 pattern[0] = Shooter.BallColor.GREEN;
                 pattern[1] = Shooter.BallColor.PURPLE;
                 pattern[2] = Shooter.BallColor.PURPLE;
                 break;
             case 22:
+                selectedId = oId;
                 pattern[0] = Shooter.BallColor.PURPLE;
                 pattern[1] = Shooter.BallColor.GREEN;
                 pattern[2] = Shooter.BallColor.PURPLE;
                 break;
             case 23:
+                selectedId = oId;
                 pattern[0] = Shooter.BallColor.PURPLE;
                 pattern[1] = Shooter.BallColor.PURPLE;
                 pattern[2] = Shooter.BallColor.GREEN;
                 break;
             default:
-                // its not from the obselisk...
-                // just do 21
-                pattern[0] = Shooter.BallColor.GREEN;
-                pattern[1] = Shooter.BallColor.PURPLE;
-                pattern[2] = Shooter.BallColor.PURPLE;
                 break;
         }
     }

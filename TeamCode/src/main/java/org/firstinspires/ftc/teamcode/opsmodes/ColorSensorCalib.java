@@ -50,8 +50,8 @@ public class ColorSensorCalib extends LinearOpMode {
     }
 
     private String whatColor(NormalizedRGBA color){
-        if(color.green > 0.060){
-            if(color.blue > 0.060 && color.blue > color.green){
+        if(color.green > 0.160){
+            if(color.blue > 0.160 && color.blue > color.green){
                 return "Purple";
             }
             return "Green";

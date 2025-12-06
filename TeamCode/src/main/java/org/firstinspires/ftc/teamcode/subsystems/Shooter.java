@@ -44,7 +44,7 @@ public class Shooter implements Runnable{
     private static final double R_KICKER_WAIT = 0.705;
     private static final double R_KICKER_SHOOT = 0.5305;
 
-    private static final float COLOR_GAIN = 7.5f;
+    private static final float COLOR_GAIN = 30.5f;
 
     private boolean leftKickerShooting = false;
     private boolean midKickerShooting = false;
@@ -57,8 +57,8 @@ public class Shooter implements Runnable{
     private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
-    private static final double SPINNER_SPEED_NEAR = -1450;
-    private static final double SPINNER_SPEED_FAR = -1545;
+    private static final double SPINNER_SPEED_NEAR = -1360;
+    private static final double SPINNER_SPEED_FAR = -1460;
 
     private final DcMotorEx shooterLeft;
     private final DcMotorEx shooterRight;
@@ -73,6 +73,12 @@ public class Shooter implements Runnable{
 
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
+
+    public boolean readColorsOnce = false;
+
+    public int lastFired = -1, secLastFir = -2;
+
+    public BallColor loadedColors[] = new BallColor[3];
 
     public Shooter(HardwareMap hardwareMap) {
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
@@ -89,6 +95,7 @@ public class Shooter implements Runnable{
         midColor.setGain(COLOR_GAIN);
         rightColor.setGain(COLOR_GAIN);
 
+        readColors();
         kickersWait();
     }
 
@@ -171,6 +178,7 @@ public class Shooter implements Runnable{
 
     public void leftKickerShoot() {
         if(shouldLShoot) {
+            lastFired = 0;
             leftKicker.setPosition(L_KICKER_SHOOT);
             leftKickerShooting = true;
         }
@@ -178,6 +186,7 @@ public class Shooter implements Runnable{
 
     public void midKickerShoot() {
         if(shouldMShoot) {
+            lastFired = 1;
             midKicker.setPosition(M_KICKER_SHOOT);
             midKickerShooting = true;
         }
@@ -185,6 +194,7 @@ public class Shooter implements Runnable{
 
     public void rightKickerShoot() {
         if(shouldRShoot) {
+            lastFired = 2;
             rightKicker.setPosition(R_KICKER_SHOOT);
             rightKickerShooting = true;
         }
@@ -249,16 +259,49 @@ public class Shooter implements Runnable{
     public boolean shootColor(BallColor color, double speed){
         // if one replaced the "else if" with "if"'s
         // multiple balls of the same color could be fired
-        if(whatColor(getLeftColor()) == color)
-            shouldLShoot = true;
-        else if(whatColor(getRightColor()) == color)
-            shouldRShoot = true;
-        else if(whatColor(getMidColor()) == color)
-            shouldMShoot = true;
+        int tmp = lastFired;
+        if(!readColorsOnce) {
+            if (whatColor(getLeftColor()) == color) {
+                shouldLShoot = true;
+                lastFired = 0;
+            }
+            else if (whatColor(getRightColor()) == color) {
+                shouldRShoot = true;
+                lastFired = 2;
+            }
+            else if (whatColor(getMidColor()) == color) {
+                shouldMShoot = true;
+                lastFired = 1;
+            }
+        }else{
+            if (loadedColors[0] == color) {
+                shouldLShoot = true;
+                lastFired = 0;
+            }
+            else if (loadedColors[2] == color) {
+                shouldRShoot = true;
+                lastFired = 2;
+            }
+            else if (loadedColors[1] == color) {
+                shouldMShoot = true;
+                lastFired = 1;
+            }
+        }
         setState(ShooterState.WAITING_FOR_SPIN_UP);
         shooterLeft.setVelocity(speed);
         shooterRight.setVelocity(-speed);
+
+        if(shouldLShoot || shouldRShoot || shouldMShoot){
+            secLastFir = tmp;
+        }
+
         return shouldLShoot || shouldRShoot || shouldMShoot;
+    }
+
+    public void readColors(){
+        loadedColors[0] = whatColor(getLeftColor());
+        loadedColors[1] = whatColor(getMidColor());
+        loadedColors[2] = whatColor(getRightColor());
     }
 
     public void stopShooterThread(){
@@ -272,8 +315,8 @@ public class Shooter implements Runnable{
 
     // Color sensor reading
     public static BallColor whatColor(NormalizedRGBA color){
-        if(color.green > 0.060){
-            if(color.blue > 0.060 && color.blue > color.green){
+        if(color.green > 0.100){
+            if(color.blue > 0.100 && color.blue > color.green){
                 return BallColor.PURPLE;
             }
             return BallColor.GREEN;
