@@ -1,10 +1,7 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
-import android.graphics.Point;
-
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Trajectory;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -31,8 +28,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private String readOrStatic = "NUN";
 
-    private Shooter.BallColor pattern[] = new Shooter.BallColor[3];
-    private int currentIndex = 0, selectedId = -1;
+    private Pattern pattern;
+    private int currentIndex = 0;
 
     public void run(){
         while(!isStopRequested()){
@@ -52,29 +49,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shooter.readColors();
 
-
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .strafeTo(new Vector2d(-55, 0))
                 .turn(ang(50));
         runTrajectory(traj);
 
-        for(int i = 21; i <= 23; i++){
-            if(tBrain.getTagID(i) != null){
-                generatePattern(i);
-            }
-            sleep(250);
-        }
-
-        if(pattern.length < 1){
-            readOrStatic = "STATIC";
-            // its not from the obselisk...
-            // just do 21
-            pattern[0] = Shooter.BallColor.GREEN;
-            pattern[1] = Shooter.BallColor.PURPLE;
-            pattern[2] = Shooter.BallColor.PURPLE;
-        }else{
-            readOrStatic = "READ";
-        }
+        pattern = readObelisk();
 
         intake.go();
 
@@ -116,6 +96,16 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shooter.stopShooterThread();
     }
 
+    private Pattern readObelisk() {
+        for(int i = 21; i <= 23; i++){
+            if(tBrain.getTagID(i) != null){
+                return Pattern.fromNum(i);
+            }
+            sleep(250);
+        }
+        return Pattern.fromNum(-1);
+    }
+
     // Litearlly becuase im lazy
     double ang(double a){
         return Math.toRadians(a);
@@ -144,8 +134,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void updateTele(){
         // Output pattern
-        if(pattern[0] != null)
-            telemetry.addData("Pattern", "%d: %s %s %s", selectedId, pattern[0].toString(), pattern[1].toString(), pattern[2].toString());
+        if(pattern != null)
+            telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Static or Read", readOrStatic);
         telemetry.addData("Static Loaded",  "%s %s %s", shooter.loadedColors[0].toString(), shooter.loadedColors[1].toString(), shooter.loadedColors[2].toString());
         telemetry.addData("Live Loaded",  "%s %s %s", Shooter.whatColor(shooter.getLeftColor()).toString(), Shooter.whatColor(shooter.getMidColor()).toString(), Shooter.whatColor(shooter.getRightColor()).toString());
@@ -175,7 +165,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void shootNext(){
-        if(!shooter.shootColorNear(pattern[currentIndex])){
+        if(!shooter.shootColorNear(pattern.getColorAtIndex(currentIndex))){
             if(shooter.secLastFir != -1) {
                 int val = 3 - (shooter.lastFired + shooter.secLastFir);
                 switch (val) {
@@ -192,12 +182,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                         shooter.shootNear();
                         break;
                     default:
-                        shooter.shootColorNear(pattern[currentIndex]);
+                        shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
                 }
                 shooter.lastFired = -1;
                 shooter.secLastFir = -2;
             }else{
-                shooter.shootColorNear(pattern[currentIndex]);
+                shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
             }
         }
         if(currentIndex == 2) currentIndex = 0;
@@ -212,32 +202,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         }
     }
 
-    private void generatePattern(int oId){
-        // take the obselisk id and figure out what
-        // it means. . . .
-        switch(oId){
-            case 21:
-                selectedId = oId;
-                pattern[0] = Shooter.BallColor.GREEN;
-                pattern[1] = Shooter.BallColor.PURPLE;
-                pattern[2] = Shooter.BallColor.PURPLE;
-                break;
-            case 22:
-                selectedId = oId;
-                pattern[0] = Shooter.BallColor.PURPLE;
-                pattern[1] = Shooter.BallColor.GREEN;
-                pattern[2] = Shooter.BallColor.PURPLE;
-                break;
-            case 23:
-                selectedId = oId;
-                pattern[0] = Shooter.BallColor.PURPLE;
-                pattern[1] = Shooter.BallColor.PURPLE;
-                pattern[2] = Shooter.BallColor.GREEN;
-                break;
-            default:
-                break;
-        }
-    }
 
 
     protected abstract int getTargetTag();
