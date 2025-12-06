@@ -100,13 +100,19 @@ public class Shooter implements Runnable{
     }
 
     public void shootDistance(double distance) {
-        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        if(state != ShooterState.SPIN_UP_HOLD)
+            setState(ShooterState.WAITING_FOR_SPIN_UP);
+        else
+            setState(ShooterState.SHOOTING);
         shooterLeft.setVelocity(distance * 10);
         shooterRight.setVelocity(distance * -10);
     }
 
     public void shootFar() {
-        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        if(state != ShooterState.SPIN_UP_HOLD)
+            setState(ShooterState.WAITING_FOR_SPIN_UP);
+        else
+            setState(ShooterState.SHOOTING);
         shooterLeft.setVelocity(SPINNER_SPEED_FAR);
         shooterRight.setVelocity(-SPINNER_SPEED_FAR);
     }
@@ -118,7 +124,10 @@ public class Shooter implements Runnable{
     }
 
     public void shootNear() {
-        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        if(state != ShooterState.SPIN_UP_HOLD)
+            setState(ShooterState.WAITING_FOR_SPIN_UP);
+        else
+            setState(ShooterState.SHOOTING);
         shooterLeft.setVelocity(SPINNER_SPEED_NEAR);
         shooterRight.setVelocity(-SPINNER_SPEED_NEAR);
     }
@@ -275,7 +284,10 @@ public class Shooter implements Runnable{
                 lastFired = 1;
             }
         }
-        setState(ShooterState.WAITING_FOR_SPIN_UP);
+        if(state != ShooterState.SPIN_UP_HOLD)
+            setState(ShooterState.WAITING_FOR_SPIN_UP);
+        else
+            setState(ShooterState.SHOOTING);
         shooterLeft.setVelocity(speed);
         shooterRight.setVelocity(-speed);
 
