@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class Shooter implements Runnable{
 
-    private boolean stop = false;
+    private volatile boolean stop = false;
 
     @Override
     public void run() {
@@ -45,10 +45,6 @@ public class Shooter implements Runnable{
     private static final double R_KICKER_SHOOT = 0.5305;
 
     private static final float COLOR_GAIN = 30.5f;
-
-    private boolean leftKickerShooting = false;
-    private boolean midKickerShooting = false;
-    private boolean rightKickerShooting = false;
 
     private boolean shouldLShoot = false;
     private boolean shouldRShoot = false;
@@ -164,19 +160,19 @@ public class Shooter implements Runnable{
         stateStartTime = System.currentTimeMillis();
     }
 
-    public void kickersShoot() {
+    private void kickersShoot() {
         leftKickerShoot();
         midKickerShoot();
         rightKickerShoot();
     }
 
-    public void kickersWait() {
+    private void kickersWait() {
         leftKickerWait();
         midKickerWait();
         rightKickerWait();
     }
 
-    public void leftKickerShoot() {
+    private void leftKickerShoot() {
         if(shouldLShoot) {
             lastFired = 0;
             leftKicker.setPosition(L_KICKER_SHOOT);
@@ -184,7 +180,7 @@ public class Shooter implements Runnable{
         }
     }
 
-    public void midKickerShoot() {
+    private void midKickerShoot() {
         if(shouldMShoot) {
             lastFired = 1;
             midKicker.setPosition(M_KICKER_SHOOT);
@@ -192,7 +188,7 @@ public class Shooter implements Runnable{
         }
     }
 
-    public void rightKickerShoot() {
+    private void rightKickerShoot() {
         if(shouldRShoot) {
             lastFired = 2;
             rightKicker.setPosition(R_KICKER_SHOOT);
@@ -200,34 +196,19 @@ public class Shooter implements Runnable{
         }
     }
 
-    public void leftKickerWait() {
+    private void leftKickerWait() {
         leftKicker.setPosition(L_KICKER_WAIT);
         leftKickerShooting = false;
     }
 
-    public void midKickerWait() {
+    private void midKickerWait() {
         midKicker.setPosition(M_KICKER_WAIT);
         midKickerShooting = false;
     }
 
-    public void rightKickerWait() {
+    private void rightKickerWait() {
         rightKicker.setPosition(R_KICKER_WAIT);
         rightKickerShooting = false;
-    }
-
-    public void toggleLeftKicker(){
-        if(leftKickerShooting) leftKickerWait();
-        else leftKickerShoot();
-    }
-
-    public void toggleMidKicker() {
-        if(midKickerShooting) midKickerWait();
-        else midKickerShoot();
-    }
-
-    public void toggleRightKicker() {
-        if(rightKickerShooting) rightKickerWait();
-        else rightKickerShoot();
     }
 
     public void setToShootAll(){
@@ -236,7 +217,7 @@ public class Shooter implements Runnable{
         shouldRShoot = true;
     }
 
-    public void resetWhatToShoot(){
+    private void resetWhatToShoot(){
         shouldMShoot = false;
         shouldRShoot = false;
         shouldLShoot = false;
@@ -256,7 +237,7 @@ public class Shooter implements Runnable{
         return shootColor(color, SPINNER_SPEED_NEAR);
     }
 
-    public boolean shootColor(BallColor color, double speed){
+    private boolean shootColor(BallColor color, double speed){
         // if one replaced the "else if" with "if"'s
         // multiple balls of the same color could be fired
         int tmp = lastFired;
