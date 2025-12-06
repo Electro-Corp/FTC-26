@@ -96,7 +96,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean isYPressed = false;
     private double incAmount = 0.1;
     private void aimAssist(){
-        if(gamepad2.y) {
+        if(gamepad1.y) {
             if (!isYPressed) {
                 AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
@@ -196,36 +196,57 @@ public abstract class MainTeleOp extends LinearOpMode {
             intake.stop();
         }
 
+        boolean fast = gamepad2.b;
         shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
+        if(gamepad2.right_bumper && !shooting) { //shoot far
             shooter.setToShootAll();
-            shooter.shootFar();
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
+        }
+        if(gamepad2.right_trigger > .2){
+            shooter.spinUp(fast);
         }
         // Uncomment later
         if(gamepad2.x){
-           shooter.shootColorFar(Shooter.BallColor.PURPLE);
+            if(fast)
+                shooter.shootColorFar(Shooter.BallColor.PURPLE);
+            else
+                shooter.shootColorNear(Shooter.BallColor.PURPLE);
         }
         if(gamepad2.a){
-            shooter.shootColorFar(Shooter.BallColor.GREEN);
+            if(fast)
+                shooter.shootColorFar(Shooter.BallColor.GREEN);
+            else
+                shooter.shootColorNear(Shooter.BallColor.GREEN);
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
             // Left
             shooter.setShootSpecific(true, false, false);
-            shooter.shootFar();
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
         }
         if(gamepad2.dpad_up){
             // Center
             shooter.setShootSpecific(false, true, false);
-            shooter.shootFar();
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
         }
         if(gamepad2.dpad_right){
             // Right
             shooter.setShootSpecific(false, false, true);
-            shooter.shootFar();
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
         }
-        if(gamepad2.right_bumper){
+        if(gamepad2.y){
             shooter.stopShoot();
         }
         shooter.update();

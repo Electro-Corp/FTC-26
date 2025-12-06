@@ -17,7 +17,7 @@ public class Shooter implements Runnable{
     }
 
     public enum ShooterState {
-        STOPPED, WAITING_FOR_SPIN_UP, SHOOTING
+        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING
     }
 
     public enum BallColor{
@@ -54,7 +54,7 @@ public class Shooter implements Runnable{
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
     private static final double SPINNER_SPEED_NEAR = -1360;
-    private static final double SPINNER_SPEED_FAR = -1460;
+    private static final double SPINNER_SPEED_FAR = -7000;
 
     private final DcMotorEx shooterLeft;
     private final DcMotorEx shooterRight;
@@ -123,6 +123,17 @@ public class Shooter implements Runnable{
         shooterRight.setVelocity(-SPINNER_SPEED_NEAR);
     }
 
+    public void spinUp(boolean fast){
+        setState(ShooterState.SPIN_UP_HOLD);
+        if(fast) {
+            shooterLeft.setVelocity(SPINNER_SPEED_FAR);
+            shooterRight.setVelocity(-SPINNER_SPEED_FAR);
+        }else{
+            shooterLeft.setVelocity(SPINNER_SPEED_NEAR);
+            shooterRight.setVelocity(-SPINNER_SPEED_NEAR);
+        }
+    }
+
 
     public void update() {
         long elapsed = System.currentTimeMillis() - stateStartTime;
@@ -132,6 +143,8 @@ public class Shooter implements Runnable{
                     kickersWait();
                     setState(ShooterState.SHOOTING);
                 }
+                break;
+            case SPIN_UP_HOLD:
                 break;
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
@@ -155,7 +168,7 @@ public class Shooter implements Runnable{
         return state != ShooterState.STOPPED;
     }
 
-    private void setState(ShooterState newState) {
+    public void setState(ShooterState newState) {
         state = newState;
         stateStartTime = System.currentTimeMillis();
     }
@@ -176,7 +189,6 @@ public class Shooter implements Runnable{
         if(shouldLShoot) {
             lastFired = 0;
             leftKicker.setPosition(L_KICKER_SHOOT);
-            leftKickerShooting = true;
         }
     }
 
@@ -184,7 +196,6 @@ public class Shooter implements Runnable{
         if(shouldMShoot) {
             lastFired = 1;
             midKicker.setPosition(M_KICKER_SHOOT);
-            midKickerShooting = true;
         }
     }
 
@@ -192,23 +203,19 @@ public class Shooter implements Runnable{
         if(shouldRShoot) {
             lastFired = 2;
             rightKicker.setPosition(R_KICKER_SHOOT);
-            rightKickerShooting = true;
         }
     }
 
     private void leftKickerWait() {
         leftKicker.setPosition(L_KICKER_WAIT);
-        leftKickerShooting = false;
     }
 
     private void midKickerWait() {
         midKicker.setPosition(M_KICKER_WAIT);
-        midKickerShooting = false;
     }
 
     private void rightKickerWait() {
         rightKicker.setPosition(R_KICKER_WAIT);
-        rightKickerShooting = false;
     }
 
     public void setToShootAll(){
