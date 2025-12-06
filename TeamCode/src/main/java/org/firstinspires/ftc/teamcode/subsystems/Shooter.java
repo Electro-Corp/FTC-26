@@ -176,7 +176,6 @@ public class Shooter implements Runnable{
         if(shouldLShoot) {
             lastFired = 0;
             leftKicker.setPosition(L_KICKER_SHOOT);
-            leftKickerShooting = true;
         }
     }
 
@@ -184,7 +183,6 @@ public class Shooter implements Runnable{
         if(shouldMShoot) {
             lastFired = 1;
             midKicker.setPosition(M_KICKER_SHOOT);
-            midKickerShooting = true;
         }
     }
 
@@ -192,23 +190,19 @@ public class Shooter implements Runnable{
         if(shouldRShoot) {
             lastFired = 2;
             rightKicker.setPosition(R_KICKER_SHOOT);
-            rightKickerShooting = true;
         }
     }
 
     private void leftKickerWait() {
         leftKicker.setPosition(L_KICKER_WAIT);
-        leftKickerShooting = false;
     }
 
     private void midKickerWait() {
         midKicker.setPosition(M_KICKER_WAIT);
-        midKickerShooting = false;
     }
 
     private void rightKickerWait() {
         rightKicker.setPosition(R_KICKER_WAIT);
-        rightKickerShooting = false;
     }
 
     public void setToShootAll(){
