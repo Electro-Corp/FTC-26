@@ -65,7 +65,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
-        shooter = new Shooter(hardwareMap, colorSensors);
+        shooter = new Shooter(hardwareMap, colorSensors, false);
 
     }
 

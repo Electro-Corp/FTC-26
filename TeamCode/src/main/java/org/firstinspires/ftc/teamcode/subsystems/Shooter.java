@@ -52,15 +52,15 @@ public class Shooter implements Runnable{
 
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
-
-    public boolean readColorsOnce = false;
+    private final boolean readColorsOnce; //AUTO only reads the color once
 
     public int lastFired = -1, secLastFir = -2;
 
-    private BallColor[] loadedColors;
+    private final BallColor[] loadedColors;
 
-    public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors) {
+    public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors, boolean readColorsOnce) {
         this.colorSensors = colorSensors;
+        this.readColorsOnce = readColorsOnce;
         this.shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         this.shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
