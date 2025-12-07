@@ -19,44 +19,49 @@ public class Shooter implements Runnable{
 
     @Override
     public void run() {
-        while(!stop) update();
+        while (!stop) {
+            update();
+            try {
+                Thread.sleep(5); // small delay so we don't eat up 100%
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     public enum ShooterState {
         STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING
     }
 
+    //Constants
     private static final double L_KICKER_WAIT = 0.8;
     private static final double L_KICKER_SHOOT = 0.574;
     private static final double M_KICKER_WAIT = 0.6145;
     private static final double M_KICKER_SHOOT = 0.4175;
     private static final double R_KICKER_WAIT = 0.705;
     private static final double R_KICKER_SHOOT = 0.5305;
-
-    private boolean shouldLShoot = false;
-    private boolean shouldRShoot = false;
-    private boolean shouldMShoot = false;
-
     private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 1000;
     private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
     private static final double SPINNER_SPEED_NEAR = -1360;
     private static final double SPINNER_SPEED_FAR = -7000;
 
+    //Final vars
     private final ColorSensors colorSensors;
     private final DcMotorEx shooterLeft;
     private final DcMotorEx shooterRight;
     private final Servo leftKicker;
     private final Servo midKicker;
     private final Servo rightKicker;
-
-    private ShooterState state = ShooterState.STOPPED;
-    private long stateStartTime = 0;
+    private final BallColor[] loadedColors;
     private final boolean readColorsOnce; //AUTO only reads the color once
 
-    public int lastFired = -1, secLastFir = -2;
-
-    private final BallColor[] loadedColors;
+    //Instance vars
+    private boolean shouldLShoot = false;
+    private boolean shouldRShoot = false;
+    private boolean shouldMShoot = false;
+    private ShooterState state = ShooterState.STOPPED;
+    private long stateStartTime = 0;
 
     public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors, boolean readColorsOnce) {
         this.colorSensors = colorSensors;
@@ -71,11 +76,15 @@ public class Shooter implements Runnable{
     }
 
     public double getVelocity(){
-        return (shooterLeft.getVelocity() + Math.abs(shooterRight.getVelocity())) / 2;
+        return (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2.0;
     }
 
     public BallColor[] getLoadedColors() {
         return loadedColors;
+    }
+
+    private void resetShootFlags() {
+        shouldLShoot = shouldMShoot = shouldRShoot = false;
     }
 
     public void shootDistance(double distance) {
@@ -140,7 +149,6 @@ public class Shooter implements Runnable{
                     shooterLeft.setVelocity(0);
                     shooterRight.setVelocity(0);
                     setState(ShooterState.STOPPED);
-                    resetWhatToShoot();
                 }
                 break;
             default:
@@ -175,21 +183,18 @@ public class Shooter implements Runnable{
 
     private void leftKickerShoot() {
         if(shouldLShoot) {
-            lastFired = 0;
             leftKicker.setPosition(L_KICKER_SHOOT);
         }
     }
 
     private void midKickerShoot() {
         if(shouldMShoot) {
-            lastFired = 1;
             midKicker.setPosition(M_KICKER_SHOOT);
         }
     }
 
     private void rightKickerShoot() {
         if(shouldRShoot) {
-            lastFired = 2;
             rightKicker.setPosition(R_KICKER_SHOOT);
         }
     }
@@ -212,12 +217,6 @@ public class Shooter implements Runnable{
         shouldRShoot = true;
     }
 
-    private void resetWhatToShoot(){
-        shouldMShoot = false;
-        shouldRShoot = false;
-        shouldLShoot = false;
-    }
-
     public void setShootSpecific(boolean a, boolean b, boolean c){
         shouldLShoot = a;
         shouldMShoot = b;
@@ -232,46 +231,36 @@ public class Shooter implements Runnable{
         return shootColor(color, SPINNER_SPEED_NEAR);
     }
 
-    private boolean shootColor(BallColor color, double speed){
-        // if one replaced the "else if" with "if"'s
-        // multiple balls of the same color could be fired
-        int tmp = lastFired;
-        if (!readColorsOnce) {
-            if (colorSensors.readLeftColor() == color) {
-                shouldLShoot = true;
-                lastFired = 0;
-            } else if (colorSensors.readRightColor() == color) {
-                shouldRShoot = true;
-                lastFired = 2;
-            } else if (colorSensors.readMidColor() == color) {
-                shouldMShoot = true;
-                lastFired = 1;
-            }
-        } else {
-            if (loadedColors[0] == color) {
-                shouldLShoot = true;
-                lastFired = 0;
-            } else if (loadedColors[2] == color) {
-                shouldRShoot = true;
-                lastFired = 2;
-            } else if (loadedColors[1] == color) {
-                shouldMShoot = true;
-                lastFired = 1;
+    private boolean shootColor(BallColor color, double speed) {
+        // Choose live readings or static loaded colors
+        BallColor[] colors = readColorsOnce ? loadedColors : new BallColor[]{
+                colorSensors.readLeftColor(),
+                colorSensors.readMidColor(),
+                colorSensors.readRightColor()
+        };
+
+        // Reset shooting flags
+        resetShootFlags();
+
+        // Find first matching index
+        for (int i = 0; i < 3; i++) {
+            if (colors[i] == color) {
+                if (i == 0) shouldLShoot = true;
+                if (i == 1) shouldMShoot = true;
+                if (i == 2) shouldRShoot = true;
+                break; // important: only shoot one ball
             }
         }
 
-        if(state != ShooterState.SPIN_UP_HOLD)
-            setState(ShooterState.WAITING_FOR_SPIN_UP);
-        else
-            setState(ShooterState.SHOOTING);
+        // Change shooter state based on spin up
+        setState(state != ShooterState.SPIN_UP_HOLD
+                ? ShooterState.WAITING_FOR_SPIN_UP
+                : ShooterState.SHOOTING);
+
         shooterLeft.setVelocity(speed);
         shooterRight.setVelocity(-speed);
 
-        if(shouldLShoot || shouldRShoot || shouldMShoot){
-            secLastFir = tmp;
-        }
-
-        return shouldLShoot || shouldRShoot || shouldMShoot;
+        return shouldLShoot || shouldMShoot || shouldRShoot;
     }
 
     public void stopShooterThread(){

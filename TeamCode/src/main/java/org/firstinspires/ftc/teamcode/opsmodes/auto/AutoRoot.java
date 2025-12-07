@@ -33,6 +33,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private Pattern pattern;
     private int currentIndex = 0;
+    private final boolean[] fired = new boolean[3];
 
     public void run(){
         while(!isStopRequested()){
@@ -126,6 +127,26 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shooterThread.start();
     }
 
+    // Find an unfired ball that matches the requested color
+    private int findIndexForColor(BallColor color) {
+        for (int i = 0; i < 3; i++) {
+            if (!fired[i] && shooter.getLoadedColors()[i] == color) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Fallback: just pick any remaining unfired ball
+    private int findAnyUnfiredIndex() {
+        for (int i = 0; i < 3; i++) {
+            if (!fired[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     private void waitForShooter(){
         // Block until shooter is done shooting or force stopped
         while(shooter.getState() != Shooter.ShooterState.STOPPED && !isStopRequested()){
@@ -166,35 +187,48 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         Actions.runBlocking(currentAction);
     }
 
-    private void shootNext(){
-        if(!shooter.shootColorNear(pattern.getColorAtIndex(currentIndex))){
-            if(shooter.secLastFir != -1) {
-                int val = 3 - (shooter.lastFired + shooter.secLastFir);
-                switch (val) {
-                    case 0:
-                        shooter.setShootSpecific(true, false, false);
-                        shooter.shootNear();
-                        break;
-                    case 1:
-                        shooter.setShootSpecific(false, true, false);
-                        shooter.shootNear();
-                        break;
-                    case 2:
-                        shooter.setShootSpecific(false, false, true);
-                        shooter.shootNear();
-                        break;
-                    default:
-                        shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
-                }
-                shooter.lastFired = -1;
-                shooter.secLastFir = -2;
-            }else{
-                shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
-            }
+    private void shootNext() {
+        BallColor targetColor = pattern.getColorAtIndex(currentIndex);
+
+        // First try to find a ball that matches the pattern color
+        int indexToShoot = findIndexForColor(targetColor);
+
+        // If no matching color is left, just shoot any remaining ball
+        if (indexToShoot == -1) {
+            indexToShoot = findAnyUnfiredIndex();
         }
-        if(currentIndex == 2) currentIndex = 0;
-        else currentIndex++;
-        // Block until ball is fired
+
+        // If nothing left, we are done
+        if (indexToShoot == -1) {
+            return;
+        }
+
+        // Tell the shooter which position to fire
+        switch (indexToShoot) {
+            case 0:
+                shooter.setShootSpecific(true, false, false);
+                break;
+            case 1:
+                shooter.setShootSpecific(false, true, false);
+                break;
+            case 2:
+                shooter.setShootSpecific(false, false, true);
+                break;
+            default:
+                return;
+        }
+
+        shooter.shootNear();
+        fired[indexToShoot] = true;
+
+        // Advance to next pattern index
+        if (currentIndex == 2) {
+            currentIndex = 0;
+        } else {
+            currentIndex++;
+        }
+
+        // Block until ball is actually shot
         waitForShooter();
     }
 
