@@ -3,15 +3,15 @@ package org.firstinspires.ftc.teamcode.opsmodes.auto;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 
 public enum Pattern {
-    PPG(21, new BallColor.BallColor[]{BallColor.BallColor.PURPLE, BallColor.BallColor.PURPLE, BallColor.BallColor.GREEN}),
-    PGP(22, new BallColor.BallColor[]{BallColor.BallColor.PURPLE, BallColor.BallColor.GREEN, BallColor.BallColor.PURPLE}),
-    GPP(23, new BallColor.BallColor[]{BallColor.BallColor.GREEN, BallColor.BallColor.PURPLE, BallColor.BallColor.PURPLE});
+    PPG(21, new BallColor[]{BallColor.PURPLE, BallColor.PURPLE, BallColor.GREEN}),
+    PGP(22, new BallColor[]{BallColor.PURPLE, BallColor.GREEN, BallColor.PURPLE}),
+    GPP(23, new BallColor[]{BallColor.GREEN, BallColor.PURPLE, BallColor.PURPLE});
 
     private int num;
-    private BallColor.BallColor[] colors;
+    private BallColor[] colors;
 
 
-    Pattern(int num, BallColor.BallColor[] colors) {
+    Pattern(int num, BallColor[] colors) {
         this.num = num;
         this.colors = colors;
     }
@@ -20,11 +20,11 @@ public enum Pattern {
         return num;
     }
 
-    public BallColor.BallColor[] getColors() {
+    public BallColor[] getColors() {
         return colors;
     }
 
-    public BallColor.BallColor getColorAtIndex(int i) {
+    public BallColor getColorAtIndex(int i) {
         return colors[num];
     }
 
