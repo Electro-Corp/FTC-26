@@ -7,6 +7,14 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
+/**
+ * Shooter represents all the hardware necessary to shoot balls out of the robot.
+ * The robot has a place to hold up to 3 balls (fed from the intake). There is a spinning
+ * wheel that once engaged will launch the ball into the air. The ball becomes engaged by
+ * three servos (one for each ball), which we call kickers. To shoot a ball, we must
+ * wait for the spinwheel to get up to the right speed before engaging the kickers.
+ * We use a state machine to track the state of the different hardware.
+ */
 public class Shooter implements Runnable{
 
     private volatile boolean stop = false;
@@ -18,23 +26,6 @@ public class Shooter implements Runnable{
 
     public enum ShooterState {
         STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING
-    }
-
-    public enum BallColor{
-        PURPLE,
-        GREEN,
-        UNKNOWN;
-
-        public String toString(){
-            switch(this){
-                case PURPLE:
-                    return "PURPLE";
-                case GREEN:
-                    return "GREEN";
-                default:
-                    return "NONE";
-            }
-        }
     }
 
     private static final double L_KICKER_WAIT = 0.8;

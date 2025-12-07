@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -211,15 +212,15 @@ public abstract class MainTeleOp extends LinearOpMode {
         // Uncomment later
         if(gamepad2.x){
             if(fast)
-                shooter.shootColorFar(Shooter.BallColor.PURPLE);
+                shooter.shootColorFar(BallColor.PURPLE);
             else
-                shooter.shootColorNear(Shooter.BallColor.PURPLE);
+                shooter.shootColorNear(BallColor.PURPLE);
         }
         if(gamepad2.a){
             if(fast)
-                shooter.shootColorFar(Shooter.BallColor.GREEN);
+                shooter.shootColorFar(BallColor.GREEN);
             else
-                shooter.shootColorNear(Shooter.BallColor.GREEN);
+                shooter.shootColorNear(BallColor.GREEN);
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
