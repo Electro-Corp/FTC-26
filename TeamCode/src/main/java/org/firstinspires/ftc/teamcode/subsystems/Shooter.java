@@ -96,7 +96,7 @@ public class Shooter implements Runnable{
     }
 
     public double getVelocity(){
-        return (shooterLeft.getVelocity() + Math.abs(shooterRight.getVelocity())) / 2;
+        return (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2;
     }
 
     public void shootDistance(double distance) {
@@ -284,12 +284,14 @@ public class Shooter implements Runnable{
                 lastFired = 1;
             }
         }
-        if(state != ShooterState.SPIN_UP_HOLD)
+        if(state != ShooterState.SPIN_UP_HOLD) {
+            shooterLeft.setVelocity(speed);
+            shooterRight.setVelocity(-speed);
             setState(ShooterState.WAITING_FOR_SPIN_UP);
+        }
         else
             setState(ShooterState.SHOOTING);
-        shooterLeft.setVelocity(speed);
-        shooterRight.setVelocity(-speed);
+
 
         if(shouldLShoot || shouldRShoot || shouldMShoot){
             secLastFir = tmp;
