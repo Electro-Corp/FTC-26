@@ -1,17 +1,17 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
-import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 
 public enum Pattern {
-    PPG(21, new Shooter.BallColor[]{Shooter.BallColor.PURPLE, Shooter.BallColor.PURPLE, Shooter.BallColor.GREEN}),
-    PGP(22, new Shooter.BallColor[]{Shooter.BallColor.PURPLE, Shooter.BallColor.GREEN, Shooter.BallColor.PURPLE}),
-    GPP(23, new Shooter.BallColor[]{Shooter.BallColor.GREEN, Shooter.BallColor.PURPLE, Shooter.BallColor.PURPLE});
+    PPG(21, new BallColor[]{BallColor.PURPLE, BallColor.PURPLE, BallColor.GREEN}),
+    PGP(22, new BallColor[]{BallColor.PURPLE, BallColor.GREEN, BallColor.PURPLE}),
+    GPP(23, new BallColor[]{BallColor.GREEN, BallColor.PURPLE, BallColor.PURPLE});
 
     private int num;
-    private Shooter.BallColor[] colors;
+    private BallColor[] colors;
 
 
-    Pattern(int num, Shooter.BallColor[] colors) {
+    Pattern(int num, BallColor[] colors) {
         this.num = num;
         this.colors = colors;
     }
@@ -20,11 +20,11 @@ public enum Pattern {
         return num;
     }
 
-    public Shooter.BallColor[] getColors() {
+    public BallColor[] getColors() {
         return colors;
     }
 
-    public Shooter.BallColor getColorAtIndex(int i) {
+    public BallColor getColorAtIndex(int i) {
         return colors[num];
     }
 

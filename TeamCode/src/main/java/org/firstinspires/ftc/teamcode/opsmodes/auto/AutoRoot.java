@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
@@ -23,6 +25,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private Intake intake;
     private Shooter shooter;
+    private ColorSensors colorSensors;
 
     private Thread shooterThread, thisTeleThread;
 
@@ -30,6 +33,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private Pattern pattern;
     private int currentIndex = 0;
+    private final boolean[] fired = new boolean[3];
 
     public void run(){
         while(!isStopRequested()){
@@ -46,8 +50,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
 
         waitForStart();
-
-        shooter.readColors();
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .strafeTo(new Vector2d(-55, 0))
@@ -116,13 +118,33 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
-        shooter = new Shooter(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors, true);
         shooterThread = new Thread(shooter);
 
         thisTeleThread = new Thread(this);
 
         shooterThread.start();
-        shooter.readColorsOnce = true;
+    }
+
+    // Find an unfired ball that matches the requested color
+    private int findIndexForColor(BallColor color) {
+        for (int i = 0; i < 3; i++) {
+            if (!fired[i] && shooter.getLoadedColors()[i] == color) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Fallback: just pick any remaining unfired ball
+    private int findAnyUnfiredIndex() {
+        for (int i = 0; i < 3; i++) {
+            if (!fired[i]) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void waitForShooter(){
@@ -134,11 +156,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void updateTele(){
         // Output pattern
+        BallColor[] loadedColors = shooter.getLoadedColors();
         if(pattern != null)
             telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Static or Read", readOrStatic);
-        telemetry.addData("Static Loaded",  "%s %s %s", shooter.loadedColors[0].toString(), shooter.loadedColors[1].toString(), shooter.loadedColors[2].toString());
-        telemetry.addData("Live Loaded",  "%s %s %s", Shooter.whatColor(shooter.getLeftColor()).toString(), Shooter.whatColor(shooter.getMidColor()).toString(), Shooter.whatColor(shooter.getRightColor()).toString());
+        telemetry.addData("Static Loaded",  "%s %s %s", loadedColors[0], loadedColors[1], loadedColors[2]);
+        telemetry.addData("Live Loaded",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
         telemetry.addData("Next fire index", currentIndex);
         telemetry.addData("Speed", shooter.getVelocity());
         telemetry.addData("State", shooter.getState());
@@ -164,35 +187,48 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         Actions.runBlocking(currentAction);
     }
 
-    private void shootNext(){
-        if(!shooter.shootColorNear(pattern.getColorAtIndex(currentIndex))){
-            if(shooter.secLastFir != -1) {
-                int val = 3 - (shooter.lastFired + shooter.secLastFir);
-                switch (val) {
-                    case 0:
-                        shooter.setShootSpecific(true, false, false);
-                        shooter.shootNear();
-                        break;
-                    case 1:
-                        shooter.setShootSpecific(false, true, false);
-                        shooter.shootNear();
-                        break;
-                    case 2:
-                        shooter.setShootSpecific(false, false, true);
-                        shooter.shootNear();
-                        break;
-                    default:
-                        shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
-                }
-                shooter.lastFired = -1;
-                shooter.secLastFir = -2;
-            }else{
-                shooter.shootColorNear(pattern.getColorAtIndex(currentIndex));
-            }
+    private void shootNext() {
+        BallColor targetColor = pattern.getColorAtIndex(currentIndex);
+
+        // First try to find a ball that matches the pattern color
+        int indexToShoot = findIndexForColor(targetColor);
+
+        // If no matching color is left, just shoot any remaining ball
+        if (indexToShoot == -1) {
+            indexToShoot = findAnyUnfiredIndex();
         }
-        if(currentIndex == 2) currentIndex = 0;
-        else currentIndex++;
-        // Block until ball is fired
+
+        // If nothing left, we are done
+        if (indexToShoot == -1) {
+            return;
+        }
+
+        // Tell the shooter which position to fire
+        switch (indexToShoot) {
+            case 0:
+                shooter.setShootSpecific(true, false, false);
+                break;
+            case 1:
+                shooter.setShootSpecific(false, true, false);
+                break;
+            case 2:
+                shooter.setShootSpecific(false, false, true);
+                break;
+            default:
+                return;
+        }
+
+        shooter.shootNear();
+        fired[indexToShoot] = true;
+
+        // Advance to next pattern index
+        if (currentIndex == 2) {
+            currentIndex = 0;
+        } else {
+            currentIndex++;
+        }
+
+        // Block until ball is actually shot
         waitForShooter();
     }
 
