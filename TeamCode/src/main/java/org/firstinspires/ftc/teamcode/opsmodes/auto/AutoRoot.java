@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
@@ -23,6 +25,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private Intake intake;
     private Shooter shooter;
+    private ColorSensors colorSensors;
 
     private Thread shooterThread, thisTeleThread;
 
@@ -46,8 +49,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
 
         waitForStart();
-
-        shooter.readColors();
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .strafeTo(new Vector2d(-55, 0))
@@ -116,7 +117,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
-        shooter = new Shooter(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors);
         shooterThread = new Thread(shooter);
 
         thisTeleThread = new Thread(this);
@@ -134,11 +136,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void updateTele(){
         // Output pattern
+        BallColor[] loadedColors = shooter.getLoadedColors();
         if(pattern != null)
             telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Static or Read", readOrStatic);
-        telemetry.addData("Static Loaded",  "%s %s %s", shooter.loadedColors[0].toString(), shooter.loadedColors[1].toString(), shooter.loadedColors[2].toString());
-        telemetry.addData("Live Loaded",  "%s %s %s", Shooter.whatColor(shooter.getLeftColor()).toString(), Shooter.whatColor(shooter.getMidColor()).toString(), Shooter.whatColor(shooter.getRightColor()).toString());
+        telemetry.addData("Static Loaded",  "%s %s %s", loadedColors[0], loadedColors[1], loadedColors[2]);
+        telemetry.addData("Live Loaded",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
         telemetry.addData("Next fire index", currentIndex);
         telemetry.addData("Speed", shooter.getVelocity());
         telemetry.addData("State", shooter.getState());

@@ -3,8 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 /**
@@ -35,8 +33,6 @@ public class Shooter implements Runnable{
     private static final double R_KICKER_WAIT = 0.705;
     private static final double R_KICKER_SHOOT = 0.5305;
 
-    private static final float COLOR_GAIN = 30.5f;
-
     private boolean shouldLShoot = false;
     private boolean shouldRShoot = false;
     private boolean shouldMShoot = false;
@@ -47,16 +43,12 @@ public class Shooter implements Runnable{
     private static final double SPINNER_SPEED_NEAR = -1360;
     private static final double SPINNER_SPEED_FAR = -7000;
 
+    private final ColorSensors colorSensors;
     private final DcMotorEx shooterLeft;
     private final DcMotorEx shooterRight;
     private final Servo leftKicker;
     private final Servo midKicker;
     private final Servo rightKicker;
-
-    // Color Sensors
-    private NormalizedColorSensor leftColor;
-    private NormalizedColorSensor midColor;
-    private NormalizedColorSensor rightColor;
 
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
@@ -65,29 +57,25 @@ public class Shooter implements Runnable{
 
     public int lastFired = -1, secLastFir = -2;
 
-    public BallColor loadedColors[] = new BallColor[3];
+    private BallColor[] loadedColors;
 
-    public Shooter(HardwareMap hardwareMap) {
-        shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
-        shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
-        leftKicker = hardwareMap.get(Servo.class, "lKick");
-        midKicker = hardwareMap.get(Servo.class, "mKick");
-        rightKicker = hardwareMap.get(Servo.class,"rKick");
-
-        // Init color sensors
-        leftColor = hardwareMap.get(NormalizedColorSensor.class, "leftColor");
-        midColor = hardwareMap.get(NormalizedColorSensor.class, "midColor");
-        rightColor = hardwareMap.get(NormalizedColorSensor.class, "rightColor");
-        leftColor.setGain(COLOR_GAIN);
-        midColor.setGain(COLOR_GAIN);
-        rightColor.setGain(COLOR_GAIN);
-
-        readColors();
+    public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors) {
+        this.colorSensors = colorSensors;
+        this.shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
+        this.shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+        this.leftKicker = hardwareMap.get(Servo.class, "lKick");
+        this.midKicker = hardwareMap.get(Servo.class, "mKick");
+        this.rightKicker = hardwareMap.get(Servo.class,"rKick");
+        this.loadedColors = colorSensors.readAllColors();
         kickersWait();
     }
 
     public double getVelocity(){
         return (shooterLeft.getVelocity() + Math.abs(shooterRight.getVelocity())) / 2;
+    }
+
+    public BallColor[] getLoadedColors() {
+        return loadedColors;
     }
 
     public void shootDistance(double distance) {
@@ -248,33 +236,30 @@ public class Shooter implements Runnable{
         // if one replaced the "else if" with "if"'s
         // multiple balls of the same color could be fired
         int tmp = lastFired;
-        if(!readColorsOnce) {
-            if (whatColor(getLeftColor()) == color) {
+        if (!readColorsOnce) {
+            if (colorSensors.readLeftColor() == color) {
                 shouldLShoot = true;
                 lastFired = 0;
-            }
-            else if (whatColor(getRightColor()) == color) {
+            } else if (colorSensors.readRightColor() == color) {
                 shouldRShoot = true;
                 lastFired = 2;
-            }
-            else if (whatColor(getMidColor()) == color) {
+            } else if (colorSensors.readMidColor() == color) {
                 shouldMShoot = true;
                 lastFired = 1;
             }
-        }else{
+        } else {
             if (loadedColors[0] == color) {
                 shouldLShoot = true;
                 lastFired = 0;
-            }
-            else if (loadedColors[2] == color) {
+            } else if (loadedColors[2] == color) {
                 shouldRShoot = true;
                 lastFired = 2;
-            }
-            else if (loadedColors[1] == color) {
+            } else if (loadedColors[1] == color) {
                 shouldMShoot = true;
                 lastFired = 1;
             }
         }
+
         if(state != ShooterState.SPIN_UP_HOLD)
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         else
@@ -289,42 +274,11 @@ public class Shooter implements Runnable{
         return shouldLShoot || shouldRShoot || shouldMShoot;
     }
 
-    public void readColors(){
-        loadedColors[0] = whatColor(getLeftColor());
-        loadedColors[1] = whatColor(getMidColor());
-        loadedColors[2] = whatColor(getRightColor());
-    }
-
     public void stopShooterThread(){
         this.stop = true;
     }
 
     public ShooterState getState(){
         return state;
-    }
-
-
-    // Color sensor reading
-    public static BallColor whatColor(NormalizedRGBA color){
-        if(color.green > 0.100){
-            if(color.blue > 0.100 && color.blue > color.green){
-                return BallColor.PURPLE;
-            }
-            return BallColor.GREEN;
-        }else{
-            return BallColor.UNKNOWN;
-        }
-    }
-
-    public NormalizedRGBA getLeftColor(){
-        return leftColor.getNormalizedColors();
-    }
-
-    public NormalizedRGBA getMidColor(){
-        return midColor.getNormalizedColors();
-    }
-
-    public NormalizedRGBA getRightColor(){
-        return rightColor.getNormalizedColors();
     }
 }

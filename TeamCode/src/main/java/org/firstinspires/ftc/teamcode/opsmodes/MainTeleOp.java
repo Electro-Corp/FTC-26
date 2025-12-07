@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -31,6 +32,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
+    private ColorSensors colorSensors;
     private Intake intake;
     private Shooter shooter;
 
@@ -62,7 +64,8 @@ public abstract class MainTeleOp extends LinearOpMode {
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
-        shooter = new Shooter(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors);
 
     }
 
@@ -76,7 +79,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
 
-            telemetry.addData("LOADED",  "%s %s %s", Shooter.whatColor(shooter.getLeftColor()).toString(), Shooter.whatColor(shooter.getMidColor()).toString(), Shooter.whatColor(shooter.getRightColor()).toString());
+            telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
             aimAssist();
 
