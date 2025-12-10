@@ -11,6 +11,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -30,6 +32,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
+    private ColorSensors colorSensors;
     private Intake intake;
     private Shooter shooter;
 
@@ -57,11 +60,12 @@ public abstract class MainTeleOp extends LinearOpMode {
 
 
         // Aiming
-        //tBrain = new TestBrain(hardwareMap);
-        //initPose = new Pose2d(0,0,0);
-        //drive = new MecanumDrive(hardwareMap, initPose);
+        tBrain = new TestBrain(hardwareMap);
+        initPose = new Pose2d(0,0,0);
+        drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
-        shooter = new Shooter(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors, false);
 
     }
 
@@ -74,15 +78,18 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         while (opModeIsActive()){
             updateDriveMotors();
-            //aimAssist();
 
-            /*telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
+            telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
+            telemetry.addData("Shooter Vel", shooter.getVelocity());
+            aimAssist();
+
+            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
             if (tag != null) {
                 telemetry.addData("Bearing to target", tag.ftcPose.bearing);
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
-            }*/
+            }
 
             readGamepad();
             telemetry.update();
@@ -98,7 +105,7 @@ public abstract class MainTeleOp extends LinearOpMode {
                 AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
-                    incAmount = Math.toRadians(tagPose.bearing);
+                    incAmount = Math.toRadians(tagPose.bearing) / 2;
 
                     Action trajAction = null;
 
@@ -160,6 +167,13 @@ public abstract class MainTeleOp extends LinearOpMode {
             rightBackPower /= max;
         }
 
+        if (gamepad1.a) {
+            leftFrontPower *= 0.5;
+            rightFrontPower *= 0.5;
+            leftBackPower *= 0.5;
+            rightBackPower *= 0.5;
+        }
+
         telemetry.addData("LF", leftFrontPower);
         telemetry.addData("RF", rightFrontPower);
         telemetry.addData("LB", leftBackPower);
@@ -186,18 +200,57 @@ public abstract class MainTeleOp extends LinearOpMode {
             intake.stop();
         }
 
+        boolean fast = gamepad2.b;
         shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_trigger >= .5 && !shooting) { //shoot far
-            shooter.shootFar();
+        if(gamepad2.right_bumper && !shooting) { //shoot far
+            shooter.setToShootAll();
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
+        }
+        if(gamepad2.right_trigger > .2){
+            shooter.spinUp(fast);
+        }
+        // Uncomment later
+        if(gamepad2.x){
+            if(fast)
+                shooter.shootColorFar(BallColor.PURPLE);
+            else
+                shooter.shootColorNear(BallColor.PURPLE);
         }
         if(gamepad2.a){
-           shooter.openGate();
+            if(fast)
+                shooter.shootColorFar(BallColor.GREEN);
+            else
+                shooter.shootColorNear(BallColor.GREEN);
         }
-        if(gamepad2.b){
-            shooter.closeGate();
+        // Manual shoot three
+        if(gamepad2.dpad_left){
+            // Left
+            shooter.setShootSpecific(true, false, false);
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
         }
-        if(gamepad2.left_bumper){
+        if(gamepad2.dpad_up){
+            // Center
+            shooter.setShootSpecific(false, true, false);
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
+        }
+        if(gamepad2.dpad_right){
+            // Right
+            shooter.setShootSpecific(false, false, true);
+            // Ugly but
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
+        }
+        if(gamepad2.y){
             shooter.stopShoot();
         }
         shooter.update();
