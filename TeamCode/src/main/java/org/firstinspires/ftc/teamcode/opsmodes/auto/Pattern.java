@@ -31,11 +31,10 @@ public enum Pattern {
     public static Pattern fromNum(int num){
         switch(num){
             case 21:
-                return GPP;
+                return PPG;
             case 22:
                 return PGP;
             case 23:
-                return PPG;
             default:
                 return GPP;
         }

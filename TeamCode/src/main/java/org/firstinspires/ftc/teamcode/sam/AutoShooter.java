@@ -54,11 +54,9 @@ public class AutoShooter {
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
-    }
-
-    public void setPattern(Pattern pattern) {
-        this.pattern = pattern;
-        firingOrderDirty = true;
+        leftKicker.setPosition(L_KICKER_WAIT);
+        midKicker.setPosition(M_KICKER_WAIT);
+        rightKicker.setPosition(R_KICKER_WAIT);
     }
 
     public Action readBallColors() {
@@ -67,6 +65,7 @@ public class AutoShooter {
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                 loadedColors = colorSensors.readAllColors();
                 firingOrderDirty = true;
+                ballIndex = 0;
 
                 if (loadedColors != null && loadedColors.length >= 3) {
                     // Compact string like "GPP"
@@ -111,10 +110,10 @@ public class AutoShooter {
                 initialized = true;
             }
 
-            double shooterVelocity = (shooterLeft.getVelocity() + shooterRight.getVelocity()) / 2;
-            telemetryPacket.put("shooterVel", shooterVelocity);
-            // keep spinning until at or above target
-            return shooterVelocity < targetVelocity;
+            double shooterVelocity = (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2.0;
+
+            // keep spinning until we reach the target magnitude
+            return shooterVelocity < Math.abs(targetVelocity);
         }
     }
 
@@ -266,6 +265,7 @@ public class AutoShooter {
                     if (testBrain.getTagID(i) != null) {
                         pattern = Pattern.fromNum(i);
                         firingOrderDirty = true;
+                        ballIndex = 0;
                     }
                 }
 
