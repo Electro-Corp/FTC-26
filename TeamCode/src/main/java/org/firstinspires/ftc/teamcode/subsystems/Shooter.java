@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -30,7 +31,7 @@ public class Shooter implements Runnable{
     //Constants
     private static final double L_KICKER_WAIT = 0.8;
     private static final double L_KICKER_SHOOT = 0.574;
-    private static final double M_KICKER_WAIT = 0.6145;
+    private static final double M_KICKER_WAIT = 0.5995;
     private static final double M_KICKER_SHOOT = 0.4175;
     private static final double R_KICKER_WAIT = 0.705;
     private static final double R_KICKER_SHOOT = 0.5305;
@@ -42,9 +43,9 @@ public class Shooter implements Runnable{
     private boolean shouldMShoot = false;
 
     private static final long SPIN_UP_TIME_MS = 1800;
-    private static final long SPIN_AFTER_SHOOT_MS = 1000;
+    private static final long SPIN_AFTER_SHOOT_MS = 200;
     private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
-    private static final double SPINNER_SPEED_NEAR = -1360;
+    private static final double SPINNER_SPEED_NEAR = -1300;
     private static final double SPINNER_SPEED_FAR = -7000;
 
     //Final vars
@@ -69,6 +70,10 @@ public class Shooter implements Runnable{
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
         this.loadedColors = colorSensors.readAllColors();
+
+        this.shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        this.shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         kickersWait();
     }
 
@@ -85,19 +90,25 @@ public class Shooter implements Runnable{
     }
 
     public void shootDistance(double distance) {
-        if(state != ShooterState.SPIN_UP_HOLD)
+        if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
-        else
+        }
+        else {
+            kickersShoot();
             setState(ShooterState.SHOOTING);
+        }
         shooterLeft.setVelocity(distance * 10);
         shooterRight.setVelocity(distance * -10);
     }
 
     public void shootFar() {
-        if(state != ShooterState.SPIN_UP_HOLD)
+        if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
-        else
+        }
+        else {
+            kickersShoot();
             setState(ShooterState.SHOOTING);
+        }
         shooterLeft.setVelocity(SPINNER_SPEED_FAR);
         shooterRight.setVelocity(-SPINNER_SPEED_FAR);
     }
@@ -109,10 +120,13 @@ public class Shooter implements Runnable{
     }
 
     public void shootNear() {
-        if(state != ShooterState.SPIN_UP_HOLD)
+        if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
-        else
+        }
+        else {
+            kickersShoot();
             setState(ShooterState.SHOOTING);
+        }
         shooterLeft.setVelocity(SPINNER_SPEED_NEAR);
         shooterRight.setVelocity(-SPINNER_SPEED_NEAR);
     }
@@ -278,4 +292,5 @@ public class Shooter implements Runnable{
     public void updateLoadedColors(){
         this.loadedColors = colorSensors.readAllColors();
     }
+
 }

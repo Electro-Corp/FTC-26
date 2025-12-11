@@ -79,6 +79,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
 
+            telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
             aimAssist();

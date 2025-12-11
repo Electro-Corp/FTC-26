@@ -72,52 +72,55 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         pattern = readObelisk();
 
+        //intake.setSpeed(-0.8);
+
         intake.go();
 
-        traj = drive.actionBuilder(drive.localizer.getPose())
-                .turn(ang(-50));
+        traj = traj.endTrajectory().fresh()
+                .turn(ang(-51));
         runTrajectory(traj);
+
+        align(getTargetTag());
 
         shootThree();
 
         intake.go();
 
-        traj = drive.actionBuilder(drive.localizer.getPose())
+        traj = traj.endTrajectory().fresh()
                 .turn(ang((45 + 90)))
                 .lineToY(-40);
         runTrajectory(traj);
 
-        traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToY(80)
+        traj = traj.endTrajectory().fresh()
+                .lineToY(0)
                 .turn(ang(-(90 + 45)));
         runTrajectory(traj);
 
         intake.stop();
 
+        align(getTargetTag());
+
         shootThree();
 
-        Vector2d curPos = drive.localizer.getPose().position;
+        /*intake.go();
 
-        intake.go();
-
-
-
-        traj = drive.actionBuilder(drive.localizer.getPose())
+        traj = traj.endTrajectory().fresh()
                 .turn(ang(45 + 180));
         runTrajectory(traj);
 
-        // Reset pose cuz roadrunner is awesome
-        drive.setPoseEstimate(new Pose2d(0,0,0));
-
-        traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToX(12)
+        traj = traj.endTrajectory().fresh()
+                .lineToX(-75)
                 .turn(ang(-90))
-                .lineToY(-40)
-                .lineToY(40)
+                .lineToY(-60)
+                .lineToY(-30)
+                .turn(ang(90))
+                .lineToX(-20)
                 .turn(ang(-(45 + 90)));
         runTrajectory(traj);
 
-        shootThree();
+        intake.stop();
+
+        shootThree();*/
 
         //intake.stop();
 
@@ -271,6 +274,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         }
         // Reset
         fired = new boolean[3];
+        shooter.stopShoot();
     }
 
 
