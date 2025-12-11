@@ -33,12 +33,26 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private Pattern pattern;
     private int currentIndex = 0;
-    private final boolean[] fired = new boolean[3];
+    private boolean[] fired = new boolean[3];
 
     public void run(){
         while(!isStopRequested()){
             updateTele();
         }
+    }
+
+    private void initHardware() {
+        tBrain = new TestBrain(hardwareMap);
+        initPose = new Pose2d(0,0,0);
+        drive = new MecanumDrive(hardwareMap, initPose);
+        intake = new Intake(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors, true);
+
+        shooterThread = new Thread(shooter);
+        thisTeleThread = new Thread(this);
+
+        shooterThread.start();
     }
 
     @Override
@@ -48,11 +62,11 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         int id = getTargetTag();
         thisTeleThread.start();
 
-
         waitForStart();
 
+
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .strafeTo(new Vector2d(-55, 0))
+                .lineToX(-60)
                 .turn(ang(50));
         runTrajectory(traj);
 
@@ -66,13 +80,44 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shootThree();
 
+        intake.go();
+
         traj = drive.actionBuilder(drive.localizer.getPose())
-                .turn(ang(-200));
+                .turn(ang((45 + 90)))
+                .lineToY(-40);
         runTrajectory(traj);
 
         traj = drive.actionBuilder(drive.localizer.getPose())
-                        .strafeTo(new Vector2d(-90, 0));
+                .lineToY(80)
+                .turn(ang(-(90 + 45)));
         runTrajectory(traj);
+
+        intake.stop();
+
+        shootThree();
+
+        Vector2d curPos = drive.localizer.getPose().position;
+
+        intake.go();
+
+
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(ang(45 + 180));
+        runTrajectory(traj);
+
+        // Reset pose cuz roadrunner is awesome
+        drive.setPoseEstimate(new Pose2d(0,0,0));
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .lineToX(12)
+                .turn(ang(-90))
+                .lineToY(-40)
+                .lineToY(40)
+                .turn(ang(-(45 + 90)));
+        runTrajectory(traj);
+
+        shootThree();
 
         //intake.stop();
 
@@ -111,20 +156,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     // Litearlly becuase im lazy
     double ang(double a){
         return Math.toRadians(a);
-    }
-
-    private void initHardware() {
-        tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(0,0,0);
-        drive = new MecanumDrive(hardwareMap, initPose);
-        intake = new Intake(hardwareMap);
-        colorSensors = new ColorSensors(hardwareMap);
-        shooter = new Shooter(hardwareMap, colorSensors, true);
-        shooterThread = new Thread(shooter);
-
-        thisTeleThread = new Thread(this);
-
-        shooterThread.start();
     }
 
     // Find an unfired ball that matches the requested color
@@ -233,9 +264,13 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void shootThree(){
+        // Read
+        shooter.updateLoadedColors();
         for(int i = 0; i < 3; i++){
             shootNext();
         }
+        // Reset
+        fired = new boolean[3];
     }
 
 

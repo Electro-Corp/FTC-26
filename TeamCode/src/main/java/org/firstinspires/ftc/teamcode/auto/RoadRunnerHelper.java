@@ -10,49 +10,59 @@ package org.firstinspires.ftc.teamcode.auto;
 //import org.firstinspires.ftc.teamcode.roadrunner.drive.DriveConstants;
 
 
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
+
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
 /**
  Makes sure trajectories are linked together + provide a convenient way to
  use roadrunner
  */
 public class RoadRunnerHelper<T>{
+
+    public static final int TILE_SIZE_IN = 24;
+
+    public static final int DEFAULT_VEL = 43;
+    public static final int DEFAULT_ANG_VEL = 15;
+    public static final int REVERSE_FAST = 60;
 //
-//    public static final int TILE_SIZE_IN = 24;
 //
-//    public static final int DEFAULT_VEL = 43;
-//    public static final int DEFAULT_ANG_VEL = 15;
-//    public static final int REVERSE_FAST = 60;
-//
-//
-//    private SampleMecanumDrive drive;
-//    private Pose2d pose;
+    private MecanumDrive drive;
+    private Pose2d pose;
+
+    TrajectoryActionBuilder traj;
 //
 //    private TrajectoryVelocityConstraint trajectoryVelocityConstraint;
-//    public RoadRunnerHelper(SampleMecanumDrive drive){
-//        this.drive = drive;
-//        pose = new Pose2d();
+    public RoadRunnerHelper(MecanumDrive drive){
+        this.drive = drive;
+        pose = new Pose2d(0, 0, 0);
+    }
 //
-//    }
-//
-//    // [NOTE] All functions return RoadRunnerHelper so its possible
-//    // to chain functions together
-//    // (im assuming thats how roadrunner does it internally idk i havent checked)
-//
-//    // Move functions
+    // [NOTE] All functions return RoadRunnerHelper so its possible
+    // to chain functions together
+    // (im assuming thats how roadrunner does it internally idk i havent checked)
+
+    // Move functions
 //
 //    /**
 //     * I dare you to guess what this does
 //     * @param dist
 //     */
-//    public RoadRunnerHelper forward(double dist){
-//        forward(dist, DEFAULT_VEL);
-//        return this;
-//    }
+    public RoadRunnerHelper lineToX(double dist){
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .lineToX(dist);
+        runTrajectory(traj);
+        return this;
+    }
 //
-//    public RoadRunnerHelper forward(int dist){
-//        forward(dist, DEFAULT_VEL);
-//        return this;
-//    }
+    public RoadRunnerHelper lineToX(int dist){
+        lineToX(dist);
+        return this;
+    }
 //
 //
 //    /**
@@ -74,12 +84,12 @@ public class RoadRunnerHelper<T>{
 //
 //
 //    public RoadRunnerHelper forwardJBBFI(double dist, double speed){
-//        return forward(dist, speed);
+//        return forward(dist);
 //    }
 //
 //
 //    public RoadRunnerHelper reverseJBBFI(double dist, double speed){
-//        return reverse(dist, speed);
+//        return reverse(dist);
 //    }
 //
 //
@@ -104,10 +114,12 @@ public class RoadRunnerHelper<T>{
 //     * Turn to angle (positive is turning left)
 //     * @param angle Turn angle
 //     */
-//    public RoadRunnerHelper turn(double angle)  {
-//        turn(angle, DEFAULT_ANG_VEL, DEFAULT_ANG_VEL);
-//        return this;
-//    }
+    public RoadRunnerHelper turn(double angle)  {
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(Math.toRadians(angle));
+        runTrajectory(traj);
+        return this;
+    }
 //
 //    public RoadRunnerHelper turnOp(double angle){
 //        turn(-1 * angle, DEFAULT_ANG_VEL, DEFAULT_ANG_VEL);
@@ -189,5 +201,10 @@ public class RoadRunnerHelper<T>{
 //        drive.setPoseEstimate(pose);
 //        return this;
 //    }
+
+    private void runTrajectory(TrajectoryActionBuilder t){
+        Action currentAction = t.build();
+        Actions.runBlocking(currentAction);
+    }
 
 }

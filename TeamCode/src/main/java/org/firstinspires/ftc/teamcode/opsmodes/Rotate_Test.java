@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
 @TeleOp(name="RoadRunner Test", group="TeleOp")
-public class RoadRunnerTest extends LinearOpMode {
+public class Rotate_Test extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -20,9 +20,10 @@ public class RoadRunnerTest extends LinearOpMode {
 
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(initPose)
-                        .lineToX(30)
                         .turn(Math.PI / 2)
-                        .lineToY(30);
+                        .turn(Math.PI / 2)
+                        .turn(Math.PI / 2)
+                        .turn(Math.PI / 2);
 
         waitForStart();
 

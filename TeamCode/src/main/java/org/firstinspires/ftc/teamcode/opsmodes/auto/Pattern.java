@@ -25,7 +25,7 @@ public enum Pattern {
     }
 
     public BallColor getColorAtIndex(int i) {
-        return colors[num];
+        return colors[i];
     }
 
     public static Pattern fromNum(int num){
