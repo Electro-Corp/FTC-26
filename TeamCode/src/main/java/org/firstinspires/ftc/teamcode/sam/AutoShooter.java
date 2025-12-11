@@ -38,7 +38,7 @@ public class AutoShooter {
     private final TestBrain testBrain;
 
     private BallColor[] loadedColors;
-    // ballIndex is the index into the *pattern* (0,1,2)
+    // ballIndex is the index into the pattern (0, 1, 2)
     private int ballIndex = 0;
     private Pattern pattern = Pattern.GPP;
 
@@ -67,12 +67,27 @@ public class AutoShooter {
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
                 loadedColors = colorSensors.readAllColors();
                 firingOrderDirty = true;
-                telemetryPacket.put("loadedL", loadedColors[0].toString());
-                telemetryPacket.put("loadedM", loadedColors[1].toString());
-                telemetryPacket.put("loadedR", loadedColors[2].toString());
+
+                if (loadedColors != null && loadedColors.length >= 3) {
+                    // Compact string like "GPP"
+                    String ballsSummary = shortName(loadedColors[0])  + shortName(loadedColors[1]) + shortName(loadedColors[2]);
+                    telemetryPacket.put("balls", ballsSummary);
+                }
+
+                telemetryPacket.put("pattern", pattern.toString());
                 return false;
             }
         };
+    }
+
+    // Helper to show a single letter for a BallColor
+    private String shortName(BallColor c) {
+        if (c == null) return "?";
+        switch (c) {
+            case GREEN:  return "G";
+            case PURPLE: return "P";
+            default:     return "?"; // unknown
+        }
     }
 
     public Action spinUp(boolean fast){
@@ -97,7 +112,8 @@ public class AutoShooter {
             }
 
             double shooterVelocity = (shooterLeft.getVelocity() + shooterRight.getVelocity()) / 2;
-            telemetryPacket.put("shooterVelocity", shooterVelocity);
+            telemetryPacket.put("shooterVel", shooterVelocity);
+            // keep spinning until at or above target
             return shooterVelocity < targetVelocity;
         }
     }
@@ -106,7 +122,7 @@ public class AutoShooter {
      * Compute the mapping from pattern positions to physical kicker indexes.
      * firingOrder[i] = kicker index (0 = left, 1 = mid, 2 = right) that matches pattern color i.
      */
-    private void computeFiringOrderIfNeeded(TelemetryPacket p) {
+    private void computeFiringOrderIfNeeded() {
         if (!firingOrderDirty) {
             return;
         }
@@ -119,11 +135,6 @@ public class AutoShooter {
             firingOrder[0] = 0;
             firingOrder[1] = 1;
             firingOrder[2] = 2;
-            if (p != null) {
-                p.put("firingOrder0", firingOrder[0]);
-                p.put("firingOrder1", firingOrder[1]);
-                p.put("firingOrder2", firingOrder[2]);
-            }
             return;
         }
 
@@ -160,13 +171,6 @@ public class AutoShooter {
             firingOrder[i] = chosen;
             used[chosen] = true;
         }
-
-        if (p != null) {
-            p.put("pattern", pattern.toString());
-            p.put("firingOrder0", firingOrder[0]);
-            p.put("firingOrder1", firingOrder[1]);
-            p.put("firingOrder2", firingOrder[2]);
-        }
     }
 
     /**
@@ -191,15 +195,14 @@ public class AutoShooter {
 
         FireNextBallAction() {
             // patternPos is which pattern color we are shooting now (0,1,2)
-            patternPos = ballIndex;
+            this.patternPos = ballIndex;
         }
 
         @Override
         public boolean run(@NonNull TelemetryPacket p) {
 
-            // Ensure we have a valid mapping before the first call
             if (!initialized) {
-                computeFiringOrderIfNeeded(p);
+                computeFiringOrderIfNeeded();
 
                 // sanitize pattern position
                 if (patternPos < 0 || patternPos > 2) {
@@ -231,34 +234,25 @@ public class AutoShooter {
                 // Prepare the next pattern position for the next ball
                 ballIndex = (ballIndex + 1) % 3;
 
-                // First actual motion
                 kicker.setPosition(shootPos);
                 startTimeMs = System.currentTimeMillis();
                 initialized = true;
 
-                p.put("patternPos", patternPos);
-                p.put("kickerIndex", kickerIndex);
-                p.put("state", "EXTEND");
+                p.put("kicker", "EXTEND " + kickerIndex);
                 return true;
             }
 
             long elapsed = System.currentTimeMillis() - startTimeMs;
 
             if (elapsed < KICKER_PULSE_MS) {
-                p.put("patternPos", patternPos);
-                p.put("kickerIndex", kickerIndex);
-                p.put("state", "HOLD");
-                p.put("elapsed", elapsed);
+                p.put("kicker", "HOLD " + kickerIndex);
                 return true;
             }
 
             // Start retracting
             kicker.setPosition(restPos);
 
-            p.put("patternPos", patternPos);
-            p.put("kickerIndex", kickerIndex);
-            p.put("state", "RETRACT");
-            p.put("elapsed", elapsed);
+            p.put("kicker", "RETRACT " + kickerIndex);
 
             return false;
         }
