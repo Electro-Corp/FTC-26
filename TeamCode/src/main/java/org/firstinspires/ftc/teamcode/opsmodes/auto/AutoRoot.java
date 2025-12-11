@@ -87,8 +87,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .lineToY(-40);
         runTrajectory(traj);
 
-        traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToY(80)
+        traj = drive.actionBuilder(new Pose2d(0,0,0))
+                .lineToY(40)
                 .turn(ang(-(90 + 45)));
         runTrajectory(traj);
 
