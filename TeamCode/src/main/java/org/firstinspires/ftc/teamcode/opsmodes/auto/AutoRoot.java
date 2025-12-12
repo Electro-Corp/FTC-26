@@ -66,7 +66,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToX(-60)
+                .lineToXConstantHeading(-60)
                 .turn(ang(50));
         runTrajectory(traj);
 
@@ -88,12 +88,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         traj = traj.endTrajectory().fresh()
                 .turn(ang((45 + 90)))
-                .lineToY(-40);
+                .lineToYConstantHeading(-40);
         runTrajectory(traj);
 
 
         traj = traj.endTrajectory().fresh()
-                .lineToY(0)
+                .lineToYConstantHeading(0)
                 .turn(ang(-(90 + 45)));
         runTrajectory(traj);
 

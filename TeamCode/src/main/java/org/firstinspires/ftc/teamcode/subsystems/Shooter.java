@@ -44,7 +44,7 @@ public class Shooter implements Runnable{
 
     private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 200;
-    private static final long PAUSE_UNTIL_GATE_OPEN = 1000;
+    private static final long PAUSE_UNTIL_GATE_OPEN = 400;
     private static final double SPINNER_SPEED_NEAR = -1300;
     private static final double SPINNER_SPEED_FAR = -7000;
 

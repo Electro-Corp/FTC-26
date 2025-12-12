@@ -15,8 +15,13 @@ public class DriveActions {
     private final MecanumDrive drive;
 
     // TODO: replace these with your real field coordinates
-    // Units should match your Road Runner config (usually inches)
-    private static final Pose2d INIT_POSE           = new Pose2d(0.0, 0.0, Math.toRadians(45));
+    // The origin is the exact center of the field
+    // +x mean towards alliance side
+    // -x means away from alliance side
+    // +y means towards audience (away from obelisk)
+    // -y means towards obelisk (away from the audience)
+    private static final Pose2d INIT_POSE           = new Pose2d(0.0, 0.0, Math.toRadians(135));
+
     private static final Pose2d READ_OBELISK_POSE   = new Pose2d(10.0, 40.0, Math.toRadians(90));
     private static final Pose2d BASKET_POSE         = new Pose2d(20.0, 60.0, Math.toRadians(180));
     private static final Pose2d ROW_OF_BALLS1_POSE  = new Pose2d(30.0, 40.0, Math.toRadians(0));
