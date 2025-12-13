@@ -157,8 +157,8 @@ public class Shooter implements Runnable{
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
                     kickersShoot();
-                    shooterLeft.setVelocity(0);
-                    shooterRight.setVelocity(0);
+                    //shooterLeft.setVelocity(0);
+                    //shooterRight.setVelocity(0);
                     setState(ShooterState.STOPPED);
                     resetWhatToShoot();
                 }

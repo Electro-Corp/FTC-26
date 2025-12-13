@@ -34,11 +34,13 @@ public class AutoOpsModeWithActions extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
+
+        waitForStart();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToReadObelisk(),
                 shooter.readObelisk(),
                 shooter.spinUp(false),
-                driveActions.rotateToBasket(),
+                driveActions.moveToLaunchLocation(),
 
                 //shoot loaded balls
                 shooter.readBallColors(),
