@@ -8,4 +8,8 @@ public class BLUE_Auto extends AutoRoot{
     protected int getTargetTag() {
         return 20;
     }
+
+    protected int getInvert(){
+        return -1;
+    }
 }

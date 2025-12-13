@@ -39,6 +39,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         while(!isStopRequested()){
             updateTele();
         }
+        shooter.stopShooterThread();
     }
 
     private void initHardware() {
@@ -48,6 +49,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
+
+        shooter.SPINNER_SPEED_NEAR = -1280;
 
         shooterThread = new Thread(shooter);
         thisTeleThread = new Thread(this);
@@ -64,85 +67,53 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         waitForStart();
 
+        shooter.spinUp(false);
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToXConstantHeading(-60)
+                .lineToXConstantHeading(-42)
                 .turn(ang(50));
         runTrajectory(traj);
 
         pattern = readObelisk();
 
-        //intake.setSpeed(-0.8);
+        intake.go();
+
+        traj = traj.endTrajectory().fresh()
+                .turn(ang(-52));
+        runTrajectory(traj);
+
+        //align(getTargetTag());
+
+        shootThree();
+
+        intake.setSpeed(-0.88);
 
         intake.go();
 
         traj = traj.endTrajectory().fresh()
-                .turn(ang(-51));
+                //.lineToXConstantHeading(-50)
+                .turn(ang((125)))
+                .lineToYConstantHeading(-35 * getInvert());
         runTrajectory(traj);
 
-        align(getTargetTag());
+        shooter.spinUp(false);
+
+        traj = traj.endTrajectory().fresh()
+                .lineToYConstantHeading(-2 * getInvert())
+                .turn(ang(-(125)));
+                //.lineToXConstantHeading(-30);
+        runTrajectory(traj);
+
+        intake.stop();
+
+        //align(getTargetTag());
 
         shootThree();
 
-        intake.go();
-
         traj = traj.endTrajectory().fresh()
-                .turn(ang((45 + 90)))
-                .lineToYConstantHeading(-40);
+                .turn(ang(-120))
+                .lineToYConstantHeading(-30 * getInvert());
         runTrajectory(traj);
-
-
-        traj = traj.endTrajectory().fresh()
-                .lineToYConstantHeading(0)
-                .turn(ang(-(90 + 45)));
-        runTrajectory(traj);
-
-        intake.stop();
-
-        align(getTargetTag());
-
-        shootThree();
-
-        /*intake.go();
-
-        traj = traj.endTrajectory().fresh()
-                .turn(ang(45 + 180));
-        runTrajectory(traj);
-
-        traj = traj.endTrajectory().fresh()
-                .lineToX(-75)
-                .turn(ang(-90))
-                .lineToY(-60)
-                .lineToY(-30)
-                .turn(ang(90))
-                .lineToX(-20)
-                .turn(ang(-(45 + 90)));
-        runTrajectory(traj);
-
-        intake.stop();
-
-        shootThree();*/
-
-        //intake.stop();
-
-        /*intake.go();
-
-        initTurn = drive.actionBuilder(drive.localizer.getPose())
-                .turn(ang(180))
-                .strafeTo(new Vector2d(-18 - 9, -18))
-                .strafeTo(new Vector2d(-18 - 9, 0));
-        runTrajectory(initTurn);
-
-        intake.stop();
-
-        initTurn = drive.actionBuilder(drive.localizer.getPose())
-                .strafeTo(new Vector2d(-18 - 9, -5))
-                .turn(ang(-180));
-        runTrajectory(initTurn);
-
-        align(id);
-
-        shootThree();*/
 
         shooter.stopShooterThread();
     }
@@ -159,7 +130,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     // Litearlly becuase im lazy
     double ang(double a){
-        return Math.toRadians(a);
+        return Math.toRadians(getInvert() * a);
     }
 
     // Find an unfired ball that matches the requested color
@@ -272,6 +243,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shooter.updateLoadedColors();
         for(int i = 0; i < 3; i++){
             shootNext();
+            // Poor hack
+            //if(i == 0) shooter.SPINNER_SPEED_NEAR = -1300;
+            //if(i > 0) shooter.SPINNER_SPEED_NEAR = -1350;
+            shooter.spinUp(false);
+            sleep(200);
+            while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
         }
         // Reset
         fired = new boolean[3];
@@ -281,4 +258,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
 
     protected abstract int getTargetTag();
+
+    protected abstract int getInvert();
 }
