@@ -1,11 +1,15 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
@@ -17,6 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
+@Config
 public abstract class AutoRoot extends LinearOpMode implements Runnable {
     TestBrain tBrain = null;
 
@@ -35,6 +40,11 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     private int currentIndex = 0;
     private boolean[] fired = new boolean[3];
 
+    FtcDashboard dashboard = FtcDashboard.getInstance();
+
+
+    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
+
     public void run(){
         while(!isStopRequested()){
             updateTele();
@@ -52,6 +62,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shooter.SPINNER_SPEED_NEAR = -1280;
 
+        shooter.setPID(pid);
+
         shooterThread = new Thread(shooter);
         thisTeleThread = new Thread(this);
 
@@ -67,10 +79,10 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         waitForStart();
 
-        shooter.spinUp(false);
+        shooter.spinUp(false, false);
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToXConstantHeading(-42)
+                .lineToXConstantHeading(-53)
                 .turn(ang(50));
         runTrajectory(traj);
 
@@ -82,21 +94,23 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .turn(ang(-52));
         runTrajectory(traj);
 
-        //align(getTargetTag());
+        align(getTargetTag());
 
         shootThree();
 
-        intake.setSpeed(-0.88);
+        /*intake.setSpeed(-0.88);
 
-        intake.go();
+        intake.go();*/
 
         traj = traj.endTrajectory().fresh()
-                //.lineToXConstantHeading(-50)
-                .turn(ang((125)))
-                .lineToYConstantHeading(-35 * getInvert());
+                .lineToXConstantHeading(0);
+                //.turn(ang((125)))
+                //.lineToYConstantHeading(-35 * getInvert());
         runTrajectory(traj);
 
-        shooter.spinUp(false);
+
+
+        /*shooter.spinUp(false, false);
 
         traj = traj.endTrajectory().fresh()
                 .lineToYConstantHeading(-2 * getInvert())
@@ -106,14 +120,14 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         intake.stop();
 
-        //align(getTargetTag());
+        align(getTargetTag());
 
         shootThree();
 
         traj = traj.endTrajectory().fresh()
                 .turn(ang(-120))
                 .lineToYConstantHeading(-30 * getInvert());
-        runTrajectory(traj);
+        runTrajectory(traj);*/
 
         shooter.stopShooterThread();
     }
@@ -165,19 +179,31 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         BallColor[] loadedColors = shooter.getLoadedColors();
         if(pattern != null)
             telemetry.addData("Pattern", pattern.toString());
-        telemetry.addData("Static or Read", readOrStatic);
+        else
+            telemetry.addLine("Waiting to read pattern...");
+       // telemetry.addData("Static or Read", readOrStatic);
         telemetry.addData("Static Loaded",  "%s %s %s", loadedColors[0], loadedColors[1], loadedColors[2]);
         telemetry.addData("Live Loaded",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
         telemetry.addData("Next fire index", currentIndex);
+        telemetry.addLine("==== SHOOTER: =====");
         telemetry.addData("Speed", shooter.getVelocity());
         telemetry.addData("State", shooter.getState());
         telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
 
         telemetry.update();
+
+        TelemetryPacket packet = new TelemetryPacket();
+        packet.put("Shooter Vel", shooter.getVelocity());
+        packet.put("Target Vel", -(shooter.SPINNER_SPEED_NEAR));
+        packet.put("Left shooter Vel", shooter.getLeftVelocity());
+        packet.put("Right shooter Vel", shooter.getRightVelocity());
+
+        dashboard.sendTelemetryPacket(packet);
+
     }
 
     private void align(int tagId){
-        AprilTagDetection tag = tBrain.getTagID(tagId); // Only Red tag right now
+        AprilTagDetection tag = tBrain.getTagID(tagId);
         if (tag != null) {
             AprilTagPoseFtc tagPose = tag.ftcPose;
 
@@ -246,8 +272,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
             // Poor hack
             //if(i == 0) shooter.SPINNER_SPEED_NEAR = -1300;
             //if(i > 0) shooter.SPINNER_SPEED_NEAR = -1350;
-            shooter.spinUp(false);
-            sleep(200);
+            shooter.spinUp(false, false);
+            //sleep(200);
             while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
         }
         // Reset

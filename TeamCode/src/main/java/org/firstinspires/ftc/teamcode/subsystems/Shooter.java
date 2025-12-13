@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class Shooter implements Runnable{
@@ -25,7 +27,7 @@ public class Shooter implements Runnable{
     }
 
     public enum ShooterState {
-        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING
+        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING, REVERSE
     }
 
     //Constants
@@ -61,6 +63,8 @@ public class Shooter implements Runnable{
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
 
+    private boolean holdSpin = false;
+
     public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors, boolean readColorsOnce) {
         this.colorSensors = colorSensors;
         this.readColorsOnce = readColorsOnce;
@@ -71,6 +75,9 @@ public class Shooter implements Runnable{
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
         this.loadedColors = colorSensors.readAllColors();
 
+        this.shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         this.shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         this.shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -79,6 +86,14 @@ public class Shooter implements Runnable{
 
     public double getVelocity(){
         return (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2.0;
+    }
+
+    public double getLeftVelocity(){
+        return Math.abs(shooterLeft.getVelocity());
+    }
+
+    public double getRightVelocity(){
+        return Math.abs(shooterRight.getVelocity());
     }
 
     public BallColor[] getLoadedColors() {
@@ -114,8 +129,10 @@ public class Shooter implements Runnable{
     }
 
     public void stopShoot(){
+        holdSpin = false;
         shooterLeft.setPower(0.0);
         shooterRight.setPower(0.0);
+        kickersWait();
         setState(ShooterState.STOPPED);
     }
 
@@ -132,6 +149,11 @@ public class Shooter implements Runnable{
     }
 
     public void spinUp(boolean fast){
+        spinUp(fast, true);
+    }
+
+    public void spinUp(boolean fast, boolean hold){
+        holdSpin = hold;
         setState(ShooterState.SPIN_UP_HOLD);
         if(fast) {
             shooterLeft.setVelocity(SPINNER_SPEED_FAR);
@@ -142,24 +164,41 @@ public class Shooter implements Runnable{
         }
     }
 
+    public void reverse(boolean fast){
+        setState(ShooterState.REVERSE);
+        if(fast) {
+            shooterLeft.setVelocity(-SPINNER_SPEED_FAR / 10);
+            shooterRight.setVelocity(SPINNER_SPEED_FAR / 10);
+        }else{
+            shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 10);
+            shooterRight.setVelocity(SPINNER_SPEED_NEAR / 10);
+        }
+    }
+
 
     public void update() {
         long elapsed = System.currentTimeMillis() - stateStartTime;
         switch (state) {
             case WAITING_FOR_SPIN_UP:
-                if (elapsed >= SPIN_UP_TIME_MS) {
+                if (/*elapsed >= SPIN_UP_TIME_MS ||*/ (Math.abs(SPINNER_SPEED_NEAR) - 10 < getVelocity() && Math.abs(SPINNER_SPEED_NEAR) + 10 > getVelocity())) {
                     kickersWait();
                     setState(ShooterState.SHOOTING);
                 }
                 break;
             case SPIN_UP_HOLD:
                 break;
+            case REVERSE:
+                break;
             case SHOOTING:
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
                     kickersShoot();
-                    shooterLeft.setVelocity(0);
-                    shooterRight.setVelocity(0);
-                    setState(ShooterState.STOPPED);
+                    if(!holdSpin) {
+                        shooterLeft.setVelocity(0);
+                        shooterRight.setVelocity(0);
+                        setState(ShooterState.STOPPED);
+                    }else{
+                        setState(ShooterState.SPIN_UP_HOLD);
+                    }
                     resetWhatToShoot();
                 }
                 break;
@@ -187,7 +226,7 @@ public class Shooter implements Runnable{
         rightKickerShoot();
     }
 
-    private void kickersWait() {
+    public void kickersWait() {
         leftKickerWait();
         midKickerWait();
         rightKickerWait();
@@ -291,6 +330,11 @@ public class Shooter implements Runnable{
 
     public void updateLoadedColors(){
         this.loadedColors = colorSensors.readAllColors();
+    }
+
+    public void setPID(PIDFCoefficients pid){
+        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
+        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
     }
 
 }

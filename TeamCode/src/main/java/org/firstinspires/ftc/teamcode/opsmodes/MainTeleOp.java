@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -35,6 +36,8 @@ public abstract class MainTeleOp extends LinearOpMode {
     private ColorSensors colorSensors;
     private Intake intake;
     private Shooter shooter;
+
+    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
 
     private void initHardware() {
@@ -66,6 +69,8 @@ public abstract class MainTeleOp extends LinearOpMode {
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
+
+        shooter.setPID(pid);
 
     }
 
@@ -201,17 +206,21 @@ public abstract class MainTeleOp extends LinearOpMode {
             intake.stop();
         }
 
-        boolean fast = gamepad2.b;
+        boolean fast = false;//gamepad2.b;
         shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_bumper && !shooting) { //shoot far
-            shooter.setToShootAll();
-            if(fast)
-                shooter.shootFar();
-            else shooter.shootNear();
+        if(gamepad2.right_bumper /*&& !shooting*/) { //shoot far
+            shooter.kickersWait();
+            //shooter.setToShootAll();
+            //if(fast)
+            //    shooter.shootFar();
+            //else shooter.shootNear();
         }
         if(gamepad2.right_trigger > .2){
             shooter.spinUp(fast);
+        }
+        if(gamepad2.b){
+            shooter.reverse(fast);
         }
         // Uncomment later
         if(gamepad2.x){
