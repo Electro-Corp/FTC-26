@@ -337,4 +337,5 @@ public class Shooter implements Runnable{
         shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
     }
 
+
 }
