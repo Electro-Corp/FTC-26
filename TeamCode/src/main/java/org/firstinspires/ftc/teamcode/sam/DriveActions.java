@@ -12,6 +12,20 @@ public class DriveActions {
 
     private final MecanumDrive drive;
 
+    // The origin is the exact center of the field
+    //         +x
+    //          |
+    //          |
+    // +y  -----+----- -y
+    //          |
+    //          |
+    //         -x
+    //
+    // -x means away towards the audience
+    // +x mean towards the obelisk
+    // -y means towards alliance
+    // +y means away from alliance
+
     private static final Pose2d INIT_POSE          = new Pose2d(50.0, -50.0, Math.toRadians(-45));
     private static final Pose2d READ_OBELISK_POSE  = new Pose2d(10.0, -10.0, Math.toRadians(-45));
     private static final Pose2d ROW_OF_BALLS1_POSE = new Pose2d(13.0, -56.0, Math.toRadians(-90));
