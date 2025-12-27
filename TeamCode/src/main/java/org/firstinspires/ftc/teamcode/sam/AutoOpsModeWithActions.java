@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.sam;
+Canpackage org.firstinspires.ftc.teamcode.sam;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -39,19 +39,24 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToReadObelisk(),
                 shooter.readObelisk(),
-                shooter.spinUp(false),
-                driveActions.moveToLaunchLocation(),
+                shooter.spinUp(false)));
 
-                //shoot loaded balls
+        //Launch initial balls
+        Actions.runBlocking(new SequentialAction(        
+                driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
-                intake.goAction(),
-                driveActions.moveToRowOfBalls1(),
-                driveActions.moveToLaunchLocation(),
+                intake.goAction()));
 
-                //shoot first row of balls
+        //Gather row 1 balls
+        Actions.runBlocking(new SequentialAction(
+                driveActions.moveToRowOfBalls1()));
+
+        //Fire row 1 balls
+        Actions.runBlocking(new SequentialAction(
+                driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
