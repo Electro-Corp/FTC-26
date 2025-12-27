@@ -139,7 +139,7 @@ public class FieldDataPointsTest {
             assertEquals(90.0, r.heading, 1e-9);
             assertEquals(8.0, r.speed, 1e-9);
         }
-        
+
         // ================= Pose 4 =================
         // Exact distance match short-circuits interpolation
         {

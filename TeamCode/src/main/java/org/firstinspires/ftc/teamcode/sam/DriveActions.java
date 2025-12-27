@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.sam;
 
-import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -14,24 +12,10 @@ public class DriveActions {
 
     private final MecanumDrive drive;
 
-    // The origin is the exact center of the field
-    //         +x
-    //          |
-    //          |
-    // +y  -----+----- -y
-    //          |
-    //          |
-    //         -x
-    //
-    // -x means away towards the audience
-    // +x mean towards the obelisk
-    // -y means towards alliance
-    // +y means away from alliance
-    private static final Pose2d INIT_POSE           = new Pose2d(50.0, -50.0, Math.toRadians(-45));
-
-    private static final Pose2d READ_OBELISK_POSE   = new Pose2d(10.0, -10.0, Math.toRadians(-45));
-    private static final Pose2d ROW_OF_BALLS1_POSE  = new Pose2d(13.0, -56.0, Math.toRadians(-90));
-    private static final Pose2d LAUNCH_POSE         = new Pose2d(10.0, -10.0, Math.toRadians(-45));
+    private static final Pose2d INIT_POSE          = new Pose2d(50.0, -50.0, Math.toRadians(-45));
+    private static final Pose2d READ_OBELISK_POSE  = new Pose2d(10.0, -10.0, Math.toRadians(-45));
+    private static final Pose2d ROW_OF_BALLS1_POSE = new Pose2d(13.0, -56.0, Math.toRadians(-90));
+    private static final Pose2d LAUNCH_POSE        = new Pose2d(10.0, -10.0, Math.toRadians(-45));
 
     public DriveActions(HardwareMap hardwareMap) {
         this.drive = new MecanumDrive(hardwareMap, INIT_POSE);
@@ -41,35 +25,47 @@ public class DriveActions {
      * Moves from the current pose to the "read obelisk" pose.
      */
     public Action moveToReadObelisk() {
-        return drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(
-                        READ_OBELISK_POSE.position.x,
-                        READ_OBELISK_POSE.position.y),
-                        READ_OBELISK_POSE.heading)
-                .build();
+        return packet -> drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(
+                        new Vector2d(
+                                READ_OBELISK_POSE.position.x,
+                                READ_OBELISK_POSE.position.y
+                        ),
+                        READ_OBELISK_POSE.heading
+                )
+                .build()
+                .run(packet);
     }
 
     /**
      * Moves from the current pose to the first row of balls.
      */
     public Action moveToRowOfBalls1() {
-        return drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(
-                        ROW_OF_BALLS1_POSE.position.x,
-                        ROW_OF_BALLS1_POSE.position.y),
-                        ROW_OF_BALLS1_POSE.heading)
-                .build();
+        return packet -> drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(
+                        new Vector2d(
+                                ROW_OF_BALLS1_POSE.position.x,
+                                ROW_OF_BALLS1_POSE.position.y
+                        ),
+                        ROW_OF_BALLS1_POSE.heading
+                )
+                .build()
+                .run(packet);
     }
 
     /**
      * Moves from the current pose to the launch location.
      */
     public Action moveToLaunchLocation() {
-        return drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(
-                        LAUNCH_POSE.position.x,
-                        LAUNCH_POSE.position.y),
-                        LAUNCH_POSE.heading)
-                .build();
+        return packet -> drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(
+                        new Vector2d(
+                                LAUNCH_POSE.position.x,
+                                LAUNCH_POSE.position.y
+                        ),
+                        LAUNCH_POSE.heading
+                )
+                .build()
+                .run(packet);
     }
 }
