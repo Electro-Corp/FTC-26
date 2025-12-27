@@ -79,8 +79,10 @@ public class FieldDataPoints {
         DataPoint two = distances.get(1).dP;
         DataPoint three = distances.get(2).dP;
 
-        double heading = (one.heading + two.heading + three.heading) / 3;
-        double speed = (one.speed + two.speed + three.speed) / 3;
+        double totalDist = distances.get(0).dist + distances.get(1).dist + distances.get(2).dist;
+
+        double heading = ((one.heading * (distances.get(0).dist / totalDist)) + (two.heading * (distances.get(1).dist / totalDist)) + (three.heading * (distances.get(2).dist / totalDist))) / 3;
+        double speed = ((one.speed * (distances.get(0).dist / totalDist)) + (two.speed * (distances.get(1).dist / totalDist)) + (three.speed * (distances.get(2).dist / totalDist))) / 3;
 
         return new DataPoint(pose.position.x, pose.position.y, heading, speed);
     }
