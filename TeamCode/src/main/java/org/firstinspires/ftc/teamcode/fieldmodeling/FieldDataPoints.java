@@ -62,29 +62,53 @@ public class FieldDataPoints {
         }
     }
 
-    public DataPoint getStateAtPose(Pose2d pose){
-        ArrayList<DataPoint> closestThree = new ArrayList<>();
-
+    public DataPoint getStateAtPose(Pose2d pose) {
         ArrayList<DataPointWDist> distances = new ArrayList<>();
 
-        for(int i = 0; i < points.size(); i++){
+        for (int i = 0; i < points.size(); i++) {
             DataPointWDist d = new DataPointWDist();
             d.dP = points.get(i);
-            d.dist = Math.sqrt(Math.pow((pose.position.x - points.get(i).posX), 2) + Math.pow((pose.position.y - points.get(i).posY), 2));
+            d.dist = Math.hypot(
+                    pose.position.x - points.get(i).posX,
+                    pose.position.y - points.get(i).posY
+            );
+            distances.add(d);
         }
 
         Collections.sort(distances, Comparator.comparing(DataPointWDist::getDist));
 
-        DataPoint one = distances.get(0).dP;
-        DataPoint two = distances.get(1).dP;
-        DataPoint three = distances.get(2).dP;
+        DataPointWDist d1 = distances.get(0);
+        DataPointWDist d2 = distances.get(1);
+        DataPointWDist d3 = distances.get(2);
 
-        double totalDist = distances.get(0).dist + distances.get(1).dist + distances.get(2).dist;
+        // Exact match short-circuit
+        if (d1.dist == 0) {
+            return new DataPoint(
+                    pose.position.x,
+                    pose.position.y,
+                    d1.dP.heading,
+                    d1.dP.speed
+            );
+        }
 
-        double heading = ((one.heading * (distances.get(0).dist / totalDist)) + (two.heading * (distances.get(1).dist / totalDist)) + (three.heading * (distances.get(2).dist / totalDist))) / 3;
-        double speed = ((one.speed * (distances.get(0).dist / totalDist)) + (two.speed * (distances.get(1).dist / totalDist)) + (three.speed * (distances.get(2).dist / totalDist))) / 3;
+        double w1 = 1.0 / d1.dist;
+        double w2 = 1.0 / d2.dist;
+        double w3 = 1.0 / d3.dist;
+
+        double wSum = w1 + w2 + w3;
+
+        double heading =
+                d1.dP.heading * (w1 / wSum) +
+                        d2.dP.heading * (w2 / wSum) +
+                        d3.dP.heading * (w3 / wSum);
+
+        double speed =
+                d1.dP.speed * (w1 / wSum) +
+                        d2.dP.speed * (w2 / wSum) +
+                        d3.dP.speed * (w3 / wSum);
 
         return new DataPoint(pose.position.x, pose.position.y, heading, speed);
     }
+
 
 }
