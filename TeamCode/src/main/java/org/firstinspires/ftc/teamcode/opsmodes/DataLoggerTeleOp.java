@@ -1,26 +1,23 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
+import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
+import org.firstinspires.ftc.teamcode.fieldmodeling.DataPoint;
+import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
-
-public abstract class MainTeleOp extends LinearOpMode {
+@TeleOp(name="LoggingTeleOp")
+public class DataLoggerTeleOp extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private DcMotorEx leftFrontDrive = null;
@@ -28,14 +25,15 @@ public abstract class MainTeleOp extends LinearOpMode {
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
 
-    TestBrain tBrain = null;
-
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
     private ColorSensors colorSensors;
     private Intake intake;
     private Shooter shooter;
+
+    private DataLogger dataLogger;
+    private FieldDataPoints fieldDataPoints;
 
     public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
@@ -61,9 +59,6 @@ public abstract class MainTeleOp extends LinearOpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-
-        // Aiming
-        tBrain = new TestBrain(hardwareMap);
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
@@ -72,6 +67,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         shooter.setPID(pid);
 
+        // Start logging
+        dataLogger = new DataLogger();
+        fieldDataPoints = new FieldDataPoints();
     }
 
     @Override
@@ -87,45 +85,15 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
-            aimAssist();
+            telemetry.addLine("================ LOGGING =================");
+            telemetry.addData("Target Velocity", shooter.SPINNER_SPEED_NEAR);
+            telemetry.addData("Localizer", "((%f %f), %f)", drive.localizer.getPose().position.x, drive.localizer.getPose().position.y, drive.localizer.getPose().heading.toDouble());
 
-            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
-            if (tag != null) {
-                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
-                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
-                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
-            }
+
+            drive.updatePoseEstimate();
 
             readGamepad();
             telemetry.update();
-        }
-    }
-
-    // Aiming Variables
-    private boolean isYPressed = false;
-    private double incAmount = 0.1;
-    private void aimAssist(){
-        if(gamepad1.y) {
-            if (!isYPressed) {
-                AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
-                if (tag != null) {
-                    AprilTagPoseFtc tagPose = tag.ftcPose;
-                    incAmount = Math.toRadians(tagPose.bearing) / 2;
-
-                    Action trajAction = null;
-
-                    TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
-                        .turn(incAmount);
-                    trajAction = trajectory.build();
-
-                    Actions.runBlocking(trajAction);
-                }
-            }
-            isYPressed = true;
-        }
-        else{
-            isYPressed = false;
         }
     }
 
@@ -224,16 +192,18 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         // Uncomment later
         if(gamepad2.x){
-            if(fast)
-                shooter.shootColorFar(BallColor.PURPLE);
-            else
-                shooter.shootColorNear(BallColor.PURPLE);
+            shooter.SPINNER_SPEED_NEAR += 10;
+//            if(fast)
+//                shooter.shootColorFar(BallColor.PURPLE);
+//            else
+//                shooter.shootColorNear(BallColor.PURPLE);
         }
         if(gamepad2.a){
-            if(fast)
-                shooter.shootColorFar(BallColor.GREEN);
-            else
-                shooter.shootColorNear(BallColor.GREEN);
+            shooter.SPINNER_SPEED_NEAR -= 10;
+//            if(fast)
+//                shooter.shootColorFar(BallColor.GREEN);
+//            else
+//                shooter.shootColorNear(BallColor.GREEN);
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
@@ -264,8 +234,20 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.stopShoot();
         }
         shooter.update();
+
+        if(gamepad1.startWasPressed()){
+            updateLog();
+        }
+
+
     }
 
-    protected abstract int GetMyTag();
+    private void updateLog(){
+        DataPoint packet = new DataPoint(drive.localizer.getPose().position.x, drive.localizer.getPose().position.y, drive.localizer.getPose().heading.toDouble(), shooter.SPINNER_SPEED_NEAR);
+
+        fieldDataPoints.addDataPoint(packet);
+
+        dataLogger.write(fieldDataPoints);
+    }
 
 }
