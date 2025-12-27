@@ -39,47 +39,35 @@ public class DriveActions {
      * Moves from the current pose to the "read obelisk" pose.
      */
     public Action moveToReadObelisk() {
-        return packet -> drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(
-                        new Vector2d(
-                                READ_OBELISK_POSE.position.x,
-                                READ_OBELISK_POSE.position.y
-                        ),
-                        READ_OBELISK_POSE.heading
-                )
-                .build()
-                .run(packet);
+        return drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(new Vector2d(
+                        READ_OBELISK_POSE.position.x,
+                        READ_OBELISK_POSE.position.y),
+                        READ_OBELISK_POSE.heading)
+                .build();
     }
 
     /**
      * Moves from the current pose to the first row of balls.
      */
     public Action moveToRowOfBalls1() {
-        return packet -> drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(
-                        new Vector2d(
-                                ROW_OF_BALLS1_POSE.position.x,
-                                ROW_OF_BALLS1_POSE.position.y
-                        ),
-                        ROW_OF_BALLS1_POSE.heading
-                )
-                .build()
-                .run(packet);
+        return drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(new Vector2d(
+                        ROW_OF_BALLS1_POSE.position.x,
+                        ROW_OF_BALLS1_POSE.position.y),
+                        ROW_OF_BALLS1_POSE.heading)
+                .build();
     }
 
     /**
      * Moves from the current pose to the launch location.
      */
     public Action moveToLaunchLocation() {
-        return packet -> drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(
-                        new Vector2d(
-                                LAUNCH_POSE.position.x,
-                                LAUNCH_POSE.position.y
-                        ),
-                        LAUNCH_POSE.heading
-                )
-                .build()
-                .run(packet);
+        return drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(new Vector2d(
+                        LAUNCH_POSE.position.x,
+                        LAUNCH_POSE.position.y),
+                        LAUNCH_POSE.heading)
+                .build();
     }
 }
