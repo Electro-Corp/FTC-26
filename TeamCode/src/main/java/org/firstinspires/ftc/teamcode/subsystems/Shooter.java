@@ -27,7 +27,7 @@ public class Shooter implements Runnable{
     }
 
     public enum ShooterState {
-        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING, REVERSE
+        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING, REVERSE, WAIT_FOR_KICKER
     }
 
     //Constants
@@ -47,6 +47,7 @@ public class Shooter implements Runnable{
     private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 200;
     private static final long PAUSE_UNTIL_GATE_OPEN = 400;
+    private static final long PULL_KICKER_BACK = 500;
     public double SPINNER_SPEED_NEAR = -1300;
     public static final double SPINNER_SPEED_FAR = -7000;
 
@@ -187,18 +188,24 @@ public class Shooter implements Runnable{
                 break;
             case SPIN_UP_HOLD:
                 break;
-            case REVERSE:
-                break;
-            case SHOOTING:
-                if (elapsed >= SPIN_AFTER_SHOOT_MS) {
-                    kickersShoot();
-                    if(!holdSpin) {
+            case WAIT_FOR_KICKER:
+                if(elapsed >= PULL_KICKER_BACK){
+                    kickersWait();
+                    if(!holdSpin){
                         shooterLeft.setVelocity(0);
                         shooterRight.setVelocity(0);
                         setState(ShooterState.STOPPED);
                     }else{
                         setState(ShooterState.SPIN_UP_HOLD);
                     }
+                }
+                break;
+            case REVERSE:
+                break;
+            case SHOOTING:
+                if (elapsed >= SPIN_AFTER_SHOOT_MS) {
+                    kickersShoot();
+                    setState(ShooterState.WAIT_FOR_KICKER);
                     resetWhatToShoot();
                 }
                 break;
@@ -298,7 +305,6 @@ public class Shooter implements Runnable{
 
         // Reset shooting flags
         resetShootFlags();
-
         // Find first matching index
         for (int i = 0; i < 3; i++) {
             if (colors[i] == color) {
