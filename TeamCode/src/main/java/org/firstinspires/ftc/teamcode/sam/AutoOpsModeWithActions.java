@@ -1,4 +1,4 @@
-Canpackage org.firstinspires.ftc.teamcode.sam;
+package org.firstinspires.ftc.teamcode.sam;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
