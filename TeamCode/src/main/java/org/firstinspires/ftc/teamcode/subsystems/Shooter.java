@@ -31,7 +31,7 @@ public class Shooter implements Runnable{
     }
 
     //Constants
-    private static final double L_KICKER_WAIT = 0.8;
+    private static final double L_KICKER_WAIT = 0.771;
     private static final double L_KICKER_SHOOT = 0.574;
     private static final double M_KICKER_WAIT = 0.5995;
     private static final double M_KICKER_SHOOT = 0.4175;
