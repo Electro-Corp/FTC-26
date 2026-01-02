@@ -12,7 +12,7 @@ public class GateCalib extends LinearOpMode {
         Servo rKick = hardwareMap.get(Servo.class,"rKick");
 
         int servoNumber = 0;
-        double lPos = 0.5;
+        double lPos = 0.6;
         double mPos = 0.5;
         double rPos = 0.5;
         boolean changeDown = false;

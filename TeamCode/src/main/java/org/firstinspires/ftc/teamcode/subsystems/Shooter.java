@@ -33,10 +33,10 @@ public class Shooter implements Runnable{
     //Constants
     private static final double L_KICKER_WAIT = 0.771;
     private static final double L_KICKER_SHOOT = 0.574;
-    private static final double M_KICKER_WAIT = 0.5995;
+    private static final double M_KICKER_WAIT = 0.6375;
     private static final double M_KICKER_SHOOT = 0.4175;
-    private static final double R_KICKER_WAIT = 0.705;
-    private static final double R_KICKER_SHOOT = 0.5305;
+    private static final double R_KICKER_WAIT = 0.58;
+    private static final double R_KICKER_SHOOT = 0.723;
 
     private static final float COLOR_GAIN = 30.5f;
 
@@ -47,7 +47,7 @@ public class Shooter implements Runnable{
     private static final long SPIN_UP_TIME_MS = 1800;
     private static final long SPIN_AFTER_SHOOT_MS = 200;
     private static final long PAUSE_UNTIL_GATE_OPEN = 400;
-    private static final long PULL_KICKER_BACK = 500;
+    private static final long PULL_KICKER_BACK = 750;
     public double SPINNER_SPEED_NEAR = -1300;
     public static final double SPINNER_SPEED_FAR = -7000;
 

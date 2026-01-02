@@ -192,14 +192,14 @@ public class DataLoggerTeleOp extends LinearOpMode {
         }
         // Uncomment later
         if(gamepad2.x){
-            shooter.SPINNER_SPEED_NEAR += 10;
+            shooter.SPINNER_SPEED_NEAR += 1;
 //            if(fast)
 //                shooter.shootColorFar(BallColor.PURPLE);
 //            else
 //                shooter.shootColorNear(BallColor.PURPLE);
         }
         if(gamepad2.a){
-            shooter.SPINNER_SPEED_NEAR -= 10;
+            shooter.SPINNER_SPEED_NEAR -= 1;
 //            if(fast)
 //                shooter.shootColorFar(BallColor.GREEN);
 //            else
