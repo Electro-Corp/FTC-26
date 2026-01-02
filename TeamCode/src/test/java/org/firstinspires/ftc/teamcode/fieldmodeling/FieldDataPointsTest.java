@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.fieldmodeling;
 import com.acmerobotics.roadrunner.Pose2d;
 import org.junit.Test;
 
+import static org.firstinspires.ftc.robotcore.internal.system.Assert.assertEquals;
 import static org.junit.Assert.*;
 
 public class FieldDataPointsTest {

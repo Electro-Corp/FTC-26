@@ -110,7 +110,6 @@ public class Shooter implements Runnable{
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
         else {
-            kickersShoot();
             setState(ShooterState.SHOOTING);
         }
         shooterLeft.setVelocity(distance * 10);
@@ -122,7 +121,6 @@ public class Shooter implements Runnable{
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
         else {
-            kickersShoot();
             setState(ShooterState.SHOOTING);
         }
         shooterLeft.setVelocity(SPINNER_SPEED_FAR);
@@ -142,7 +140,7 @@ public class Shooter implements Runnable{
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
         else {
-            kickersShoot();
+            //kickersShoot();
             setState(ShooterState.SHOOTING);
         }
         shooterLeft.setVelocity(SPINNER_SPEED_NEAR);
@@ -191,6 +189,7 @@ public class Shooter implements Runnable{
             case WAIT_FOR_KICKER:
                 if(elapsed >= PULL_KICKER_BACK){
                     kickersWait();
+                    resetWhatToShoot();
                     if(!holdSpin){
                         shooterLeft.setVelocity(0);
                         shooterRight.setVelocity(0);
@@ -206,7 +205,6 @@ public class Shooter implements Runnable{
                 if (elapsed >= SPIN_AFTER_SHOOT_MS) {
                     kickersShoot();
                     setState(ShooterState.WAIT_FOR_KICKER);
-                    resetWhatToShoot();
                 }
                 break;
             default:
