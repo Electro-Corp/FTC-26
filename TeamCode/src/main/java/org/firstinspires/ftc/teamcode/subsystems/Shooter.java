@@ -179,10 +179,10 @@ public class Shooter implements Runnable{
         long elapsed = System.currentTimeMillis() - stateStartTime;
         switch (state) {
             case WAITING_FOR_SPIN_UP:
-                if (/*elapsed >= SPIN_UP_TIME_MS ||*/ (Math.abs(SPINNER_SPEED_NEAR) - 10 < getVelocity() && Math.abs(SPINNER_SPEED_NEAR) + 10 > getVelocity())) {
+                //if (/*elapsed >= SPIN_UP_TIME_MS ||*/ (Math.abs(SPINNER_SPEED_NEAR) - 10 < getVelocity() && Math.abs(SPINNER_SPEED_NEAR) + 10 > getVelocity())) {
                     kickersWait();
                     setState(ShooterState.SHOOTING);
-                }
+                //}
                 break;
             case SPIN_UP_HOLD:
                 break;

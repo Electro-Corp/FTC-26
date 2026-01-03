@@ -1,9 +1,10 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,17 +12,21 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
-import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
-import org.firstinspires.ftc.teamcode.fieldmodeling.DataPoint;
-import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Kickers;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterCommands;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter_New;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @Config
-@TeleOp(name="LoggingTeleOp")
-public class DataLoggerTeleOp extends LinearOpMode {
+@TeleOp(name="New Shooter TeleOp")
+public class MainTeleOp_NewShooter extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     private DcMotorEx leftFrontDrive = null;
@@ -29,17 +34,14 @@ public class DataLoggerTeleOp extends LinearOpMode {
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
 
+    TestBrain tBrain = null;
+
     Pose2d initPose = null;
     MecanumDrive drive = null;
 
     private ColorSensors colorSensors;
     private Intake intake;
-    private Shooter shooter;
-
-    private DataLogger dataLogger;
-    private FieldDataPoints fieldDataPoints;
-
-    FtcDashboard dashboard = FtcDashboard.getInstance();
+    private Shooter_New shooter;
 
     public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
@@ -65,17 +67,17 @@ public class DataLoggerTeleOp extends LinearOpMode {
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
+
+        // Aiming
+        tBrain = new TestBrain(hardwareMap);
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
-        shooter = new Shooter(hardwareMap, colorSensors, false);
+        shooter = new Shooter_New(hardwareMap, colorSensors);
 
-        shooter.setPID(pid);
+        //shooter.setPID(pid);
 
-        // Start logging
-        dataLogger = new DataLogger();
-        fieldDataPoints = new FieldDataPoints();
     }
 
     @Override
@@ -88,27 +90,49 @@ public class DataLoggerTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
 
-            telemetry.addData("Shooter State", shooter.getState());
+            //telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
-            telemetry.addLine("================ LOGGING =================");
-            telemetry.addData("Target Velocity", shooter.SPINNER_SPEED_NEAR);
-            telemetry.addData("Localizer", "((%f %f), %f)", drive.localizer.getPose().position.x, drive.localizer.getPose().position.y, drive.localizer.getPose().heading.toDouble());
+            aimAssist();
 
-
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.put("Shooter Vel", shooter.getVelocity());
-            packet.put("Target Vel", -(shooter.SPINNER_SPEED_NEAR));
-            packet.put("Left shooter Vel", shooter.getLeftVelocity());
-            packet.put("Right shooter Vel", shooter.getRightVelocity());
-
-            dashboard.sendTelemetryPacket(packet);
-
-            drive.updatePoseEstimate();
+//            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+//            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
+//            if (tag != null) {
+//                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
+//                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
+//                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
+//            }
 
             readGamepad();
             telemetry.update();
         }
+    }
+
+    // Aiming Variables
+    private boolean isYPressed = false;
+    private double incAmount = 0.1;
+    private void aimAssist(){
+//        if(gamepad1.y) {
+//            if (!isYPressed) {
+//                AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
+//                if (tag != null) {
+//                    AprilTagPoseFtc tagPose = tag.ftcPose;
+//                    incAmount = Math.toRadians(tagPose.bearing) / 2;
+//
+//                    Action trajAction = null;
+//
+//                    TrajectoryActionBuilder trajectory = drive.actionBuilder(drive.localizer.getPose())
+//                        .turn(incAmount);
+//                    trajAction = trajectory.build();
+//
+//                    Actions.runBlocking(trajAction);
+//                }
+//            }
+//            isYPressed = true;
+//        }
+//        else{
+//            isYPressed = false;
+//        }
     }
 
     private void updateDriveMotors() {
@@ -189,79 +213,41 @@ public class DataLoggerTeleOp extends LinearOpMode {
         }
 
         boolean fast = false;//gamepad2.b;
-        shooting = shooter.isShooting();
+        //shooting = shooter.isShooting();
         //shooter
-        if(gamepad2.right_bumper /*&& !shooting*/) { //shoot far
-            shooter.kickersWait();
-            //shooter.setToShootAll();
-            //if(fast)
-            //    shooter.shootFar();
-            //else shooter.shootNear();
+        if(gamepad2.right_bumper) {
+
         }
+        // Spin up
         if(gamepad2.right_trigger > .2){
-            shooter.spinUp(fast);
+            shooter.pushCommand(new ShooterCommands.SpinUp(false, false));
         }
+        // Reverse
         if(gamepad2.b){
-            shooter.reverse(fast);
+            shooter.pushCommand(new ShooterCommands.SpinUp(false, true));
         }
-        // Uncomment later
+        // Color Shooting
         if(gamepad2.x){
-            shooter.SPINNER_SPEED_NEAR += 1;
-//            if(fast)
-//                shooter.shootColorFar(BallColor.PURPLE);
-//            else
-//                shooter.shootColorNear(BallColor.PURPLE);
+            shooter.pushCommand(new ShooterCommands.ShootColorCommand(BallColor.PURPLE));
         }
         if(gamepad2.a){
-            shooter.SPINNER_SPEED_NEAR -= 1;
-//            if(fast)
-//                shooter.shootColorFar(BallColor.GREEN);
-//            else
-//                shooter.shootColorNear(BallColor.GREEN);
+            shooter.pushCommand(new ShooterCommands.ShootColorCommand(BallColor.GREEN));
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
-            // Left
-            shooter.setShootSpecific(true, false, false);
-            // Ugly but
-            if(fast)
-                shooter.shootFar();
-            else shooter.shootNear();
+            shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.LEFT));
         }
         if(gamepad2.dpad_up){
-            // Center
-            shooter.setShootSpecific(false, true, false);
-            // Ugly but
-            if(fast)
-                shooter.shootFar();
-            else shooter.shootNear();
+            shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.MID));
         }
         if(gamepad2.dpad_right){
-            // Right
-            shooter.setShootSpecific(false, false, true);
-            // Ugly but
-            if(fast)
-                shooter.shootFar();
-            else shooter.shootNear();
+            shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.RIGHT));
         }
+        // Stop
         if(gamepad2.y){
-            shooter.stopShoot();
+            shooter.pushCommand(new ShooterCommands.StopCommand());
         }
         shooter.update();
-
-        if(gamepad1.startWasPressed()){
-            updateLog();
-        }
-
-
-    }
-
-    private void updateLog(){
-        DataPoint packet = new DataPoint(drive.localizer.getPose().position.x, drive.localizer.getPose().position.y, drive.localizer.getPose().heading.toDouble(), shooter.SPINNER_SPEED_NEAR);
-
-        fieldDataPoints.addDataPoint(packet);
-
-        dataLogger.write(fieldDataPoints);
     }
 
 }

@@ -274,4 +274,15 @@ public class AutoShooter {
             }
         };
     }
+
+    public Action stop(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                shooterLeft.setVelocity(0);
+                shooterRight.setVelocity(0);
+                return false;
+            }
+        };
+    }
 }

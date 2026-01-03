@@ -37,9 +37,10 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         telemetry.addData("Pose", driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
+                shooter.spinUp(false),
                 driveActions.moveToReadObelisk(),
-                shooter.readObelisk(),
-                shooter.spinUp(false)));
+                shooter.readObelisk()
+                ));
 
         //Launch initial balls
         telemetry.addData("Pose", driveActions.getCurrentPoseString());
@@ -50,6 +51,7 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
+                shooter.stop(),
                 intake.goAction()));
 
         //Gather row 1 balls
