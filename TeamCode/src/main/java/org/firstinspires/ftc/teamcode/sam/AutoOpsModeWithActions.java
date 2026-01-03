@@ -13,7 +13,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 @Autonomous(name="Auto with Actions")
 public class AutoOpsModeWithActions extends LinearOpMode {
     TestBrain tBrain = null;
-    Pose2d initPose = null;
 
     private Intake intake;
     private AutoShooter shooter;
@@ -25,7 +24,6 @@ public class AutoOpsModeWithActions extends LinearOpMode {
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
         driveActions = new DriveActions(hardwareMap);
-        initPose = new Pose2d(0,0,0);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new AutoShooter(hardwareMap, colorSensors, tBrain);
@@ -36,13 +34,17 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         initHardware();
 
         waitForStart();
+        telemetry.addData("Pose", driveActions.getCurrentPoseString());
+        telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToReadObelisk(),
                 shooter.readObelisk(),
                 shooter.spinUp(false)));
 
         //Launch initial balls
-        Actions.runBlocking(new SequentialAction(        
+        telemetry.addData("Pose", driveActions.getCurrentPoseString());
+        telemetry.update();
+        Actions.runBlocking(new SequentialAction(
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
                 shooter.fireNextBall(),
@@ -51,10 +53,14 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 intake.goAction()));
 
         //Gather row 1 balls
+        telemetry.addData("Pose",  driveActions.getCurrentPoseString());
+        telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToRowOfBalls1()));
 
         //Fire row 1 balls
+        telemetry.addData("Pose",  driveActions.getCurrentPoseString());
+        telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),

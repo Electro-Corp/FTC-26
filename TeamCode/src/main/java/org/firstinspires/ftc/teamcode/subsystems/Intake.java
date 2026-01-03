@@ -35,7 +35,7 @@ public class Intake {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                intakeMotor.setPower(speed);
+                go();
                 return false;
             }
         };
