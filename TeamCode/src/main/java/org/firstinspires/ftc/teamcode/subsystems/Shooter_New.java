@@ -47,7 +47,7 @@ public class Shooter_New {
         Push a new command to the shooter
      */
     public void pushCommand(ShooterCommands.ShooterCommand command){
-        this.queue.add(0, command);
+        this.queue.add(command);
     }
 
     /*
@@ -61,7 +61,8 @@ public class Shooter_New {
                 commandToLoop = -1;
                 queue.remove(command);
             }else{
-                // Hold our position for looping
+                // This is just in case someone else gets pushed
+                // to the queue ahead
                 commandToLoop = queue.size() - 1;
             }
         }
