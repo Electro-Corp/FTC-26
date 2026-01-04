@@ -50,6 +50,7 @@ public class ShooterCommands {
                 return true;
             }
             shooter.getKickers().fireKicker(pos);
+            shooter.pushCommand(new RetractKickerCommand(pos));
             return false;
         }
     }
@@ -64,6 +65,23 @@ public class ShooterCommands {
         public boolean run(Shooter_New shooter){
             ShootCommand shootCommand = new ShootCommand(shooter.getColorSensors().getPositionOfColor(target)); // replace with real value
             return shootCommand.run(shooter);
+        }
+    }
+
+    public static class RetractKickerCommand extends ShooterCommand{
+        private Kickers.Position pos;
+        public RetractKickerCommand(Kickers.Position pos){
+            this.loop = true;
+            this.pos = pos;
+        }
+
+        @Override
+        public boolean run(Shooter_New shooter) {
+            if(shooter.getVelocity() - 10 < shooter.getTargetVelocity() && shooter.getTargetVelocity() < shooter.getVelocity() + 10){
+                return true;
+            }
+            shooter.getKickers().fireKicker(pos);
+            return false;
         }
     }
 }
