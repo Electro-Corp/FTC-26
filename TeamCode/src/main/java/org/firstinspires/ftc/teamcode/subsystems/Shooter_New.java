@@ -47,6 +47,10 @@ public class Shooter_New {
         Push a new command to the shooter
      */
     public void pushCommand(ShooterCommands.ShooterCommand command){
+        if(command.override){
+            queue.clear();
+            commandToLoop = -1;
+        }
         this.queue.add(command);
     }
 
@@ -106,5 +110,15 @@ public class Shooter_New {
 
     public ColorSensors getColorSensors(){
         return colorSensors;
+    }
+
+    public String getCommandStackString(){
+        String stack = "";
+        for(int i = 0; i < 10; i++){
+            if(queue.size() > i)
+                stack += "[ " + queue.get(i).toString() + " ]\n";
+            else stack += "[         ]";
+        }
+        return stack;
     }
 }

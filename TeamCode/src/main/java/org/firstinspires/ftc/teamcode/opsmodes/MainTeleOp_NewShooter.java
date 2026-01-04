@@ -95,6 +95,10 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
             telemetry.addData("Shooter Vel", shooter.getVelocity());
             aimAssist();
 
+
+            telemetry.addLine("Shooter Command Stack:");
+            telemetry.addLine(shooter.getCommandStackString());
+
 //            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
 //            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
 //            if (tag != null) {

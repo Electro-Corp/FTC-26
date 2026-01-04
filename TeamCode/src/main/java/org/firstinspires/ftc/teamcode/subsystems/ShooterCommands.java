@@ -2,8 +2,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 public class ShooterCommands {
     public static abstract class ShooterCommand{
-        public boolean loop = false, block = false;
+        public boolean loop = false, block = false, override = false;
         public abstract boolean run(Shooter_New shooter);
+        public abstract String toString();
     }
 
     // Commands
@@ -19,13 +20,26 @@ public class ShooterCommands {
             shooter.setTargetVelocity(reverse ? -Shooter_New.Config.SPINNER_SPEED_NEAR : Shooter_New.Config.SPINNER_SPEED_NEAR);
             return false;
         }
+
+        @Override
+        public String toString() { return "SpinUp"; }
     }
     public static class StopCommand extends ShooterCommand{
+        public StopCommand(){
+            this.override = true;
+        }
+
         @Override
         public boolean run(Shooter_New shooter){
             shooter.setTargetVelocity(0);
+            shooter.getKickers().retractKicker(Kickers.Position.LEFT);
+            shooter.getKickers().retractKicker(Kickers.Position.MID);
+            shooter.getKickers().retractKicker(Kickers.Position.RIGHT);
             return false;
         }
+
+        @Override
+        public String toString() { return "Stop"; }
     }
     public static class ShootCommand extends ShooterCommand{
         Kickers.Position pos;
@@ -53,6 +67,9 @@ public class ShooterCommands {
             shooter.pushCommand(new RetractKickerCommand(pos));
             return false;
         }
+
+        @Override
+        public String toString() { return "Shoot"; }
     }
 
     public static class ShootThreeCommand extends ShooterCommand{
@@ -63,6 +80,9 @@ public class ShooterCommands {
             shooter.pushCommand(new ShootCommand(Kickers.Position.RIGHT, false));
             return false;
         }
+
+        @Override
+        public String toString() { return "ShootThree"; }
     }
 
     public static class ShootColorCommand extends ShooterCommand{
@@ -76,6 +96,9 @@ public class ShooterCommands {
             ShootCommand shootCommand = new ShootCommand(shooter.getColorSensors().getPositionOfColor(target)); // replace with real value
             return shootCommand.run(shooter);
         }
+
+        @Override
+        public String toString() { return "ShootColor"; }
     }
 
     public static class RetractKickerCommand extends ShooterCommand{
@@ -93,5 +116,8 @@ public class ShooterCommands {
             shooter.getKickers().retractKicker(pos);
             return false;
         }
+
+        @Override
+        public String toString() { return "RetractKicker"; }
     }
 }
