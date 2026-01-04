@@ -55,8 +55,7 @@ public class Shooter_New {
      */
     public void update(){
         if(!queue.isEmpty()){
-            ShooterCommands.ShooterCommand command = null;
-            command = queue.get(commandToLoop == -1 ? queue.size() - 1 : commandToLoop);
+            ShooterCommands.ShooterCommand command = queue.get(commandToLoop == -1 ? queue.size() - 1 : commandToLoop);
 
             if(!command.run(this)){
                 commandToLoop = -1;

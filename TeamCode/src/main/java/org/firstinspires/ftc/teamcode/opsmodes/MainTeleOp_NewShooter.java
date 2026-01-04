@@ -216,7 +216,7 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
         //shooting = shooter.isShooting();
         //shooter
         if(gamepad2.right_bumper) {
-
+            shooter.pushCommand(new ShooterCommands.ShootThreeCommand());
         }
         // Spin up
         if(gamepad2.right_trigger > .2){

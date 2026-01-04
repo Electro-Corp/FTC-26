@@ -32,7 +32,7 @@ public class ShooterCommands {
 
         public ShootCommand(Kickers.Position pos){
             this.pos = pos;
-            this.loop = false;
+            this.loop = true;
         }
 
         public ShootCommand(Kickers.Position pos, boolean waitForSpeed){
@@ -55,7 +55,17 @@ public class ShooterCommands {
         }
     }
 
-    public static class ShootColorCommand extends ShooterCommand {
+    public static class ShootThreeCommand extends ShooterCommand{
+        @Override
+        public boolean run(Shooter_New shooter) {
+            shooter.pushCommand(new ShootCommand(Kickers.Position.LEFT));
+            shooter.pushCommand(new ShootCommand(Kickers.Position.MID, false));
+            shooter.pushCommand(new ShootCommand(Kickers.Position.RIGHT, false));
+            return false;
+        }
+    }
+
+    public static class ShootColorCommand extends ShooterCommand{
         BallColor target;
         public ShootColorCommand(BallColor color){
             this.target = color;
