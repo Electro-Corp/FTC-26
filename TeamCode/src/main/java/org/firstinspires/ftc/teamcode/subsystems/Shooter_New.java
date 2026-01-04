@@ -24,7 +24,6 @@ public class Shooter_New {
     private final DcMotorEx shooterRight;
 
     private double lastVelocity = -1;
-    private int commandToLoop = -1;
 
     private ArrayList<ShooterCommands.ShooterCommand> queue;
 
@@ -49,7 +48,6 @@ public class Shooter_New {
     public void pushCommand(ShooterCommands.ShooterCommand command){
         if(command.override){
             queue.clear();
-            commandToLoop = -1;
         }
         this.queue.add(command);
     }
@@ -59,15 +57,10 @@ public class Shooter_New {
      */
     public void update(){
         if(!queue.isEmpty()){
-            ShooterCommands.ShooterCommand command = queue.get(commandToLoop == -1 ? queue.size() - 1 : commandToLoop);
+            ShooterCommands.ShooterCommand command = queue.get(0);
 
             if(!command.run(this)){
-                commandToLoop = -1;
                 queue.remove(command);
-            }else{
-                // This is just in case someone else gets pushed
-                // to the queue ahead
-                commandToLoop = queue.size() - 1;
             }
         }
         // Don't write to hardware ALL the time
@@ -81,8 +74,8 @@ public class Shooter_New {
     /*
         Setters
      */
-    public void setTargetVelocity(double speed){
-        targetVelocity = speed;
+    public void setTargetVelocity(double velocity){
+        targetVelocity = velocity;
     }
 
     /*
