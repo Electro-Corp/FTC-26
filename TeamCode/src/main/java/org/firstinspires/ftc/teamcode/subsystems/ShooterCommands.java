@@ -90,7 +90,7 @@ public class ShooterCommands {
             if(shooter.getVelocity() - 10 < shooter.getTargetVelocity() && shooter.getTargetVelocity() < shooter.getVelocity() + 10){
                 return true;
             }
-            shooter.getKickers().fireKicker(pos);
+            shooter.getKickers().retractKicker(pos);
             return false;
         }
     }
