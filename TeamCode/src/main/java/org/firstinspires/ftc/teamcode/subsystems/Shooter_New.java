@@ -59,6 +59,7 @@ public class Shooter_New {
             command = queue.get(commandToLoop == -1 ? queue.size() - 1 : commandToLoop);
 
             if(!command.run(this)){
+                commandToLoop = -1;
                 queue.remove(command);
             }else{
                 // This is just in case someone else gets pushed
