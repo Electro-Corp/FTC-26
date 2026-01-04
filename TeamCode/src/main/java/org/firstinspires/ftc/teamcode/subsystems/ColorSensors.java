@@ -65,6 +65,24 @@ public class ColorSensors {
         return result;
     }
 
+    public Kickers.Position getPositionOfColor(BallColor color){
+        BallColor[] res = readAllColors();
+        for(int i = 0; i < 3; i++){
+            if(res[i] == color){
+                switch(i){
+                    case 0:
+                        return Kickers.Position.LEFT;
+                    case 1:
+                        return Kickers.Position.MID;
+                    case 2:
+                        return Kickers.Position.RIGHT;
+                }
+            }
+        }
+        // Default return
+        return Kickers.Position.MID;
+    }
+
     /**
      * Classifies a ball's color based on normalized sensor values, identifying it as
      * green, purple, or unknown

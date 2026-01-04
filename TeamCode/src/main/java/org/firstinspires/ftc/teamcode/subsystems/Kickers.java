@@ -21,6 +21,8 @@ public class Kickers {
     private final Servo midKicker;
     private final Servo rightKicker;
 
+    private boolean left, mid, right;
+
     public Kickers(HardwareMap hardwareMap){
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
@@ -28,6 +30,36 @@ public class Kickers {
     }
 
     public void fireKicker(Position pos){
+        switch(pos){
+            case LEFT:
+                left = true;
+                leftKicker.setPosition(Config.L_KICKER_SHOOT);
+                break;
+            case MID:
+                mid = true;
+                midKicker.setPosition(Config.M_KICKER_SHOOT);
+                break;
+            case RIGHT:
+                right = true;
+                rightKicker.setPosition(Config.R_KICKER_SHOOT);
+                break;
+        }
+    }
 
+    public void retractKicker(Position pos){
+        switch(pos){
+            case LEFT:
+                left = false;
+                leftKicker.setPosition(Config.L_KICKER_WAIT);
+                break;
+            case MID:
+                mid = false;
+                midKicker.setPosition(Config.M_KICKER_WAIT);
+                break;
+            case RIGHT:
+                right = false;
+                rightKicker.setPosition(Config.R_KICKER_WAIT);
+                break;
+        }
     }
 }

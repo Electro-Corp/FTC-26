@@ -55,13 +55,14 @@ public class ShooterCommands {
     }
 
     public static class ShootColorCommand extends ShooterCommand {
+        BallColor target;
         public ShootColorCommand(BallColor color){
-
+            this.target = color;
         }
 
         @Override
         public boolean run(Shooter_New shooter){
-            ShootCommand shootCommand = new ShootCommand(Kickers.Position.RIGHT); // replace with real value
+            ShootCommand shootCommand = new ShootCommand(shooter.getColorSensors().getPositionOfColor(target)); // replace with real value
             return shootCommand.run(shooter);
         }
     }

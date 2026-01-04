@@ -96,4 +96,8 @@ public class Shooter_New {
     public Kickers getKickers(){
         return kickers;
     }
+
+    public ColorSensors getColorSensors(){
+        return colorSensors;
+    }
 }
