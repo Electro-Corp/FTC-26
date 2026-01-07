@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import java.util.ArrayList;
 
@@ -37,7 +38,6 @@ public class Shooter_New {
         this.shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         this.shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         this.shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
 
         this.queue = new ArrayList<>();
     }
@@ -76,6 +76,11 @@ public class Shooter_New {
      */
     public void setTargetVelocity(double velocity){
         targetVelocity = velocity;
+    }
+
+    public void setPID(PIDFCoefficients pid){
+        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
+        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
     }
 
     /*

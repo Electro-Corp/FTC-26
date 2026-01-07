@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+
+import java.util.Set;
+
 public class ShooterCommands {
     public static abstract class ShooterCommand{
         public boolean loop = false, block = false, override = false;
@@ -119,5 +123,24 @@ public class ShooterCommands {
 
         @Override
         public String toString() { return "RetractKicker"; }
+    }
+
+    // No reason to exist besides I like the Command system
+    public static class SetPIDCommand extends ShooterCommand{
+        PIDFCoefficients pid;
+        public SetPIDCommand(PIDFCoefficients pid){
+            this.pid = pid;
+        }
+
+        @Override
+        public boolean run(Shooter_New shooter) {
+            shooter.setPID(pid);
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "SetPIDCommand";
+        }
     }
 }

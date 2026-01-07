@@ -76,8 +76,9 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter_New(hardwareMap, colorSensors);
 
-        //shooter.setPID(pid);
-
+        // This could be "shooter.setPID(pid)" but more testing
+        // for the queue system is good anyway
+        shooter.pushCommand(new ShooterCommands.SetPIDCommand(pid));
     }
 
     @Override
