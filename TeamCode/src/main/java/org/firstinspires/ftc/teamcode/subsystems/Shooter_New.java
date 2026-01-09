@@ -28,6 +28,10 @@ public class Shooter_New {
 
     private ArrayList<ShooterCommands.ShooterCommand> queue;
 
+    private double firingSpeed = Config.SPINNER_SPEED_NEAR;
+
+    private boolean spinup = false, reverse = false;
+
     public Shooter_New(HardwareMap hardwareMap, ColorSensors colorSensors){
         this.shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         this.shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
@@ -63,6 +67,13 @@ public class Shooter_New {
                 queue.remove(command);
             }
         }
+
+        if(spinup){
+            targetVelocity = reverse ? -firingSpeed : firingSpeed;
+        }else{
+            targetVelocity = 0;
+        }
+
         // Don't write to hardware ALL the time
         if(targetVelocity != lastVelocity) {
             shooterLeft.setVelocity(targetVelocity);
@@ -81,6 +92,15 @@ public class Shooter_New {
     public void setPID(PIDFCoefficients pid){
         shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
         shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
+    }
+
+    public void setFiringSpeed(double speed){
+        this.firingSpeed = speed;
+    }
+
+    public void setSpinup(boolean value, boolean reverse){
+        this.spinup = value;
+        this.reverse = reverse;
     }
 
     /*
@@ -118,5 +138,9 @@ public class Shooter_New {
             else stack += "[         ]";
         }
         return stack;
+    }
+
+    public double getFiringSpeed(){
+        return firingSpeed;
     }
 }

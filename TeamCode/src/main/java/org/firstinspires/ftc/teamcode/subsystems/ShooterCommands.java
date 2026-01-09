@@ -21,7 +21,7 @@ public class ShooterCommands {
 
         @Override
         public boolean run(Shooter_New shooter){
-            shooter.setTargetVelocity(reverse ? -Shooter_New.Config.SPINNER_SPEED_NEAR : Shooter_New.Config.SPINNER_SPEED_NEAR);
+            shooter.setSpinup(true, reverse);
             return false;
         }
 
@@ -35,7 +35,7 @@ public class ShooterCommands {
 
         @Override
         public boolean run(Shooter_New shooter){
-            shooter.setTargetVelocity(0);
+            shooter.setSpinup(false, false);
             shooter.getKickers().retractKicker(Kickers.Position.LEFT);
             shooter.getKickers().retractKicker(Kickers.Position.MID);
             shooter.getKickers().retractKicker(Kickers.Position.RIGHT);

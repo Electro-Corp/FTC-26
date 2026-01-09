@@ -12,15 +12,12 @@ public class DataLogger {
 
     Writer logOut;
 
-    private ArrayList<DataPoint> data;
-
     private String fileName;
 
-    private final String readName = "/sdcard/LogParams-FINAL.txt";
+    private static final String readName = "/sdcard/LogParams-FINAL.txt";
 
     public DataLogger(){
         fileName = "/sdcard/LogParams-" + System.currentTimeMillis() + ".txt";
-        data = new ArrayList<>();
     }
 
     public void write(FieldDataPoints points){
@@ -38,7 +35,7 @@ public class DataLogger {
         }
     }
 
-    public FieldDataPoints read(){
+    public static FieldDataPoints read(){
         Reader reader = null;
         try {
             reader = new FileReader(readName);

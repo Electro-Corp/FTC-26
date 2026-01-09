@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
+import android.provider.ContactsContract;
+
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -11,6 +13,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
+import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
@@ -39,6 +43,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
+    public FieldDataPoints fieldMap;
+
 
     private void initHardware() {
         leftFrontDrive = hardwareMap.get(DcMotorEx.class,"leftFront");
@@ -64,7 +70,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(0,0,0);
+        initPose = new Pose2d(50,50,45);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
@@ -72,6 +78,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         shooter.setPID(pid);
 
+        // Init field
+        fieldMap = DataLogger.read();
     }
 
     @Override
@@ -96,6 +104,9 @@ public abstract class MainTeleOp extends LinearOpMode {
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
             }
+
+            // Update speed with position
+            shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
 
             readGamepad();
             telemetry.update();
@@ -224,12 +235,14 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         // Uncomment later
         if(gamepad2.x){
+            rotateToFire();
             if(fast)
                 shooter.shootColorFar(BallColor.PURPLE);
             else
                 shooter.shootColorNear(BallColor.PURPLE);
         }
         if(gamepad2.a){
+            rotateToFire();
             if(fast)
                 shooter.shootColorFar(BallColor.GREEN);
             else
@@ -237,6 +250,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
+            rotateToFire();
             // Left
             shooter.setShootSpecific(true, false, false);
             // Ugly but
@@ -245,6 +259,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             else shooter.shootNear();
         }
         if(gamepad2.dpad_up){
+            rotateToFire();
             // Center
             shooter.setShootSpecific(false, true, false);
             // Ugly but
@@ -253,6 +268,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             else shooter.shootNear();
         }
         if(gamepad2.dpad_right){
+            rotateToFire();
             // Right
             shooter.setShootSpecific(false, false, true);
             // Ugly but
@@ -264,6 +280,12 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.stopShoot();
         }
         shooter.update();
+    }
+
+    public void rotateToFire(){
+        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(Math.toRadians(drive.localizer.getPose().heading.toDouble() - fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+        Actions.runBlocking(traj.build());
     }
 
     protected abstract int GetMyTag();

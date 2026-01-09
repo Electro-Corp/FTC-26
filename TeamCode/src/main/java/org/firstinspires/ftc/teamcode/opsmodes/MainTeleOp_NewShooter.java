@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
+import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
@@ -45,6 +47,7 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 
     public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
+    public FieldDataPoints fieldMap;
 
     private void initHardware() {
         leftFrontDrive = hardwareMap.get(DcMotorEx.class,"leftFront");
@@ -70,7 +73,7 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(0,0,0);
+        initPose = new Pose2d(50,50,45);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
@@ -79,6 +82,9 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
         // This could be "shooter.setPID(pid)" but more testing
         // for the queue system is good anyway
         shooter.pushCommand(new ShooterCommands.SetPIDCommand(pid));
+
+        // Init field
+        fieldMap = DataLogger.read();
     }
 
     @Override
@@ -107,6 +113,9 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 //                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
 //                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
 //            }
+
+            // Update speed
+            shooter.setFiringSpeed(fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
 
             readGamepad();
             telemetry.update();
@@ -221,6 +230,7 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
         //shooting = shooter.isShooting();
         //shooter
         if(gamepad2.right_bumper) {
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootThreeCommand());
         }
         // Spin up
@@ -233,19 +243,24 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
         }
         // Color Shooting
         if(gamepad2.x){
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootColorCommand(BallColor.PURPLE));
         }
         if(gamepad2.a){
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootColorCommand(BallColor.GREEN));
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.LEFT));
         }
         if(gamepad2.dpad_up){
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.MID));
         }
         if(gamepad2.dpad_right){
+            rotateToFire();
             shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.RIGHT));
         }
         // Stop
@@ -253,6 +268,12 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
             shooter.pushCommand(new ShooterCommands.StopCommand());
         }
         shooter.update();
+    }
+
+    public void rotateToFire(){
+        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                .turn(Math.toRadians(drive.localizer.getPose().heading.toDouble() - fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+        Actions.runBlocking(traj.build());
     }
 
 }
