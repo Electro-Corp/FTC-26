@@ -48,9 +48,7 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
+                shooter.fire3balls(),
                 shooter.stop(),
                 intake.goAction()));
 
@@ -67,17 +65,21 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 shooter.spinUp(false),
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
+                shooter.fire3balls(),
                 shooter.stop()
         ));
 
-        telemetry.addData("[MoveToRow2] Pose",  driveActions.getCurrentPoseString());
+        telemetry.addData("[MoveToRow2] Pose1",  driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 intake.goAction(),
-                driveActions.moveToRowOfBalls2()));
+                driveActions.moveToRowOfBalls2Pose1()));
+
+        telemetry.addData("[MoveToRow2] Pose2",  driveActions.getCurrentPoseString());
+        telemetry.update();
+        Actions.runBlocking(new SequentialAction(
+                intake.goAction(),
+                driveActions.moveToRowOfBalls2Pose2()));
 
         telemetry.addData("[FireRow2] Pose",  driveActions.getCurrentPoseString());
         telemetry.update();
@@ -85,9 +87,7 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 shooter.spinUp(false),
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
-                shooter.fireNextBall(),
+                shooter.fire3balls(),
                 shooter.stop()
         ));
     }
