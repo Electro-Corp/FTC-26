@@ -41,7 +41,7 @@ public class DataLoggerTeleOp extends LinearOpMode {
 
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
-    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.1,1,11);
+    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.35,1,11);
 
 
     private void initHardware() {
@@ -71,7 +71,6 @@ public class DataLoggerTeleOp extends LinearOpMode {
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
 
-        shooter.setPID(pid);
 
         // Start logging
         dataLogger = new DataLogger();
@@ -105,6 +104,8 @@ public class DataLoggerTeleOp extends LinearOpMode {
             dashboard.sendTelemetryPacket(packet);
 
             drive.updatePoseEstimate();
+
+            shooter.setPID(pid);
 
             readGamepad();
             telemetry.update();

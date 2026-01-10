@@ -41,7 +41,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     private Intake intake;
     private Shooter shooter;
 
-    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
+    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.35,1,11);
 
     public FieldDataPoints fieldMap;
 

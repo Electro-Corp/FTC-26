@@ -107,7 +107,8 @@ public class AutoShooter {
             double shooterVelocity = (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2.0;
 
             // keep spinning until we reach the target magnitude
-            return shooterVelocity < Math.abs(targetVelocity);
+            //return shooterVelocity < Math.abs(targetVelocity);
+            return false;
         }
     }
 
