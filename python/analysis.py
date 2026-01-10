@@ -87,7 +87,7 @@ def main() -> int:
 
     # Defaults from your message
     start_pose = (50.0, -50.0, math.radians(-45.0))  # (x, y, heading)
-    goal_xy = (50.0, -50.0)  # (x, y)
+    goal_xy = (55.0, -55)  # (x, y)
 
     # Convert samples to plot coords + heading vectors
     pxs: List[float] = []

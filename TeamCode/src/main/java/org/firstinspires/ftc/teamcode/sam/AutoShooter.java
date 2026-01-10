@@ -13,17 +13,11 @@ import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 public class AutoShooter {
 
     // Constants
-    private static final double L_KICKER_WAIT = 0.8;
-    private static final double L_KICKER_SHOOT = 0.574;
-    private static final double M_KICKER_WAIT = 0.6145;
-    private static final double M_KICKER_SHOOT = 0.4175;
-    private static final double R_KICKER_WAIT = 0.705;
-    private static final double R_KICKER_SHOOT = 0.5305;
-
     private static final long KICKER_PULSE_MS = 600;
     private static final double SPINNER_SPEED_NEAR = -1360;
     private static final double SPINNER_SPEED_FAR = -7000;
@@ -54,9 +48,9 @@ public class AutoShooter {
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
-        leftKicker.setPosition(L_KICKER_WAIT);
-        midKicker.setPosition(M_KICKER_WAIT);
-        rightKicker.setPosition(R_KICKER_WAIT);
+        leftKicker.setPosition(Shooter.L_KICKER_WAIT);
+        midKicker.setPosition(Shooter.M_KICKER_WAIT);
+        rightKicker.setPosition(Shooter.R_KICKER_WAIT);
     }
 
     public Action readBallColors() {
@@ -214,19 +208,19 @@ public class AutoShooter {
                 switch (kickerIndex) {
                     case 0:
                         kicker = leftKicker;
-                        shootPos = L_KICKER_SHOOT;
-                        restPos = L_KICKER_WAIT;
+                        shootPos = Shooter.L_KICKER_SHOOT;
+                        restPos = Shooter.L_KICKER_WAIT;
                         break;
                     case 1:
                         kicker = midKicker;
-                        shootPos = M_KICKER_SHOOT;
-                        restPos = M_KICKER_WAIT;
+                        shootPos = Shooter.M_KICKER_SHOOT;
+                        restPos = Shooter.M_KICKER_WAIT;
                         break;
                     case 2:
                     default:
                         kicker = rightKicker;
-                        shootPos = R_KICKER_SHOOT;
-                        restPos = R_KICKER_WAIT;
+                        shootPos = Shooter.R_KICKER_SHOOT;
+                        restPos = Shooter.R_KICKER_WAIT;
                         break;
                 }
 
