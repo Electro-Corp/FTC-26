@@ -81,7 +81,9 @@ public class ShooterCommands {
         @Override
         public boolean run(Shooter_New shooter) {
             shooter.pushCommand(new ShootCommand(Kickers.Position.LEFT));
+            shooter.pushCommand(new DelayCommand(250));
             shooter.pushCommand(new ShootCommand(Kickers.Position.MID, false));
+            shooter.pushCommand(new DelayCommand(250));
             shooter.pushCommand(new ShootCommand(Kickers.Position.RIGHT, false));
             return false;
         }
@@ -142,6 +144,28 @@ public class ShooterCommands {
         @Override
         public String toString() {
             return "SetPIDCommand";
+        }
+    }
+
+    public static class DelayCommand extends ShooterCommand{
+        private double delay, startTime = -1;
+        public DelayCommand(double delay){
+            this.delay = delay;
+        }
+
+        @Override
+        public boolean run(Shooter_New shooter) {
+            if(startTime == -1) {
+                startTime = System.currentTimeMillis();
+            }else if(System.currentTimeMillis() - startTime > delay){
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "Delay";
         }
     }
 }

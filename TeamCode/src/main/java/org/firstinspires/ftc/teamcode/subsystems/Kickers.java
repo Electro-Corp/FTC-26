@@ -4,12 +4,12 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 public class Kickers {
-    public class Config{
+    public static class Config{
         private static final double L_KICKER_WAIT = 0.771;
         private static final double L_KICKER_SHOOT = 0.574;
         private static final double M_KICKER_WAIT = 0.6375;
         private static final double M_KICKER_SHOOT = 0.4175;
-        private static final double R_KICKER_WAIT = 0.58;
+        private static final double R_KICKER_WAIT = 0.55;
         private static final double R_KICKER_SHOOT = 0.723;
     }
 

@@ -15,7 +15,7 @@ public class DataPoint {
     public JsonObject toJSON() {
         JsonObject obj = new JsonObject();
         obj.addProperty("posX", posX);
-        obj.addProperty("posY", posX);
+        obj.addProperty("posY", posY);
         obj.addProperty("heading", heading);
         obj.addProperty("speed", speed);
 

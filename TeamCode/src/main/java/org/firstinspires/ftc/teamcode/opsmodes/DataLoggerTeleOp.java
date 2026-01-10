@@ -41,7 +41,7 @@ public class DataLoggerTeleOp extends LinearOpMode {
 
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
-    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
+    public static PIDFCoefficients pid = new PIDFCoefficients(12,0.1,1,11);
 
 
     private void initHardware() {
@@ -94,7 +94,7 @@ public class DataLoggerTeleOp extends LinearOpMode {
             telemetry.addLine("================ LOGGING =================");
             telemetry.addData("Target Velocity", shooter.SPINNER_SPEED_NEAR);
             telemetry.addData("Localizer", "((%f %f), %f)", drive.localizer.getPose().position.x, drive.localizer.getPose().position.y, drive.localizer.getPose().heading.toDouble());
-
+            telemetry.addData("Logged points", fieldDataPoints.getNumOfPoints());
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());

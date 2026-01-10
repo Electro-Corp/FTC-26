@@ -9,12 +9,7 @@ import java.util.ArrayList;
 
 public class Shooter_New {
     public class Config {
-        private static final long SPIN_UP_TIME_MS = 1800;
-        private static final long SPIN_AFTER_SHOOT_MS = 200;
-        private static final long PAUSE_UNTIL_GATE_OPEN = 400;
-        private static final long PULL_KICKER_BACK = 750;
         public static final double SPINNER_SPEED_NEAR = -1300;
-        public static final double SPINNER_SPEED_FAR = -7000;
     }
 
     private double targetVelocity = 0;

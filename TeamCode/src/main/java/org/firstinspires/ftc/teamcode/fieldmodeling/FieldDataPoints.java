@@ -111,4 +111,9 @@ public class FieldDataPoints {
     }
 
 
+    public double getNumOfPoints(){
+        return points.size();
+    }
+
+
 }

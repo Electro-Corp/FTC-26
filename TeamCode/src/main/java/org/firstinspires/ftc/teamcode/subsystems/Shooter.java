@@ -35,7 +35,7 @@ public class Shooter implements Runnable{
     private static final double L_KICKER_SHOOT = 0.574;
     private static final double M_KICKER_WAIT = 0.6375;
     private static final double M_KICKER_SHOOT = 0.4175;
-    private static final double R_KICKER_WAIT = 0.58;
+    private static final double R_KICKER_WAIT = 0.55;
     private static final double R_KICKER_SHOOT = 0.723;
 
     private static final float COLOR_GAIN = 30.5f;
