@@ -29,7 +29,7 @@ public class DriveActions {
     private static final Pose2d INIT_POSE          = new Pose2d(50.0, -50.0, Math.toRadians(-45));
     private static final Pose2d READ_OBELISK_POSE  = new Pose2d(10.0, -10.0, Math.toRadians(0));
     private static final Pose2d ROW_OF_BALLS1_POSE = new Pose2d(13.0, -56.0, Math.toRadians(90));
-    private static final Pose2d ROW_OF_BALLS2_POSE1 = new Pose2d(-20.0, -10, Math.toRadians(90));
+    private static final Pose2d ROW_OF_BALLS2_POSE1 = new Pose2d(-20.0, -20, Math.toRadians(90));
     private static final Pose2d ROW_OF_BALLS2_POSE2 = new Pose2d(-20.0, -56.0, Math.toRadians(90));
     private static final Pose2d LAUNCH_POSE        = new Pose2d(10.0, -10.0, Math.toRadians(-45));
 

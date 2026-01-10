@@ -5,11 +5,13 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.opsmodes.MainTeleOp;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
@@ -50,6 +52,10 @@ public class AutoShooter {
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
+        this.shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //this.shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MainTeleOp.pid);
+        //this.shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MainTeleOp.pid);
         leftKicker.setPosition(Shooter.L_KICKER_WAIT);
         midKicker.setPosition(Shooter.M_KICKER_WAIT);
         rightKicker.setPosition(Shooter.R_KICKER_WAIT);
