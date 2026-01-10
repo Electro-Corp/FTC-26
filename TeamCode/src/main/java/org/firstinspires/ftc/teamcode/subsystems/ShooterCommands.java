@@ -61,8 +61,9 @@ public class ShooterCommands {
         @Override
         public boolean run(Shooter_New shooter){
             if(loop){
-                if(shooter.getVelocity() - 10 < shooter.getTargetVelocity() && shooter.getTargetVelocity() < shooter.getVelocity() + 10){
+                if((Math.abs(shooter.getTargetVelocity()) - 10 < shooter.getVelocity() && Math.abs(shooter.getTargetVelocity()) + 10 > shooter.getVelocity())){
                     shooter.getKickers().fireKicker(pos);
+                    shooter.pushCommand(new RetractKickerCommand(pos));
                     return false;
                 }
                 return true;
@@ -97,7 +98,7 @@ public class ShooterCommands {
 
         @Override
         public boolean run(Shooter_New shooter){
-            ShootCommand shootCommand = new ShootCommand(shooter.getColorSensors().getPositionOfColor(target)); // replace with real value
+            ShootCommand shootCommand = new ShootCommand(shooter.getColorSensors().getPositionOfColor(target));
             return shootCommand.run(shooter);
         }
 
@@ -114,7 +115,7 @@ public class ShooterCommands {
 
         @Override
         public boolean run(Shooter_New shooter) {
-            if(shooter.getVelocity() - 10 < shooter.getTargetVelocity() && shooter.getTargetVelocity() < shooter.getVelocity() + 10){
+            if((Math.abs(shooter.getTargetVelocity()) - 10 < shooter.getVelocity() && Math.abs(shooter.getTargetVelocity()) + 10 > shooter.getVelocity())){
                 return true;
             }
             shooter.getKickers().retractKicker(pos);

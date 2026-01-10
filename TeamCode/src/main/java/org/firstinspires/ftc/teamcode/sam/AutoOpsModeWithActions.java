@@ -34,7 +34,7 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         initHardware();
 
         waitForStart();
-        telemetry.addData("Pose", driveActions.getCurrentPoseString());
+        telemetry.addData("[MoveReadObelisk] Pose", driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 shooter.spinUp(false),
@@ -43,7 +43,7 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 ));
 
         //Launch initial balls
-        telemetry.addData("Pose", driveActions.getCurrentPoseString());
+        telemetry.addData("[Fire init] Pose", driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToLaunchLocation(),
@@ -55,13 +55,29 @@ public class AutoOpsModeWithActions extends LinearOpMode {
                 intake.goAction()));
 
         //Gather row 1 balls
-        telemetry.addData("Pose",  driveActions.getCurrentPoseString());
+        telemetry.addData("[MoveBalls1] Pose",  driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToRowOfBalls1()));
 
         //Fire row 1 balls
-        telemetry.addData("Pose",  driveActions.getCurrentPoseString());
+        telemetry.addData("[FireRow1] Pose",  driveActions.getCurrentPoseString());
+        telemetry.update();
+        Actions.runBlocking(new SequentialAction(
+                driveActions.moveToLaunchLocation(),
+                shooter.readBallColors(),
+                shooter.fireNextBall(),
+                shooter.fireNextBall(),
+                shooter.fireNextBall()
+        ));
+
+        telemetry.addData("[MoveToRow2] Pose",  driveActions.getCurrentPoseString());
+        telemetry.update();
+        Actions.runBlocking(new SequentialAction(
+                intake.goAction(),
+                driveActions.moveToRowOfBalls2()));
+
+        telemetry.addData("[FireRow2] Pose",  driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
                 driveActions.moveToLaunchLocation(),

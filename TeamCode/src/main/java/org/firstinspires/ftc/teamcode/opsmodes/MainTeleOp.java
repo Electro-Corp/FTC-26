@@ -70,8 +70,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(50,50,45);
+        initPose = new Pose2d(50,-50,-Math.PI / 4);
         drive = new MecanumDrive(hardwareMap, initPose);
+        drive.localizer.setPose(initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
@@ -95,6 +96,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
+            telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
             aimAssist();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
@@ -104,6 +106,12 @@ public abstract class MainTeleOp extends LinearOpMode {
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
                 telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
             }
+
+            drive.localizer.update();
+
+
+            telemetry.addLine(getCurrentPoseString());
+
 
             // Update speed with position
             shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
@@ -284,8 +292,13 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turn(Math.toRadians(drive.localizer.getPose().heading.toDouble() - fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+                        .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading);
         Actions.runBlocking(traj.build());
+    }
+
+    public String getCurrentPoseString() {
+        Pose2d pose = drive.localizer.getPose();
+        return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
     }
 
     protected abstract int GetMyTag();

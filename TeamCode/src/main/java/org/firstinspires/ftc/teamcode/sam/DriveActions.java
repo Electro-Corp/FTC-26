@@ -29,6 +29,7 @@ public class DriveActions {
     private static final Pose2d INIT_POSE          = new Pose2d(50.0, -50.0, Math.toRadians(-45));
     private static final Pose2d READ_OBELISK_POSE  = new Pose2d(10.0, -10.0, Math.toRadians(0));
     private static final Pose2d ROW_OF_BALLS1_POSE = new Pose2d(13.0, -56.0, Math.toRadians(90));
+    private static final Pose2d ROW_OF_BALLS2_POSE = new Pose2d(16.0, -56.0, Math.toRadians(90));
     private static final Pose2d LAUNCH_POSE        = new Pose2d(10.0, -10.0, Math.toRadians(-45));
 
 //    private static final Pose2d INIT_POSE          = new Pose2d(50.0, -50.0, Math.toRadians(-45));
@@ -38,6 +39,7 @@ public class DriveActions {
 
     public DriveActions(HardwareMap hardwareMap) {
         this.drive = new MecanumDrive(hardwareMap, INIT_POSE);
+        this.drive.localizer.setPose(INIT_POSE);
     }
 
     public String getCurrentPoseString() {
@@ -66,6 +68,15 @@ public class DriveActions {
                         ROW_OF_BALLS1_POSE.position.x,
                         ROW_OF_BALLS1_POSE.position.y),
                         ROW_OF_BALLS1_POSE.heading)
+                .build();
+    }
+
+    public Action moveToRowOfBalls2(){
+        return drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(new Vector2d(
+                                ROW_OF_BALLS2_POSE.position.x,
+                                ROW_OF_BALLS2_POSE.position.y),
+                        ROW_OF_BALLS2_POSE.heading)
                 .build();
     }
 

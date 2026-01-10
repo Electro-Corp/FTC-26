@@ -73,8 +73,9 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(50,50,45);
+        initPose = new Pose2d(50,-50,-Math.PI / 4);
         drive = new MecanumDrive(hardwareMap, initPose);
+        drive.localizer.setPose(initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter_New(hardwareMap, colorSensors);
@@ -100,6 +101,8 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
             //telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
+            telemetry.addData("Target speed", shooter.getTargetVelocity());
+            telemetry.addData("Fire speed", shooter.getFiringSpeed());
             aimAssist();
 
 
@@ -108,11 +111,13 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 
 //            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
 //            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
-//            if (tag != null) {
+//            if (tag != null) {i
 //                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
 //                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
 //                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
 //            }
+
+            drive.localizer.update();
 
             // Update speed
             shooter.setFiringSpeed(fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
@@ -272,7 +277,7 @@ public class MainTeleOp_NewShooter extends LinearOpMode {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turn(Math.toRadians(drive.localizer.getPose().heading.toDouble() - fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading);
         Actions.runBlocking(traj.build());
     }
 

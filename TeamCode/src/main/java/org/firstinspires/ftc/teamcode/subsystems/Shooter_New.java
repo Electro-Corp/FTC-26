@@ -132,10 +132,10 @@ public class Shooter_New {
 
     public String getCommandStackString(){
         String stack = "";
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < 7; i++){
             if(queue.size() > i)
                 stack += "[ " + queue.get(i).toString() + " ]\n";
-            else stack += "[         ]";
+            else stack += "[         ]\n";
         }
         return stack;
     }
@@ -143,4 +143,5 @@ public class Shooter_New {
     public double getFiringSpeed(){
         return firingSpeed;
     }
+
 }
