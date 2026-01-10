@@ -64,11 +64,13 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         telemetry.addData("[FireRow1] Pose",  driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
+                shooter.spinUp(false),
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
-                shooter.fireNextBall()
+                shooter.fireNextBall(),
+                shooter.stop()
         ));
 
         telemetry.addData("[MoveToRow2] Pose",  driveActions.getCurrentPoseString());
@@ -80,11 +82,13 @@ public class AutoOpsModeWithActions extends LinearOpMode {
         telemetry.addData("[FireRow2] Pose",  driveActions.getCurrentPoseString());
         telemetry.update();
         Actions.runBlocking(new SequentialAction(
+                shooter.spinUp(false),
                 driveActions.moveToLaunchLocation(),
                 shooter.readBallColors(),
                 shooter.fireNextBall(),
                 shooter.fireNextBall(),
-                shooter.fireNextBall()
+                shooter.fireNextBall(),
+                shooter.stop()
         ));
     }
 }
