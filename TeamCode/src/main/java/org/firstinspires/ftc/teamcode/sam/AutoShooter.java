@@ -181,15 +181,12 @@ public class AutoShooter {
         private Servo kicker;
         private double shootPos;
         private double restPos;
-        private int patternPos;
         private int kickerIndex;
 
         private boolean initialized = false;
         private long startTimeMs;
 
         FireNextBallAction() {
-            // patternPos is which pattern color we are shooting now (0,1,2)
-            this.patternPos = ballIndex;
         }
 
         @Override
@@ -197,6 +194,9 @@ public class AutoShooter {
 
             if (!initialized) {
                 computeFiringOrderIfNeeded();
+
+                // Capture current pattern position at run-time
+                int patternPos = ballIndex;
 
                 // sanitize pattern position
                 if (patternPos < 0 || patternPos > 2) {
