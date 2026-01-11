@@ -5,11 +5,13 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.opsmodes.MainTeleOp;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
@@ -19,6 +21,7 @@ public class AutoShooter {
 
     // Constants
     private static final long KICKER_PULSE_MS = 600;
+    private static final long SHOOTER_RECOVERY_TIMEOUT_MS = 1000;
     private static final double SPINNER_SPEED_NEAR = -1360;
     private static final double SPINNER_SPEED_FAR = -7000;
 
@@ -31,6 +34,7 @@ public class AutoShooter {
     private final Servo rightKicker;
     private final TestBrain testBrain;
 
+    private double lastTargetVelocity = SPINNER_SPEED_NEAR;
     private BallColor[] loadedColors;
     // ballIndex is the index into the pattern (0, 1, 2)
     private int ballIndex = 0;
@@ -48,6 +52,10 @@ public class AutoShooter {
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
+        this.shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //this.shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MainTeleOp.pid);
+        //this.shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MainTeleOp.pid);
         leftKicker.setPosition(Shooter.L_KICKER_WAIT);
         midKicker.setPosition(Shooter.M_KICKER_WAIT);
         rightKicker.setPosition(Shooter.R_KICKER_WAIT);
@@ -85,6 +93,7 @@ public class AutoShooter {
 
     public Action spinUp(boolean fast){
         double targetVelocity = fast ? SPINNER_SPEED_FAR : SPINNER_SPEED_NEAR;
+        lastTargetVelocity = targetVelocity;
         return new SpinUpAction(targetVelocity);
     }
 
@@ -168,15 +177,13 @@ public class AutoShooter {
     }
 
     /**
-     * Based on the current ballIndex (pattern position), opens the appropriate kicker,
-     * waits for it to shoot, and retracts it.
-     * Uses firingOrder[ballIndex] to choose which kicker to fire.
+     * Fires 3 balls in order based on the current pattern and loaded colors.
      */
-    public Action fireNextBall() {
-        return new FireNextBallAction();
+    public Action fire3balls() {
+        return new Fire3BallsAction();
     }
 
-    private class FireNextBallAction implements Action {
+    private class Fire3BallsAction implements Action {
 
         private Servo kicker;
         private double shootPos;
@@ -184,9 +191,12 @@ public class AutoShooter {
         private int kickerIndex;
 
         private boolean initialized = false;
+        private boolean ballInitialized = false;
+        private int ballCount = 0;
         private long startTimeMs;
+        private int stage = 0; // 0 = pulse, 1 = recovery
 
-        FireNextBallAction() {
+        Fire3BallsAction() {
         }
 
         @Override
@@ -194,7 +204,10 @@ public class AutoShooter {
 
             if (!initialized) {
                 computeFiringOrderIfNeeded();
+                initialized = true;
+            }
 
+            if (!ballInitialized) {
                 // Capture current pattern position at run-time
                 int patternPos = ballIndex;
 
@@ -230,25 +243,42 @@ public class AutoShooter {
 
                 kicker.setPosition(shootPos);
                 startTimeMs = System.currentTimeMillis();
-                initialized = true;
+                stage = 0;
+                ballInitialized = true;
 
                 p.put("kicker", "EXTEND " + kickerIndex);
-                return true;
             }
 
             long elapsed = System.currentTimeMillis() - startTimeMs;
 
-            if (elapsed < KICKER_PULSE_MS) {
-                p.put("kicker", "HOLD " + kickerIndex);
-                return true;
+            if (stage == 0) {
+                if (elapsed < KICKER_PULSE_MS) {
+                    p.put("kicker", "HOLD " + kickerIndex);
+                    return true;
+                }
+
+                // Start retracting
+                kicker.setPosition(restPos);
+                stage = 1;
+                p.put("kicker", "RETRACT " + kickerIndex);
             }
 
-            // Start retracting
-            kicker.setPosition(restPos);
+            double shooterVelocity = (Math.abs(shooterLeft.getVelocity()) + Math.abs(shooterRight.getVelocity())) / 2.0;
+            double targetVelocity = Math.abs(lastTargetVelocity);
+            boolean atSpeed = shooterVelocity >= targetVelocity;
+            boolean timedOut = elapsed >= SHOOTER_RECOVERY_TIMEOUT_MS;
 
-            p.put("kicker", "RETRACT " + kickerIndex);
+            p.put("shooterVelocity", shooterVelocity);
 
-            return false;
+            if (atSpeed || timedOut) {
+                ballCount++;
+                ballInitialized = false;
+                if (ballCount >= 3) {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 
