@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import java.util.ArrayList;
 
-public class Shooter_New {
+public class Shooter_New implements Runnable{
     public class Config {
         public static final double SPINNER_SPEED_NEAR = -1300;
     }
@@ -25,7 +25,7 @@ public class Shooter_New {
 
     private double firingSpeed = Config.SPINNER_SPEED_NEAR;
 
-    private boolean spinup = false, reverse = false;
+    private boolean spinup = false, reverse = false, running = true;
 
     public Shooter_New(HardwareMap hardwareMap, ColorSensors colorSensors){
         this.shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
@@ -75,6 +75,19 @@ public class Shooter_New {
             shooterRight.setVelocity(-targetVelocity);
             lastVelocity = targetVelocity;
         }
+    }
+    /*
+        Thread for Auto
+     */
+    @Override
+    public void run() {
+        while(running){
+            this.update();
+        }
+    }
+
+    public void stopShooterThread(){
+        this.running = false;
     }
 
     /*
@@ -137,6 +150,10 @@ public class Shooter_New {
 
     public double getFiringSpeed(){
         return firingSpeed;
+    }
+
+    public boolean currentCommandIsFiring(){
+        return queue.get(0) instanceof ShooterCommands.ShootCommand;
     }
 
 }

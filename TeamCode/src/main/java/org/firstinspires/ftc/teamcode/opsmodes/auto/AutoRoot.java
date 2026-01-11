@@ -6,18 +6,20 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
-import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.subsystems.Kickers;
 
+import org.firstinspires.ftc.teamcode.subsystems.ShooterCommands;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter_New;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
@@ -29,7 +31,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     MecanumDrive drive = null;
 
     private Intake intake;
-    private Shooter shooter;
+    private Shooter_New shooter;
     private ColorSensors colorSensors;
 
     private Thread shooterThread, thisTeleThread;
@@ -42,25 +44,26 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
+    public FieldDataPoints fieldMap;
 
     public static PIDFCoefficients pid = new PIDFCoefficients(12,0.3,1,12);
 
     public void run(){
         while(!isStopRequested()){
-            updateTele();
+            updateAutoThread();
         }
         shooter.stopShooterThread();
     }
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(0,0,0);
+        initPose = new Pose2d(50,-50,45);
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
-        shooter = new Shooter(hardwareMap, colorSensors, true);
+        shooter = new Shooter_New(hardwareMap, colorSensors);
 
-        shooter.SPINNER_SPEED_NEAR = -1280;
+        //shooter.SPINNER_SPEED_NEAR = -1280;
 
         shooter.setPID(pid);
 
@@ -79,10 +82,10 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         waitForStart();
 
-        shooter.spinUp(false, false);
+        shooter.pushCommand(new ShooterCommands.SpinUp(false, false));
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToXConstantHeading(-53)
+                .lineToXConstantHeading(0)
                 .turn(ang(50));
         runTrajectory(traj);
 
@@ -98,14 +101,14 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shootThree();
 
-        /*intake.setSpeed(-0.88);
+        intake.setSpeed(-0.88);
 
-        intake.go();*/
+        intake.go();
 
         traj = traj.endTrajectory().fresh()
-                .lineToXConstantHeading(0);
-                //.turn(ang((125)))
-                //.lineToYConstantHeading(-35 * getInvert());
+                .lineToXConstantHeading(13)
+                .turn(ang((125)))
+                .lineToYConstantHeading(-35 * getInvert());
         runTrajectory(traj);
 
 
@@ -150,7 +153,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     // Find an unfired ball that matches the requested color
     private int findIndexForColor(BallColor color) {
         for (int i = 0; i < 3; i++) {
-            if (!fired[i] && shooter.getLoadedColors()[i] == color) {
+            if (!fired[i] && colorSensors.readAllColors()[i] == color) {
                 return i;
             }
         }
@@ -169,14 +172,14 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void waitForShooter(){
         // Block until shooter is done shooting or force stopped
-        while(shooter.getState() != Shooter.ShooterState.STOPPED && !isStopRequested()){
+        while(shooter.currentCommandIsFiring() && !isStopRequested()){
            // block main thread
         }
     }
 
-    private void updateTele(){
+    private void updateAutoThread(){
         // Output pattern
-        BallColor[] loadedColors = shooter.getLoadedColors();
+        BallColor[] loadedColors = colorSensors.readAllColors();
         if(pattern != null)
             telemetry.addData("Pattern", pattern.toString());
         else
@@ -185,16 +188,20 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         telemetry.addData("Static Loaded",  "%s %s %s", loadedColors[0], loadedColors[1], loadedColors[2]);
         telemetry.addData("Live Loaded",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
         telemetry.addData("Next fire index", currentIndex);
+        telemetry.addLine(getCurrentPoseString());
         telemetry.addLine("==== SHOOTER: =====");
         telemetry.addData("Speed", shooter.getVelocity());
-        telemetry.addData("State", shooter.getState());
         telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
 
         telemetry.update();
 
+        // Use field data
+        drive.localizer.update();
+        shooter.setFiringSpeed(fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
+
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Shooter Vel", shooter.getVelocity());
-        packet.put("Target Vel", -(shooter.SPINNER_SPEED_NEAR));
+        packet.put("Target Vel", -(shooter.getTargetVelocity()));
         packet.put("Left shooter Vel", shooter.getLeftVelocity());
         packet.put("Right shooter Vel", shooter.getRightVelocity());
 
@@ -220,6 +227,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void shootNext() {
+        rotateToFire();
         BallColor targetColor = pattern.getColorAtIndex(currentIndex);
 
         // First try to find a ball that matches the pattern color
@@ -238,19 +246,18 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         // Tell the shooter which position to fire
         switch (indexToShoot) {
             case 0:
-                shooter.setShootSpecific(true, false, false);
+                shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.LEFT, true));
                 break;
             case 1:
-                shooter.setShootSpecific(false, true, false);
+                shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.MID, true));
                 break;
             case 2:
-                shooter.setShootSpecific(false, false, true);
+                shooter.pushCommand(new ShooterCommands.ShootCommand(Kickers.Position.RIGHT, true));
                 break;
             default:
                 return;
         }
 
-        shooter.shootNear();
         fired[indexToShoot] = true;
 
         // Advance to next pattern index
@@ -266,22 +273,28 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void shootThree(){
         // Read
-        shooter.updateLoadedColors();
         for(int i = 0; i < 3; i++){
             shootNext();
             // Poor hack
             //if(i == 0) shooter.SPINNER_SPEED_NEAR = -1300;
             //if(i > 0) shooter.SPINNER_SPEED_NEAR = -1350;
-            shooter.spinUp(false, false);
-            //sleep(200);
-            while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
+            shooter.pushCommand(new ShooterCommands.SpinUp(false, false));
         }
         // Reset
         fired = new boolean[3];
-        shooter.stopShoot();
+        shooter.pushCommand(new ShooterCommands.StopCommand());
     }
 
+    public String getCurrentPoseString() {
+        Pose2d pose = drive.localizer.getPose();
+        return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+    }
 
+    public void rotateToFire(){
+        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading);
+        Actions.runBlocking(traj.build());
+    }
 
     protected abstract int getTargetTag();
 
