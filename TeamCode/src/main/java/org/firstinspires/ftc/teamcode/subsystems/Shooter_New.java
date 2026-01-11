@@ -46,9 +46,10 @@ public class Shooter_New implements Runnable{
      */
     public void pushCommand(ShooterCommands.ShooterCommand command){
         if(command.override){
-            queue.clear();
+            queue.add(0, command);
+        }else {
+            this.queue.add(command);
         }
-        this.queue.add(command);
     }
 
     /*
@@ -82,6 +83,11 @@ public class Shooter_New implements Runnable{
     @Override
     public void run() {
         while(running){
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             this.update();
         }
     }
@@ -152,8 +158,12 @@ public class Shooter_New implements Runnable{
         return firingSpeed;
     }
 
-    public boolean currentCommandIsFiring(){
-        return queue.get(0) instanceof ShooterCommands.ShootCommand;
+    public boolean commandStackEmpty(){
+        return !(queue.isEmpty());
+    }
+
+    public void clearQueue(){
+        queue.clear();
     }
 
 }

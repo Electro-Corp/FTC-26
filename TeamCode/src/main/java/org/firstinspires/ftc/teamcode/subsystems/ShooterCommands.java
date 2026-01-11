@@ -29,12 +29,16 @@ public class ShooterCommands {
         public String toString() { return "SpinUp"; }
     }
     public static class StopCommand extends ShooterCommand{
+        public StopCommand(boolean o){
+            this.override = o;
+        }
         public StopCommand(){
             this.override = true;
         }
 
         @Override
         public boolean run(Shooter_New shooter){
+            if(override) shooter.clearQueue();
             shooter.setSpinup(false, false);
             shooter.getKickers().retractKicker(Kickers.Position.LEFT);
             shooter.getKickers().retractKicker(Kickers.Position.MID);
