@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class RED_TeleOp extends MainTeleOp {
 
     @Override
-    protected int GetMyTag() {
-        return 24;
+    protected int GetSideMultiplier() {
+        return 1;
     }
 }

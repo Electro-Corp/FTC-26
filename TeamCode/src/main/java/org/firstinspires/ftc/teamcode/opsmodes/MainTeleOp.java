@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
-import android.provider.ContactsContract;
-
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -71,7 +69,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(50,-50,-Math.PI / 4);
+        initPose = new Pose2d(50,-50 * GetSideMultiplier(), Math.toRadians(-50 * GetSideMultiplier()));
         drive = new MecanumDrive(hardwareMap, initPose);
         drive.localizer.setPose(initPose);
         intake = new Intake(hardwareMap);
@@ -101,7 +99,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             aimAssist();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(GetMyTag()); //
+            AprilTagDetection tag = tBrain.getTagID(GetSideMultiplier()); //
             if (tag != null) {
                 telemetry.addData("Bearing to target", tag.ftcPose.bearing);
                 telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
@@ -128,7 +126,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     private void aimAssist(){
         if(gamepad1.y) {
             if (!isYPressed) {
-                AprilTagDetection tag = tBrain.getTagID(GetMyTag()); // Only Red tag right now
+                AprilTagDetection tag = tBrain.getTagID(GetSideMultiplier()); // Only Red tag right now
                 if (tag != null) {
                     AprilTagPoseFtc tagPose = tag.ftcPose;
                     incAmount = Math.toRadians(tagPose.bearing) / 2;
@@ -293,7 +291,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                        .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading);
+                        .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading * GetSideMultiplier());
         Actions.runBlocking(traj.build());
     }
 
@@ -302,6 +300,6 @@ public abstract class MainTeleOp extends LinearOpMode {
         return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
     }
 
-    protected abstract int GetMyTag();
+    protected abstract int GetSideMultiplier();
 
 }
