@@ -143,7 +143,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .turnTo(ang(25))
-                .strafeToLinearHeading(new Vector2d(-15,  -50 * getInvert()), ang(90));
+                .strafeToLinearHeading(new Vector2d(-30,  -50 * getInvert()), ang(90));
         runTrajectory(traj);
 
         Thread.sleep(1000);
@@ -159,7 +159,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shootThree();
 
         traj = drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(54, -54 * getInvert()), ang(-50 * getInvert()));
+                .strafeToLinearHeading(initPose.position, initPose.heading);
         runTrajectory(traj);
 
         shooter.stopShooterThread();
