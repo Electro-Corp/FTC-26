@@ -67,7 +67,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(54,-54, ang(-50));
+        initPose = new Pose2d(54,-54 * getInvert(), ang(-50 * getInvert()));
         drive = new MecanumDrive(hardwareMap, initPose);
         intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
@@ -157,6 +157,10 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         intake.stop();
 
         shootThree();
+
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(new Vector2d(54, -54 * getInvert()), ang(-50 * getInvert()));
+        runTrajectory(traj);
 
         shooter.stopShooterThread();
     }
