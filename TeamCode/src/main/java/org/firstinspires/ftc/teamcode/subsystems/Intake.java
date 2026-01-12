@@ -10,6 +10,14 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Intake {
     private DcMotor intakeMotor;
     private double speed;
+
+    private Shooter shooter;
+    public Intake (HardwareMap hardwareMap, Shooter shooter){
+        speed = -1.0;
+        this.shooter = shooter;
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
+    }
+
     public Intake (HardwareMap hardwareMap){
         speed = -1.0;
         intakeMotor = hardwareMap.get(DcMotor.class, "intake");
@@ -21,6 +29,11 @@ public class Intake {
 
     public void go(){
         intakeMotor.setPower(speed);
+        if(this.shooter != null){
+            if(this.shooter.getState() == Shooter.ShooterState.STOPPED){
+                this.shooter.reverse();
+            }
+        }
     }
 
     public void reverse(){

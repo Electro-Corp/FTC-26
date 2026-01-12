@@ -174,6 +174,12 @@ public class Shooter implements Runnable{
         }
     }
 
+    public void reverse(){
+        setState(ShooterState.REVERSE);
+        shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 100);
+        shooterRight.setVelocity(SPINNER_SPEED_NEAR / 100);
+    }
+
 
     public void update() {
         long elapsed = System.currentTimeMillis() - stateStartTime;

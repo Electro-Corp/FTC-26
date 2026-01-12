@@ -72,9 +72,9 @@ public abstract class MainTeleOp extends LinearOpMode {
         initPose = new Pose2d(50,-50 * GetSideMultiplier(), Math.toRadians(-50 * GetSideMultiplier()));
         drive = new MecanumDrive(hardwareMap, initPose);
         drive.localizer.setPose(initPose);
-        intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
+        intake = new Intake(hardwareMap, shooter);
 
         shooter.setPID(pid);
 

@@ -67,9 +67,10 @@ public class DataLoggerTeleOp extends LinearOpMode {
 
         initPose = new Pose2d(0,0,0);
         drive = new MecanumDrive(hardwareMap, initPose);
-        intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
+        intake = new Intake(hardwareMap, shooter);
+
 
 
         // Start logging

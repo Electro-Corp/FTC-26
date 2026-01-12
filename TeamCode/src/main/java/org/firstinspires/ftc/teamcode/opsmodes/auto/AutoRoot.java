@@ -69,9 +69,10 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         tBrain = new TestBrain(hardwareMap);
         initPose = new Pose2d(54,-54 * getInvert(), ang(-50 * getInvert()));
         drive = new MecanumDrive(hardwareMap, initPose);
-        intake = new Intake(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
+        intake = new Intake(hardwareMap, shooter);
+
         fieldMap = DataLogger.read();
 
         posHeadings = new PositionsHeadings();
