@@ -337,7 +337,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(5));
+                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(10));
         Actions.runBlocking(traj.build());
     }
 
