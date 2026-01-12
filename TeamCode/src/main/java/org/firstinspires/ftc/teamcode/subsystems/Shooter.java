@@ -166,20 +166,13 @@ public class Shooter implements Runnable{
     public void reverse(boolean fast){
         setState(ShooterState.REVERSE);
         if(fast) {
-            shooterLeft.setVelocity(-SPINNER_SPEED_FAR / 10);
-            shooterRight.setVelocity(SPINNER_SPEED_FAR / 10);
+            shooterLeft.setVelocity(-SPINNER_SPEED_FAR / 8);
+            shooterRight.setVelocity(SPINNER_SPEED_FAR / 8);
         }else{
-            shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 10);
-            shooterRight.setVelocity(SPINNER_SPEED_NEAR / 10);
+            shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 8);
+            shooterRight.setVelocity(SPINNER_SPEED_NEAR / 8);
         }
     }
-
-    public void reverse(){
-        setState(ShooterState.REVERSE);
-        shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 100);
-        shooterRight.setVelocity(SPINNER_SPEED_NEAR / 100);
-    }
-
 
     public void update() {
         long elapsed = System.currentTimeMillis() - stateStartTime;
