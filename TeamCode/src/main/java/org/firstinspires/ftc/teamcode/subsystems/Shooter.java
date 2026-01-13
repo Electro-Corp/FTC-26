@@ -31,11 +31,11 @@ public class Shooter implements Runnable{
     }
 
     //Constants
-    public static final double L_KICKER_WAIT = 0.771;
+    public static final double L_KICKER_WAIT = 0.8025;
     public static final double L_KICKER_SHOOT = 0.574;
-    public static final double M_KICKER_WAIT = 0.6375;
+    public static final double M_KICKER_WAIT = 0.65;
     public static final double M_KICKER_SHOOT = 0.4175;
-    public static final double R_KICKER_WAIT = 0.55;
+    public static final double R_KICKER_WAIT = 0.543;
     public static final double R_KICKER_SHOOT = 0.723;
 
     private static final float COLOR_GAIN = 30.5f;
