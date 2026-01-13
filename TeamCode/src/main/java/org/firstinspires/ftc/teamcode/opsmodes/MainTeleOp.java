@@ -290,7 +290,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                        .turnTo(((fieldMap.getStateAtPose(drive.localizer.getPose()).heading) + Math.toRadians(10)) * GetSideMultiplier());
+                        .turnTo(((fieldMap.getStateAtPose(drive.localizer.getPose()).heading * GetSideMultiplier()) + Math.toRadians(10 * GetSideMultiplier())));
         Actions.runBlocking(traj.build());
     }
 
