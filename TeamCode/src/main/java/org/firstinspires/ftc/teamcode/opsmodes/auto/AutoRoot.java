@@ -125,7 +125,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .strafeToLinearHeading(new Vector2d(4,  -50 * getInvert()), ang(90));
         runTrajectory(traj);
 
-        Thread.sleep(1000);
+        Thread.sleep(500);
 
         shooter.spinUp(false, false);
 
@@ -147,7 +147,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .strafeToLinearHeading(new Vector2d(-30,  -60 * getInvert()), ang(90));
         runTrajectory(traj);
 
-        Thread.sleep(1000);
+        Thread.sleep(500);
 
         shooter.spinUp(false, false);
 
@@ -338,7 +338,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(10));
+                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(15));
         Actions.runBlocking(traj.build());
     }
 
