@@ -69,7 +69,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(50,-50 * GetSideMultiplier(), Math.toRadians(-50 * GetSideMultiplier()));
+        initPose = new Pose2d(50,-50, Math.toRadians(-50 * GetSideMultiplier()));
         drive = new MecanumDrive(hardwareMap, initPose);
         drive.localizer.setPose(initPose);
         colorSensors = new ColorSensors(hardwareMap);
@@ -110,7 +110,6 @@ public abstract class MainTeleOp extends LinearOpMode {
 
 
             telemetry.addLine(getCurrentPoseString());
-
 
             // Update speed with position
             shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
