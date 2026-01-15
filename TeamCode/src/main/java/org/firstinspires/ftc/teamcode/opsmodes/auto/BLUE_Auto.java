@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="BLUE Auto")
+@Autonomous(name="A_BLUE Auto")
 public class BLUE_Auto extends AutoRoot{
     @Override
     protected int getTargetTag() {

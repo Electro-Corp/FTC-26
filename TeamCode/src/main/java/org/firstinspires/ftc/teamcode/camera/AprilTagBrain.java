@@ -4,6 +4,7 @@ import android.graphics.Point;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibrationIdentity;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -104,5 +105,9 @@ public class AprilTagBrain {
 
     public float getFPS(){
         return visionPortal.getFps();
+    }
+
+    public CameraStreamSource getCamera(){
+        return visionPortal;
     }
 }

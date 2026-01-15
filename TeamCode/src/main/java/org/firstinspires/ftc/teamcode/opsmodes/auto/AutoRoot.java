@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.google.gson.JsonObject;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
@@ -25,6 +26,10 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterCommands;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter_New;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
+
+import java.io.FileWriter;
+import java.io.Writer;
+import java.util.Random;
 
 @Config
 public abstract class AutoRoot extends LinearOpMode implements Runnable {
@@ -54,6 +59,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     public static class PositionsHeadings{
         public double obeliskPos = -20;
         public double obeliskAngle = 0;
+
+        public Pose2d shootingPosition;
     }
 
     PositionsHeadings posHeadings;
@@ -62,20 +69,24 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         while(!isStopRequested()){
             updateAutoThread();
         }
+        dumpPosition();
         shooter.stopShooterThread();
     }
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(54,-54 * getInvert(), ang(-50 * getInvert()));
+        initPose = new Pose2d(54,-54 * getInvert(), -0.873 * getInvert());
         drive = new MecanumDrive(hardwareMap, initPose);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
-        intake = new Intake(hardwareMap, shooter);
+        intake = new Intake(hardwareMap);
+
+        FtcDashboard.getInstance().startCameraStream(tBrain.getCamera(), 24);
 
         fieldMap = DataLogger.read();
 
         posHeadings = new PositionsHeadings();
+        posHeadings.shootingPosition = new Pose2d(new Vector2d(18, -20 * getInvert()), -50 * getInvert());
 
         //shooter.SPINNER_SPEED_NEAR = -1280;
 
@@ -98,15 +109,13 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         waitForStart();
 
-        shooter.spinUp(false, true);
+        shooter.spinUp(false, false);
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToYSplineHeading(posHeadings.obeliskPos, ang(posHeadings.obeliskAngle));
+                .lineToYSplineHeading(posHeadings.obeliskPos * getInvert(), ang(posHeadings.obeliskAngle));
         runTrajectory(traj);
 
         pattern = readObelisk();
-
-        intake.go();
 
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .turn(ang(-52));
@@ -125,16 +134,13 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .strafeToLinearHeading(new Vector2d(4,  -50 * getInvert()), ang(90));
         runTrajectory(traj);
 
-        Thread.sleep(500);
+        Thread.sleep(250);
 
         shooter.spinUp(false, false);
 
         traj = drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(10, posHeadings.obeliskPos * getInvert()), ang(50));
-                //.lineToXConstantHeading(-30);
+                .strafeToLinearHeading(posHeadings.shootingPosition.position, posHeadings.shootingPosition.heading);
         runTrajectory(traj);
-
-        //intake.stop();
 
         shootThree();
 
@@ -147,15 +153,16 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
                 .strafeToLinearHeading(new Vector2d(-30,  -60 * getInvert()), ang(90));
         runTrajectory(traj);
 
-        Thread.sleep(500);
+        Thread.sleep(250);
 
         shooter.spinUp(false, false);
 
-        traj = drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(new Vector2d(10, posHeadings.obeliskPos * getInvert()), ang(50));
-        runTrajectory(traj);
+        // stupid hack
+        //posHeadings.shootingPosition = new Pose2d(new Vector2d(posHeadings.shootingPosition.position.x, posHeadings.shootingPosition.position.y - (getInvert() * 3)), posHeadings.shootingPosition.heading);
 
-        //intake.stop();
+        traj = drive.actionBuilder(drive.localizer.getPose())
+                .strafeToLinearHeading(posHeadings.shootingPosition.position, posHeadings.shootingPosition.heading);
+        runTrajectory(traj);
 
         shootThree();
 
@@ -164,16 +171,17 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         runTrajectory(traj);
 
         shooter.stopShooterThread();
+
+        dumpPosition();
     }
 
     private Pattern readObelisk() {
+        sleep(500);
         for(int i = 21; i <= 23; i++){
-            if(tBrain.getTagID(i) != null){
-                return Pattern.fromNum(i);
-            }
             sleep(250);
+            if(tBrain.isIdOnScreen(i)) return Pattern.fromNum(i);
         }
-        return Pattern.fromNum(-1);
+        return Pattern.fromNum(new Random().nextInt((23 - 21) + 1) + 21);
     }
 
     // Litearlly becuase im lazy
@@ -223,17 +231,19 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         telemetry.addLine(getCurrentPoseString());
         telemetry.addLine("==== SHOOTER: =====");
         telemetry.addData("Speed", shooter.getVelocity());
-        telemetry.addData("Calculated speed", fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
+        telemetry.addData("Calculated speed", -fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
+        telemetry.addData("Current Target", -(shooter.SPINNER_SPEED_NEAR));
         telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
         telemetry.addData("Shooter state", shooter.getState());
         //telemetry.addData("Current is shoot", shooter.commandStackEmpty());
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
+        shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 30;
+
         // Use field data
         drive.localizer.update();
         //shooter.setFiringSpeed(fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
-        shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
 
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Shooter Vel", shooter.getVelocity());
@@ -315,13 +325,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         rotateToFire();
         for(int i = 0; i < 3; i++){
             shooter.spinUp(false, false);
+            //while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
             shootNext(true);
             // Poor hack
             //if(i == 0) shooter.SPINNER_SPEED_NEAR = -1300;
             //if(i > 0) shooter.SPINNER_SPEED_NEAR = -1350;
-
             //sleep(200);
-            //while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
             //shooter.pushCommand(new ShooterCommands.SpinUp(false, false));
         }
         // Reset
@@ -337,9 +346,36 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     public void rotateToFire(){
+        Pose2d og = drive.localizer.getPose();
+        Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * getInvert()), og.heading.toDouble() * getInvert());
+
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo(fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(15));
+                .turnTo((fieldMap.getStateAtPose(drive.localizer.getPose()).heading + ang(19)) * getInvert());
         Actions.runBlocking(traj.build());
+    }
+
+    public void dumpPosition(){
+        Writer logOut;
+
+        try{
+            logOut = new FileWriter("/sdcard/end.json");
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
+        try {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("posX", drive.localizer.getPose().position.x);
+            obj.addProperty("posY", drive.localizer.getPose().position.y);
+            obj.addProperty("heading", drive.localizer.getPose().heading.toDouble());
+            JsonObject wrapper = new JsonObject();
+            wrapper.add("start", obj);
+
+            logOut.write(wrapper.toString());
+            logOut.close();
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     protected abstract int getTargetTag();

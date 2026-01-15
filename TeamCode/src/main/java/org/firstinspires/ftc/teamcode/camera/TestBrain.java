@@ -47,6 +47,13 @@ public class TestBrain extends AprilTagBrain{
         return null;
     }
 
+    public boolean isIdOnScreen(int id){
+        for(AprilTagDetection tag : this.getVisibleTags())
+            if(tag.id == id) return true;
+
+        return false;
+    }
+
     public AprilTagPoseFtc getCloestTagPose(){
         ArrayList<AprilTagDetection> tags = this.getVisibleTags();
 

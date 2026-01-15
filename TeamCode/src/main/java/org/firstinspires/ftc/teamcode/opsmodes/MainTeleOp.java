@@ -3,7 +3,11 @@ package org.firstinspires.ftc.teamcode.opsmodes;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -20,6 +24,9 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
+
+import java.io.FileReader;
+import java.io.Reader;
 
 
 public abstract class MainTeleOp extends LinearOpMode {
@@ -41,6 +48,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12);
 
+    private boolean erroredOut = false;
+    private String readError = "NONE";
 
     public FieldDataPoints fieldMap;
 
@@ -69,7 +78,15 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(50,-50, Math.toRadians(-50 * GetSideMultiplier()));
+
+        try{
+            initPose = getAutoPose();
+        } catch (Exception e){
+            initPose = new Pose2d(50,-50, Math.toRadians(-50 * GetSideMultiplier()));
+            erroredOut = true;
+            readError = e.getMessage();
+        }
+
         drive = new MecanumDrive(hardwareMap, initPose);
         drive.localizer.setPose(initPose);
         colorSensors = new ColorSensors(hardwareMap);
@@ -96,6 +113,12 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
             telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+
+            if(erroredOut){
+                telemetry.addLine("Failed to read auto end position, using default.");
+                telemetry.addLine(readError);
+            }
+
             aimAssist();
 
             telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
@@ -297,6 +320,13 @@ public abstract class MainTeleOp extends LinearOpMode {
     public String getCurrentPoseString() {
         Pose2d pose = drive.localizer.getPose();
         return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+    }
+
+    public Pose2d getAutoPose() throws Exception {
+        Reader reader = new FileReader("/sdcard/end.json");
+        JsonObject obj = new JsonParser().parse(reader).getAsJsonObject();
+        JsonObject wrapper = obj.get("start").getAsJsonObject();
+        return new Pose2d(new Vector2d(wrapper.get("posX").getAsDouble(), wrapper.get("posY").getAsDouble()), wrapper.get("heading").getAsDouble());
     }
 
     protected abstract int GetSideMultiplier();
