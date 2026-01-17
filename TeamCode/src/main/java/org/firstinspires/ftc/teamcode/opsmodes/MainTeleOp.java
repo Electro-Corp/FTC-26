@@ -48,6 +48,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12);
 
+
     private boolean erroredOut = false;
     private String readError = "NONE";
 
@@ -250,11 +251,12 @@ public abstract class MainTeleOp extends LinearOpMode {
         shooting = shooter.isShooting();
         //shooter
         if(gamepad2.right_bumper /*&& !shooting*/) { //shoot far
-            shooter.kickersWait();
-            //shooter.setToShootAll();
-            //if(fast)
-            //    shooter.shootFar();
-            //else shooter.shootNear();
+            rotateToFire();
+            //shooter.kickersWait();
+            shooter.setToShootAll();
+            if(fast)
+                shooter.shootFar();
+            else shooter.shootNear();
         }
         if(gamepad2.right_trigger > .2){
             shooter.spinUp(fast);
@@ -313,7 +315,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     public void rotateToFire(){
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                        .turnTo(((fieldMap.getStateAtPose(drive.localizer.getPose()).heading * GetSideMultiplier()) + Math.toRadians(10 * GetSideMultiplier())));
+                        .turnTo(((fieldMap.getStateAtPose(drive.localizer.getPose()).heading * GetSideMultiplier()) + Math.toRadians(19 * GetSideMultiplier())));
         Actions.runBlocking(traj.build());
     }
 

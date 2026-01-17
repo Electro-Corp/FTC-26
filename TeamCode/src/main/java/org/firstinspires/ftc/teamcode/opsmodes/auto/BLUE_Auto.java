@@ -12,4 +12,9 @@ public class BLUE_Auto extends AutoRoot{
     protected int getInvert(){
         return -1;
     }
+
+    @Override
+    protected double getXOffset() {
+        return 7.5;
+    }
 }

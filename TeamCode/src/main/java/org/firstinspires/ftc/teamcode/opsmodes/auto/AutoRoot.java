@@ -58,9 +58,9 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public static class PositionsHeadings{
         public double obeliskPos = -20;
-        public double obeliskAngle = 0;
+        public double obeliskAngle = 10;
 
-        public Pose2d shootingPosition;
+        public Pose2d shootingPosition, endPosition;
     }
 
     PositionsHeadings posHeadings;
@@ -75,7 +75,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(54,-54 * getInvert(), -0.873 * getInvert());
+        initPose = new Pose2d(54,-54 * getInvert(), ang(-50));
         drive = new MecanumDrive(hardwareMap, initPose);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
@@ -86,8 +86,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         fieldMap = DataLogger.read();
 
         posHeadings = new PositionsHeadings();
-        posHeadings.shootingPosition = new Pose2d(new Vector2d(18, -20 * getInvert()), -50 * getInvert());
-
+        posHeadings.shootingPosition = new Pose2d(new Vector2d(18 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
+        posHeadings.endPosition = new Pose2d(new Vector2d(-20 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
         //shooter.SPINNER_SPEED_NEAR = -1280;
 
         shooter.setPID(pid);
@@ -111,14 +111,17 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shooter.spinUp(false, false);
 
+
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .lineToYSplineHeading(posHeadings.obeliskPos * getInvert(), ang(posHeadings.obeliskAngle));
         runTrajectory(traj);
 
+        intake.go();
+
         pattern = readObelisk();
 
         traj = drive.actionBuilder(drive.localizer.getPose())
-                .turn(ang(-52));
+                .turnTo(-0.873 * getInvert());
         runTrajectory(traj);
 
         align(getTargetTag());
@@ -131,7 +134,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .turnTo(ang(25))
-                .strafeToLinearHeading(new Vector2d(4,  -50 * getInvert()), ang(90));
+                .strafeToLinearHeading(new Vector2d((4 + getXOffset()),  -50 * getInvert()), ang(90));
         runTrajectory(traj);
 
         Thread.sleep(250);
@@ -150,7 +153,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .turnTo(ang(25))
-                .strafeToLinearHeading(new Vector2d(-30,  -60 * getInvert()), ang(90));
+                .strafeToLinearHeading(new Vector2d((-30 + getXOffset()),  -60 * getInvert()), ang(90));
         runTrajectory(traj);
 
         Thread.sleep(250);
@@ -167,7 +170,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shootThree();
 
         traj = drive.actionBuilder(drive.localizer.getPose())
-                .strafeToLinearHeading(initPose.position, initPose.heading);
+                .strafeToLinearHeading(posHeadings.endPosition.position, posHeadings.endPosition.heading);
         runTrajectory(traj);
 
         shooter.stopShooterThread();
@@ -347,10 +350,11 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public void rotateToFire(){
         Pose2d og = drive.localizer.getPose();
-        Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * getInvert()), og.heading.toDouble() * getInvert());
+        Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * getInvert()), og.heading.toDouble());
+
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo((fieldMap.getStateAtPose(mapping).heading + ang(19)) * getInvert());
+                .turnTo((fieldMap.getStateAtPose(mapping).heading * getInvert()) + (ang(19)));
         Actions.runBlocking(traj.build());
     }
 
@@ -381,4 +385,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     protected abstract int getTargetTag();
 
     protected abstract int getInvert();
+
+    protected abstract double getXOffset();
 }

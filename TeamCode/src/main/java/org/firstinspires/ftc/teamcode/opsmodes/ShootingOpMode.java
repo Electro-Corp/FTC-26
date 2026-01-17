@@ -16,9 +16,12 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 @Config
 @TeleOp(name="Shooting PID tune")
 public class ShootingOpMode extends LinearOpMode {
-    public static PIDFCoefficients pid = new PIDFCoefficients(0,0,0,0);
+    public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12);
 
     double p, i , d, f = 0;
+
+    public static int speed = 1300;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -37,6 +40,8 @@ public class ShootingOpMode extends LinearOpMode {
             telemetry.addData("L/R Vel", "%s, %s", shooter.getLeftVelocity(), shooter.getRightVelocity());
             telemetry.addData("Delta", Math.abs(shooter.getLeftVelocity() - shooter.getRightVelocity()));
             telemetry.update();
+
+            shooter.SPINNER_SPEED_NEAR = -speed;
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());

@@ -71,6 +71,7 @@ def field_to_plot_xy(x_field: float, y_field: float) -> Tuple[float, float]:
 
 
 def heading_to_plot_uv(heading_rad: float, length: float) -> Tuple[float, float]:
+    heading_rad += math.radians(19)
     dx_field = math.cos(heading_rad)
     dy_field = math.sin(heading_rad)
     dx_plot = -dy_field
@@ -86,7 +87,7 @@ def main() -> int:
     samples = load_samples(json_path)
 
     # Defaults from your message
-    start_pose = (50.0, -50.0, math.radians(-45.0))  # (x, y, heading)
+    start_pose = (54.0, -54.0, math.radians(-50.0))  # (x, y, heading)
     goal_xy = (55.0, -55)  # (x, y)
 
     # Convert samples to plot coords + heading vectors
