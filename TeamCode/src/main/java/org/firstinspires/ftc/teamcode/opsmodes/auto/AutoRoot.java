@@ -354,7 +354,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo((fieldMap.getStateAtPose(mapping).heading * getInvert()) + (ang(19)));
+                .turnTo((fieldMap.getStateAtPose(mapping).heading * getInvert()));
         Actions.runBlocking(traj.build());
     }
 

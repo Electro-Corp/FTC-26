@@ -12,6 +12,8 @@ import java.util.Comparator;
 public class FieldDataPoints {
     private ArrayList<DataPoint> points;
 
+    private DataPoint goal = new DataPoint(54, -54, Math.toRadians(-50), -1300);
+
     public FieldDataPoints(JsonObject wrapper){
         points = new ArrayList<>();
 
@@ -97,17 +99,21 @@ public class FieldDataPoints {
 
         double wSum = w1 + w2 + w3;
 
-        double heading =
-                d1.dP.heading * (w1 / wSum) +
-                        d2.dP.heading * (w2 / wSum) +
-                        d3.dP.heading * (w3 / wSum);
+//        double heading =
+//                d1.dP.heading * (w1 / wSum) +
+//                        d2.dP.heading * (w2 / wSum) +
+//                        d3.dP.heading * (w3 / wSum);
+
+        double hypot = Math.hypot(goal.posX - pose.position.x, goal.posY - pose.position.y);
+
+        double heading = -Math.atan2(goal.posY - pose.position.y, goal.posX - pose.position.x);
 
         double speed =
                 d1.dP.speed * (w1 / wSum) +
                         d2.dP.speed * (w2 / wSum) +
                         d3.dP.speed * (w3 / wSum);
 
-        return new DataPoint(pose.position.x, pose.position.y, heading, speed);
+        return new DataPoint(pose.position.x, pose.position.y, -heading, speed);
     }
 
 

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opsmodes;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -106,6 +108,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+
 
         while (opModeIsActive()){
             updateDriveMotors();
@@ -137,6 +141,15 @@ public abstract class MainTeleOp extends LinearOpMode {
 
             // Update speed with position
             shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
+            shooter.SPINNER_SPEED_NEAR -= 30;
+
+            TelemetryPacket packet = new TelemetryPacket();
+            packet.put("Shooter Vel", shooter.getVelocity());
+            packet.put("Target Vel", -(shooter.SPINNER_SPEED_NEAR));
+            packet.put("Left shooter Vel", shooter.getLeftVelocity());
+            packet.put("Right shooter Vel", shooter.getRightVelocity());
+
+            dashboard.sendTelemetryPacket(packet);
 
             readGamepad();
             telemetry.update();
@@ -235,6 +248,10 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     boolean shooting = false, gateHeld = false;
     private void readGamepad(){
+        if(gamepad1.y){
+            rotateToFire();
+        }
+
         //control intake, gamepad 2 left trigger is forward and left bumper is reverse
         if(gamepad2.left_trigger >= .2) {
             intake.setSpeed(-gamepad2.left_trigger);
@@ -314,9 +331,11 @@ public abstract class MainTeleOp extends LinearOpMode {
     }
 
     public void rotateToFire(){
+        Pose2d og = drive.localizer.getPose();
+        Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                        .turnTo(((fieldMap.getStateAtPose(drive.localizer.getPose()).heading * GetSideMultiplier()) + Math.toRadians(19 * GetSideMultiplier())));
-        Actions.runBlocking(traj.build());
+                        .turnTo(((fieldMap.getStateAtPose(mapping).heading * GetSideMultiplier())));
+        //Actions.runBlocking(traj.build());
     }
 
     public String getCurrentPoseString() {

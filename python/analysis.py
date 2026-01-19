@@ -71,7 +71,6 @@ def field_to_plot_xy(x_field: float, y_field: float) -> Tuple[float, float]:
 
 
 def heading_to_plot_uv(heading_rad: float, length: float) -> Tuple[float, float]:
-    heading_rad += math.radians(19)
     dx_field = math.cos(heading_rad)
     dy_field = math.sin(heading_rad)
     dx_plot = -dy_field
@@ -89,6 +88,7 @@ def main() -> int:
     # Defaults from your message
     start_pose = (54.0, -54.0, math.radians(-50.0))  # (x, y, heading)
     goal_xy = (55.0, -55)  # (x, y)
+    goal_blue = (55.0, 55) # (x, y)
 
     # Convert samples to plot coords + heading vectors
     pxs: List[float] = []
@@ -100,18 +100,24 @@ def main() -> int:
     arrow_len = 2.0
     for s in samples:
         px, py = field_to_plot_xy(s.x, s.y)
-        u, v = heading_to_plot_uv(s.heading, arrow_len)
+        u, v = heading_to_plot_uv(s.heading + math.radians(19), arrow_len)
         pxs.append(px)
         pys.append(py)
         us.append(u)
         vs.append(v)
+        px, py = field_to_plot_xy(s.x, -1 * s.y)
+        u, v = heading_to_plot_uv((s.heading + math.radians(19)) * -1, arrow_len)
+        pxs.append(px)
+        pys.append(py)
+        us.append(u)
+        vs.append(v)        
 
     fig, ax = plt.subplots(figsize=(8, 8))
 
     # Larger dots so speed coloring is easier to see
     point_size = 220  # increase/decrease to taste
     if all(math.isfinite(s) for s in speeds):
-        sc = ax.scatter(pxs, pys, c=speeds, s=point_size)
+        sc = ax.scatter(pxs, pys, c=speeds * 2, s=point_size)
         plt.colorbar(sc, ax=ax, label="speed")
     else:
         ax.scatter(pxs, pys, s=point_size)
@@ -138,6 +144,11 @@ def main() -> int:
     gx, gy = goal_xy
     gpx, gpy = field_to_plot_xy(gx, gy)
     ax.scatter([gpx], [gpy], marker="*", s=320)
+
+    gx, gy = goal_blue
+    gpx, gpy = field_to_plot_xy(gx, gy)
+    ax.scatter([gpx], [gpy], marker="*", s=320)
+    
 
     # Axes through origin (in plot coordinates)
     ax.axhline(0, linewidth=1)
