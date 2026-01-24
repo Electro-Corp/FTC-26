@@ -242,7 +242,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
-        shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 30;
+        shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 70;
 
         // Use field data
         drive.localizer.update();

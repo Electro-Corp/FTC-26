@@ -345,7 +345,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                         .turnTo(((fieldMap.getStateAtPose(mapping).heading * GetSideMultiplier())));
-        //Actions.runBlocking(traj.build());
+        Actions.runBlocking(traj.build());
     }
 
     public String getCurrentPoseString() {
