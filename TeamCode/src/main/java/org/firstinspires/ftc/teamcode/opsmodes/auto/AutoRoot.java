@@ -75,7 +75,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        initPose = new Pose2d(54,-54 * getInvert(), ang(-50));
+        if(isNear())  initPose = new Pose2d(54,-54 * getInvert(), ang(-50));
+        else initPose = new Pose2d(-60, -12 * getInvert(), ang(0));
         drive = new MecanumDrive(hardwareMap, initPose);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
@@ -111,7 +112,24 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         shooter.spinUp(false, false);
 
+        if(isNear()) nearActions();
+        else farActions();
 
+
+        shooter.stopShooterThread();
+
+        dumpPosition();
+    }
+
+    private void farActions() {
+        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                .lineToXSplineHeading(-30, ang(-50));
+        runTrajectory(traj);
+
+        shootThree();
+    }
+
+    private void nearActions() throws InterruptedException {
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
                 .lineToYSplineHeading(posHeadings.obeliskPos * getInvert(), ang(posHeadings.obeliskAngle));
         runTrajectory(traj);
@@ -172,10 +190,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         traj = drive.actionBuilder(drive.localizer.getPose())
                 .strafeToLinearHeading(posHeadings.endPosition.position, posHeadings.endPosition.heading);
         runTrajectory(traj);
-
-        shooter.stopShooterThread();
-
-        dumpPosition();
     }
 
     private Pattern readObelisk() {
@@ -242,7 +256,8 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
-        shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 70;
+        if(isNear()) shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 70;
+        else shooter.SPINNER_SPEED_NEAR = -1600;
 
         // Use field data
         drive.localizer.update();
@@ -323,6 +338,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void shootThree(){
+        shooter.setDamDown();
         // Read
         shooter.updateLoadedColors();
         rotateToFire();
@@ -341,6 +357,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         shooter.stopShoot();
         shooter.kickersWait();
         //shooter.pushCommand(new ShooterCommands.StopCommand());
+        shooter.setDamUp();
     }
 
     public String getCurrentPoseString() {
@@ -387,4 +404,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     protected abstract int getInvert();
 
     protected abstract double getXOffset();
+
+    protected abstract boolean isNear();
 }

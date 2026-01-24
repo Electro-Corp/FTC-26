@@ -27,7 +27,7 @@ public class Shooter implements Runnable{
     }
 
     public enum ShooterState {
-        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING, REVERSE, WAIT_FOR_KICKER
+        STOPPED, WAITING_FOR_SPIN_UP, SPIN_UP_HOLD, SHOOTING, REVERSE, WAIT_FOR_KICKER, REVERSE_HUMAN_PLAYER
     }
 
     //Constants
@@ -179,6 +179,17 @@ public class Shooter implements Runnable{
         }
     }
 
+    public void reverseHumanPlayer(boolean fast){
+        setState(ShooterState.REVERSE_HUMAN_PLAYER);
+        if(fast) {
+            shooterLeft.setVelocity(-SPINNER_SPEED_FAR / 8);
+            shooterRight.setVelocity(SPINNER_SPEED_FAR / 8);
+        }else{
+            shooterLeft.setVelocity(-SPINNER_SPEED_NEAR / 8);
+            shooterRight.setVelocity(SPINNER_SPEED_NEAR / 8);
+        }
+    }
+
     public void update() {
         long elapsed = System.currentTimeMillis() - stateStartTime;
         switch (state) {
@@ -203,6 +214,7 @@ public class Shooter implements Runnable{
                     }
                 }
                 break;
+            case REVERSE_HUMAN_PLAYER:
             case REVERSE:
                 break;
             case SHOOTING:
@@ -218,6 +230,9 @@ public class Shooter implements Runnable{
                 }
                 break;
         }
+
+        if(state == ShooterState.STOPPED || state == ShooterState.REVERSE) setDamUp();
+        else setDamDown();
     }
 
     public boolean isShooting(){
@@ -279,6 +294,14 @@ public class Shooter implements Runnable{
             dam.setPosition(DAM_UP_POS);
             isDamUp = true;
         }
+    }
+
+    public void setDamUp() {
+        dam.setPosition(DAM_UP_POS);
+    }
+
+    public void setDamDown() {
+        dam.setPosition(DAM_DOWN_POS);
     }
 
     public void setToShootAll(){

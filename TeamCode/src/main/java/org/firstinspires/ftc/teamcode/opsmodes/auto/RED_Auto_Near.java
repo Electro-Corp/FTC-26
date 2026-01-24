@@ -2,19 +2,24 @@ package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="A_BLUE Auto")
-public class BLUE_Auto extends AutoRoot{
+@Autonomous(name="A_RED Auto Near")
+public class RED_Auto_Near extends AutoRoot{
+
     @Override
     protected int getTargetTag() {
-        return 20;
+        return 24;
     }
-
     protected int getInvert(){
-        return -1;
+        return 1;
     }
 
     @Override
     protected double getXOffset() {
-        return 7.5;
+        return 0;
+    }
+
+    @Override
+    protected boolean isNear() {
+        return true;
     }
 }

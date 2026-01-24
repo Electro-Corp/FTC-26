@@ -258,6 +258,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         if(gamepad2.left_trigger >= .2) {
             intake.setSpeed(-gamepad2.left_trigger);
             intake.go();
+            //shooter.setDamUp();
         }
         else if(gamepad2.left_bumper) {
             intake.reverse();
@@ -279,9 +280,10 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         if(gamepad2.right_trigger > .2){
             shooter.spinUp(fast);
+            //shooter.setDamDown();
         }
         if(gamepad2.b){
-            shooter.reverse(fast);
+            shooter.reverseHumanPlayer(fast);
         }
         // Uncomment later
 //        if(gamepad2.x){

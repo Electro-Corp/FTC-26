@@ -104,7 +104,7 @@ public class FieldDataPoints {
 //                        d2.dP.heading * (w2 / wSum) +
 //                        d3.dP.heading * (w3 / wSum);
 
-        double hypot = Math.hypot(goal.posX - pose.position.x, goal.posY - pose.position.y);
+        //double hypot = Math.hypot(goal.posX - pose.position.x, goal.posY - pose.position.y);
 
         double heading = -Math.atan2(goal.posY - pose.position.y, goal.posX - pose.position.x);
 
