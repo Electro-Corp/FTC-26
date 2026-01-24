@@ -53,6 +53,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     private boolean erroredOut = false;
     private String readError = "NONE";
+    private boolean damButtonPrev = false;
+    private boolean damButtonCurr = false;
 
     public FieldDataPoints fieldMap;
 
@@ -282,13 +284,13 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.reverse(fast);
         }
         // Uncomment later
-        if(gamepad2.x){
-            rotateToFire();
-            if(fast)
-                shooter.shootColorFar(BallColor.PURPLE);
-            else
-                shooter.shootColorNear(BallColor.PURPLE);
-        }
+//        if(gamepad2.x){
+//            rotateToFire();
+//            if(fast)
+//                shooter.shootColorFar(BallColor.PURPLE);
+//            else
+//                shooter.shootColorNear(BallColor.PURPLE);
+//        }
         if(gamepad2.a){
             rotateToFire();
             if(fast)
@@ -327,6 +329,14 @@ public abstract class MainTeleOp extends LinearOpMode {
         if(gamepad2.y){
             shooter.stopShoot();
         }
+
+        damButtonCurr = gamepad2.x;
+
+        if (damButtonCurr && !damButtonPrev) {
+            shooter.toggleDam();
+        }
+        damButtonPrev = damButtonCurr;
+
         shooter.update();
     }
 

@@ -10,11 +10,13 @@ public class GateCalib extends LinearOpMode {
         Servo lKick = hardwareMap.get(Servo.class, "lKick");
         Servo mKick = hardwareMap.get(Servo.class,"mKick");
         Servo rKick = hardwareMap.get(Servo.class,"rKick");
+        Servo dam = hardwareMap.get(Servo.class, "dam");
 
         int servoNumber = 0;
         double lPos = 0.6;
         double mPos = 0.5;
         double rPos = 0.5;
+        double dPos = 0.5;
         boolean changeDown = false;
         double diff = 0.0005;
 
@@ -25,7 +27,7 @@ public class GateCalib extends LinearOpMode {
             if (gamepad1.dpad_right) {
                 if (!changeDown) {
                     servoNumber++;
-                    if (servoNumber > 2)
+                    if (servoNumber > 3)
                         servoNumber = 0;
                 }
                 changeDown = true;
@@ -52,11 +54,18 @@ public class GateCalib extends LinearOpMode {
                     rKick.setPosition(rPos);
                     telemetry.addLine("CURRENT IS RIGHT");
                     break;
+                case 3:
+                    if (gamepad1.dpad_up) dPos += diff;
+                    if (gamepad1.dpad_down) dPos -= diff;
+                    dam.setPosition(dPos);
+                    telemetry.addLine("CURRENT IS DAM");
+                    break;
             }
 
             telemetry.addData("LEFT POST", lPos);
             telemetry.addData("MIDDLE POS",mPos);
             telemetry.addData("RIGHT POS", rPos);
+            telemetry.addData("DAM POS", dPos);
             telemetry.update();
         }
     }
