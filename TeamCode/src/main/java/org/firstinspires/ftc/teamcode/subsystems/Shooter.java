@@ -37,7 +37,7 @@ public class Shooter implements Runnable{
     public static final double L_DAM_UP_POS = 0.6785;
     public static final double L_DAM_DOWN_POS = 1.0;
     public static final double R_DAM_UP_POS = 0.0;
-    public static final double R_DAM_DOWN_POS = 0.0;
+    public static final double R_DAM_DOWN_POS = 0.4445;
 
     private static final float COLOR_GAIN = 30.5f;
 
