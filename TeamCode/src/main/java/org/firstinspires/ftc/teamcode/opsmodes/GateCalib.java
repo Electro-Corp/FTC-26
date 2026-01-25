@@ -10,13 +10,15 @@ public class GateCalib extends LinearOpMode {
         Servo lKick = hardwareMap.get(Servo.class, "lKick");
         Servo mKick = hardwareMap.get(Servo.class,"mKick");
         Servo rKick = hardwareMap.get(Servo.class,"rKick");
-        Servo dam = hardwareMap.get(Servo.class, "dam");
+        Servo leftDam = hardwareMap.get(Servo.class, "leftDam");
+        Servo rightDam = hardwareMap.get(Servo.class, "rightDam");
 
         int servoNumber = 0;
         double lPos = 0.6;
         double mPos = 0.5;
         double rPos = 0.5;
-        double dPos = 0.5;
+        double dLPos = 0.5;
+        double dRPos = 0.5;
         boolean changeDown = false;
         double diff = 0.0005;
 
@@ -27,7 +29,7 @@ public class GateCalib extends LinearOpMode {
             if (gamepad1.dpad_right) {
                 if (!changeDown) {
                     servoNumber++;
-                    if (servoNumber > 3)
+                    if (servoNumber > 4)
                         servoNumber = 0;
                 }
                 changeDown = true;
@@ -55,17 +57,24 @@ public class GateCalib extends LinearOpMode {
                     telemetry.addLine("CURRENT IS RIGHT");
                     break;
                 case 3:
-                    if (gamepad1.dpad_up) dPos += diff;
-                    if (gamepad1.dpad_down) dPos -= diff;
-                    dam.setPosition(dPos);
-                    telemetry.addLine("CURRENT IS DAM");
+                    if (gamepad1.dpad_up) dLPos += diff;
+                    if (gamepad1.dpad_down) dLPos -= diff;
+                    leftDam.setPosition(dLPos);
+                    telemetry.addLine("CURRENT IS LEFT DAM");
+                    break;
+                case 4:
+                    if (gamepad1.dpad_up) dRPos += diff;
+                    if (gamepad1.dpad_down) dRPos -= diff;
+                    rightDam.setPosition(dRPos);
+                    telemetry.addLine("CURRENT IS RIGHT DAM");
                     break;
             }
 
             telemetry.addData("LEFT POST", lPos);
             telemetry.addData("MIDDLE POS",mPos);
             telemetry.addData("RIGHT POS", rPos);
-            telemetry.addData("DAM POS", dPos);
+            telemetry.addData("LEFT DAM POS", dLPos);
+            telemetry.addData("RIGHT DAM POS", dRPos);
             telemetry.update();
         }
     }
