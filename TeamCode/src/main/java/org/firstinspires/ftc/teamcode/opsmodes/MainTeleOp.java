@@ -56,6 +56,8 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean damButtonPrev = false;
     private boolean damButtonCurr = false;
 
+    private boolean shootThreeSpeed = false;
+
     public FieldDataPoints fieldMap;
 
 
@@ -116,6 +118,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
 
+            telemetry.addData("SHOOT THREE MODE", shootThreeSpeed);
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
@@ -128,13 +131,13 @@ public abstract class MainTeleOp extends LinearOpMode {
 
             aimAssist();
 
-            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
-            AprilTagDetection tag = tBrain.getTagID(GetSideMultiplier()); //
-            if (tag != null) {
-                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
-                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
-                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
-            }
+//            telemetry.addData("Total Tags on screen", tBrain.getVisibleTags().size()); // How many are on the screen?
+//            AprilTagDetection tag = tBrain.getTagID(GetSideMultiplier()); //
+//            if (tag != null) {
+//                telemetry.addData("Bearing to target", tag.ftcPose.bearing);
+//                telemetry.addData("Bearing (rad) to target", Math.toRadians(tag.ftcPose.bearing));
+//                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
+//            }
 
             drive.localizer.update();
 
@@ -143,7 +146,8 @@ public abstract class MainTeleOp extends LinearOpMode {
 
             // Update speed with position
             shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
-            shooter.SPINNER_SPEED_NEAR -= 30;
+            if(shootThreeSpeed) shooter.SPINNER_SPEED_NEAR -= 60;
+            else shooter.SPINNER_SPEED_NEAR -= 30;
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());
@@ -248,7 +252,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         rightBackDrive.setPower(rightBackPower);
     }
 
-    boolean shooting = false, gateHeld = false;
+    boolean shooting = false, gateHeld = false, aHeld = false;
     private void readGamepad(){
         if(gamepad1.y){
             rotateToFire();
@@ -294,11 +298,12 @@ public abstract class MainTeleOp extends LinearOpMode {
 //                shooter.shootColorNear(BallColor.PURPLE);
 //        }
         if(gamepad2.a){
-            rotateToFire();
-            if(fast)
-                shooter.shootColorFar(BallColor.GREEN);
-            else
-                shooter.shootColorNear(BallColor.GREEN);
+            if(!aHeld) {
+                shootThreeSpeed = !shootThreeSpeed;
+                aHeld = true;
+            }
+        }else{
+            aHeld = false;
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
