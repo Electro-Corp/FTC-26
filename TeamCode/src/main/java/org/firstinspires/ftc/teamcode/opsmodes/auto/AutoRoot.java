@@ -54,7 +54,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public FieldDataPoints fieldMap;
 
-    public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12);
+    public static PIDFCoefficients pid = new PIDFCoefficients(34,0.3,0.5,14);
 
     public static class PositionsHeadings{
         public double obeliskPos = -20;
@@ -89,7 +89,6 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         posHeadings = new PositionsHeadings();
         posHeadings.shootingPosition = new Pose2d(new Vector2d(18 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
         posHeadings.endPosition = new Pose2d(new Vector2d(-20 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
-        //shooter.SPINNER_SPEED_NEAR = -1280;
 
         shooter.setPID(pid);
 
@@ -247,16 +246,16 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         //telemetry.addData("Fired", "%d %d %d", fired[0], fired[1], fired[2]);
         telemetry.addLine(getCurrentPoseString());
         telemetry.addLine("==== SHOOTER: =====");
-        telemetry.addData("Speed", shooter.getVelocity());
-        telemetry.addData("Calculated speed", -fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
-        telemetry.addData("Current Target", -(shooter.SPINNER_SPEED_NEAR));
+        telemetry.addData("Current Speed", shooter.getVelocity());
+        //telemetry.addData("Calculated speed", -fieldMap.getStateAtPose(drive.localizer.getPose()).speed);
+        telemetry.addData("Target Speed", -(shooter.SPINNER_SPEED_NEAR));
         telemetry.addData("Shooter Thread is alive", shooterThread.isAlive());
         telemetry.addData("Shooter state", shooter.getState());
         //telemetry.addData("Current is shoot", shooter.commandStackEmpty());
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
-        if(isNear()) shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 70;
+        if(isNear()) shooter.SPINNER_SPEED_NEAR = -1350;//fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 160;
         else shooter.SPINNER_SPEED_NEAR = -1600;
 
         // Use field data
