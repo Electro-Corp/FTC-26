@@ -7,7 +7,6 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -53,8 +52,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     private boolean erroredOut = false;
     private String readError = "NONE";
-    private boolean damButtonPrev = false;
-    private boolean damButtonCurr = false;
+    private boolean xPrev = false;
+    private boolean xCurr = false;
+    private boolean autoAim = true;
 
     private boolean shootThreeSpeed = false;
 
@@ -337,22 +337,25 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.stopShoot();
         }
 
-        damButtonCurr = gamepad2.x;
+        xCurr = gamepad1.x;
 
-        if (damButtonCurr && !damButtonPrev) {
-            shooter.toggleDam();
+        if (xCurr && !xPrev) {
+            if (autoAim) autoAim = false;
+            else autoAim = true;
         }
-        damButtonPrev = damButtonCurr;
+        xPrev = xCurr;
 
         shooter.update();
     }
 
     public void rotateToFire(){
-        Pose2d og = drive.localizer.getPose();
-        Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
-        TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                        .turnTo(((fieldMap.getStateAtPose(mapping).heading * GetSideMultiplier())));
-        Actions.runBlocking(traj.build());
+        if (autoAim) {
+            Pose2d og = drive.localizer.getPose();
+            Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
+            TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
+                    .turnTo(((fieldMap.getStateAtPose(mapping).heading * GetSideMultiplier())));
+            Actions.runBlocking(traj.build());
+        }
     }
 
     public String getCurrentPoseString() {
