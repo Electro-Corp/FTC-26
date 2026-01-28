@@ -118,7 +118,9 @@ public abstract class MainTeleOp extends LinearOpMode {
         while (opModeIsActive()){
             updateDriveMotors();
 
+            telemetry.addData("READY TO FIRE?", (Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity()));
             telemetry.addData("SHOOT THREE MODE", shootThreeSpeed);
+            telemetry.addLine("=========================================");
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
