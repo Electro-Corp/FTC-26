@@ -54,7 +54,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     public FieldDataPoints fieldMap;
 
-    public static PIDFCoefficients pid = new PIDFCoefficients(34,0.3,0.5,14);
+    public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12.5);
 
     public static class PositionsHeadings{
         public double obeliskPos = -20;
@@ -75,7 +75,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
-        if(isNear())  initPose = new Pose2d(54,-54 * getInvert(), ang(-50));
+        if(isNear())  initPose = new Pose2d(54,-58 * getInvert(), ang(-53));
         else initPose = new Pose2d(-60, -12 * getInvert(), ang(0));
         drive = new MecanumDrive(hardwareMap, initPose);
         colorSensors = new ColorSensors(hardwareMap);
@@ -255,7 +255,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
-        if(isNear()) shooter.SPINNER_SPEED_NEAR = -1210; //fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 20;
+        if(isNear()) shooter.SPINNER_SPEED_NEAR = -1220; //fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 20;
         else shooter.SPINNER_SPEED_NEAR = -1600;
 
         // Use field data
@@ -368,9 +368,10 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         Pose2d og = drive.localizer.getPose();
         Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * getInvert()), og.heading.toDouble());
 
+        double angle = (fieldMap.getStateAtPose(mapping).heading * getInvert());
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo((fieldMap.getStateAtPose(mapping).heading * getInvert()));
+                .turnTo(angle);
         Actions.runBlocking(traj.build());
     }
 

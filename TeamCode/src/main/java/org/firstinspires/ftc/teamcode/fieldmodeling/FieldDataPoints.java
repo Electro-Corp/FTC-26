@@ -12,7 +12,7 @@ import java.util.Comparator;
 public class FieldDataPoints {
     private ArrayList<DataPoint> points;
 
-    private DataPoint goal = new DataPoint(54, -54, Math.toRadians(-50), -1300);
+    private DataPoint goal = new DataPoint(60, -66, Math.toRadians(-50), -1300);
 
     public FieldDataPoints(JsonObject wrapper){
         points = new ArrayList<>();
