@@ -149,7 +149,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             // Update speed with position
             shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
             if(shootThreeSpeed) shooter.SPINNER_SPEED_NEAR -= 60;
-            else shooter.SPINNER_SPEED_NEAR -= 30;
+            //else shooter.SPINNER_SPEED_NEAR -= 10;
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());
