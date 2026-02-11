@@ -76,7 +76,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     private void initHardware() {
         tBrain = new TestBrain(hardwareMap);
         if(isNear())  initPose = new Pose2d(54,-58 * getInvert(), ang(-53));
-        else initPose = new Pose2d(-60, -12 * getInvert(), ang(0));
+        else initPose = new Pose2d(-59, -16 * getInvert(), ang(0));
         drive = new MecanumDrive(hardwareMap, initPose);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
@@ -88,7 +88,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
         posHeadings = new PositionsHeadings();
         posHeadings.shootingPosition = new Pose2d(new Vector2d(18 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
-        posHeadings.endPosition = new Pose2d(new Vector2d(-20 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
+        posHeadings.endPosition = new Pose2d(new Vector2d(-25 + getXOffset(), -20 * getInvert()), -0.873 * getInvert());
 
         shooter.setPID(pid);
 
@@ -121,8 +121,12 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void farActions() {
+        pattern = readObelisk();
+
+        intake.go();
+
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .lineToXSplineHeading(-30, ang(-50));
+                .strafeToLinearHeading(new Vector2d(-45,  -12 * getInvert()), ang(-50));
         runTrajectory(traj);
 
         shootThree();
@@ -227,7 +231,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
 
     private void waitForShooter(){
         // Block until shooter is done shooting or force stopped
-        while(shooter.getState() != Shooter.ShooterState.STOPPED && !isStopRequested()){
+        while((shooter.getState() != Shooter.ShooterState.STOPPED && shooter.getState() != Shooter.ShooterState.SPIN_UP_HOLD) && !isStopRequested()){
            // block main thread
         }
     }
@@ -255,6 +259,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         //telemetry.addLine(shooter.getCommandStackString());
         telemetry.update();
 
+        //if(isNear()) shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
         if(isNear()) shooter.SPINNER_SPEED_NEAR = -1220; //fieldMap.getStateAtPose(drive.localizer.getPose()).speed - 20;
         else shooter.SPINNER_SPEED_NEAR = -1600;
 
@@ -337,25 +342,23 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
     }
 
     private void shootThree(){
+        shooter.spinUp(false, true);
         shooter.setDamDown();
         // Read
         shooter.updateLoadedColors();
-        rotateToFire();
         for(int i = 0; i < 3; i++){
-            shooter.spinUp(false, false);
+            rotateToFire();
+
             //while(!(Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity())){}
             shootNext(true);
-            // Poor hack
-            //if(i == 0) shooter.SPINNER_SPEED_NEAR = -1300;
-            //if(i > 0) shooter.SPINNER_SPEED_NEAR = -1350;
-            //sleep(200);
-            //shooter.pushCommand(new ShooterCommands.SpinUp(false, false));
         }
         // Reset
         fired = new boolean[3];
+//        shooter.setShootSpecific(true, true, true);
+//        shooter.shootNear();
+//        waitForShooter();
         shooter.stopShoot();
         shooter.kickersWait();
-        //shooter.pushCommand(new ShooterCommands.StopCommand());
         shooter.setDamUp();
     }
 
@@ -371,7 +374,7 @@ public abstract class AutoRoot extends LinearOpMode implements Runnable {
         double angle = (fieldMap.getStateAtPose(mapping).heading * getInvert());
 
         TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                .turnTo(angle);
+                .turnTo(angle - (Math.toRadians(3) * getInvert()));
         Actions.runBlocking(traj.build());
     }
 
