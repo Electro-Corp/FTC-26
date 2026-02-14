@@ -38,6 +38,9 @@ public abstract class MainTeleOp extends LinearOpMode {
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
 
+
+    private final boolean rrEnabled = false;
+
     TestBrain tBrain = null;
 
     Pose2d initPose = null;
@@ -94,8 +97,10 @@ public abstract class MainTeleOp extends LinearOpMode {
             readError = e.getMessage();
         }
 
-        drive = new MecanumDrive(hardwareMap, initPose);
-        drive.localizer.setPose(initPose);
+        if(rrEnabled) {
+            drive = new MecanumDrive(hardwareMap, initPose);
+            drive.localizer.setPose(initPose);
+        }
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, false);
         intake = new Intake(hardwareMap, shooter);
@@ -124,8 +129,9 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
-            telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
-
+            if(rrEnabled) {
+                telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
+            }
             if(erroredOut){
                 telemetry.addLine("Failed to read auto end position, using default.");
                 telemetry.addLine(readError);
@@ -141,13 +147,16 @@ public abstract class MainTeleOp extends LinearOpMode {
 //                telemetry.addData("X Y Z", "| %.2f | %.2f | %.2f |", tag.ftcPose.x, tag.ftcPose.y, tag.ftcPose.z);
 //            }
 
-            drive.localizer.update();
+            if(rrEnabled)
+                drive.localizer.update();
 
 
             telemetry.addLine(getCurrentPoseString());
 
             // Update speed with position
-            shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
+            if(rrEnabled)
+                shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
+            else shooter.SPINNER_SPEED_NEAR = -1300;
             if(shootThreeSpeed) shooter.SPINNER_SPEED_NEAR -= 60;
             //else shooter.SPINNER_SPEED_NEAR -= 10;
 
@@ -351,7 +360,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     }
 
     public void rotateToFire(){
-        if (autoAim) {
+        if (autoAim && rrEnabled) {
             Pose2d og = drive.localizer.getPose();
             Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
             TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
@@ -361,8 +370,12 @@ public abstract class MainTeleOp extends LinearOpMode {
     }
 
     public String getCurrentPoseString() {
-        Pose2d pose = drive.localizer.getPose();
-        return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+        if(rrEnabled) {
+            Pose2d pose = drive.localizer.getPose();
+            return String.format("(x=%.2f, y=%.2f, h=%.2f)", pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+        }else{
+            return "none";
+        }
     }
 
     public Pose2d getAutoPose() throws Exception {
