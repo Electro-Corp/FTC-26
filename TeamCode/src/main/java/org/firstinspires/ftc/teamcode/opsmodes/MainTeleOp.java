@@ -105,7 +105,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         shooter = new Shooter(hardwareMap, colorSensors, false);
         intake = new Intake(hardwareMap, shooter);
 
-        shooter.setPID(pid);
+        //shooter.setPID(pid);
 
         // Init field
         fieldMap = DataLogger.read();

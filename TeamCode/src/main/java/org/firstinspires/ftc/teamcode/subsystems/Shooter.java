@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class Shooter implements Runnable{
 
@@ -192,6 +193,12 @@ public class Shooter implements Runnable{
     }
 
     public void update() {
+        // TATE PID
+        double p = PIDControl(SPINNER_SPEED_NEAR, shooterLeft.getVelocity());
+        shooterLeft.setPower(p);
+        p = PIDControl(SPINNER_SPEED_NEAR, shooterRight.getVelocity());
+        shooterRight.setPower(-p);
+
         long elapsed = System.currentTimeMillis() - stateStartTime;
         switch (state) {
             case WAITING_FOR_SPIN_UP:
@@ -384,5 +391,26 @@ public class Shooter implements Runnable{
         shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pid);
     }
 
+    /*
+        Tate Hunter's PID
+     */
+
+    double integralSum = 0;
+    public static double Kp = -0.03;
+    public static double Ki = 0;
+    public static double Kd = 0;
+    public static int target = 0;
+    ElapsedTime timer = new ElapsedTime();
+    private double lasterror = 0;
+
+    public double PIDControl(double reference, double state){
+        double error = reference-state;
+        integralSum += error * timer.seconds();
+        double derivitive = (error - lasterror) / timer.seconds();
+        lasterror = error;
+        timer.reset();
+        double output = (error * Kp) + (derivitive * Kd) + (integralSum * Ki);
+        return output;
+    }
 
 }
