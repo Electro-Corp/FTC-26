@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointLocalizer;
 
 @TeleOp(name="RoadRunner Test", group="TeleOp")
 public class RoadRunnerTest extends LinearOpMode {
@@ -18,6 +19,11 @@ public class RoadRunnerTest extends LinearOpMode {
         Pose2d initPose = new Pose2d(0,0,0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, initPose);
 
+        MecanumDrive.PARAMS.maxWheelVel = 20;
+        MecanumDrive.PARAMS.lateralGain = 0;
+        MecanumDrive.PARAMS.headingGain = 5;
+
+        PinpointLocalizer.PARAMS.parYTicks
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(initPose)
                         .lineToX(30)
