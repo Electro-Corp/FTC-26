@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.FilteredPIDFCoefficients;
+import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -15,10 +17,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 // See Web Browser Panels here: http://192.168.43.1:8001/
 public class Constants {
-    public static FollowerConstants followerConstants = new FollowerConstants().mass(5);
+    public static FollowerConstants followerConstants = new FollowerConstants()
+            .mass(5)
+            .forwardZeroPowerAcceleration(-36.35)
+            .lateralZeroPowerAcceleration(-66.57)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.07, 0, 0.005, 0.025))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0, 0.002, 0.035))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.6,0.0,0.0001,2,0.1));
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(3.7)
+            .forwardPodY(4)
             .strafePodX(0)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
@@ -32,12 +40,18 @@ public class Constants {
             .rightRearMotorName("rightBack")
             .leftRearMotorName("leftBack")
             .leftFrontMotorName("leftFront")
+            .xVelocity(70.9)
+            .yVelocity(56.7)
             .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(
+            0.99,
+            100,
+            1,
+            1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
