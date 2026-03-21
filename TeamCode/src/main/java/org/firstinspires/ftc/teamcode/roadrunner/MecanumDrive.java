@@ -239,6 +239,11 @@ public final class      MecanumDrive {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // TODO: reverse motor directions if needed
         leftFront.setDirection(DcMotorEx.Direction.REVERSE);
         leftBack.setDirection(DcMotorEx.Direction.REVERSE);
@@ -264,10 +269,11 @@ public final class      MecanumDrive {
             maxPowerMag = Math.max(maxPowerMag, power.value());
         }
 
-        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
-        leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
-        rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
-        rightFront.setPower(wheelVels.rightFront.get(0) / maxPowerMag);
+        double maxVelTicks = PARAMS.maxWheelVel / PARAMS.inPerTick;
+        leftFront.setVelocity(wheelVels.leftFront.get(0) / maxPowerMag * maxVelTicks);
+        leftBack.setVelocity(wheelVels.leftBack.get(0) / maxPowerMag * maxVelTicks);
+        rightBack.setVelocity(wheelVels.rightBack.get(0) / maxPowerMag * maxVelTicks);
+        rightFront.setVelocity(wheelVels.rightFront.get(0) / maxPowerMag * maxVelTicks);
     }
 
     public final class FollowTrajectoryAction implements Action {
@@ -302,10 +308,10 @@ public final class      MecanumDrive {
             }
 
             if (t >= timeTrajectory.duration) {
-                leftFront.setPower(0);
-                leftBack.setPower(0);
-                rightBack.setPower(0);
-                rightFront.setPower(0);
+                leftFront.setVelocity(0);
+                leftBack.setVelocity(0);
+                rightBack.setVelocity(0);
+                rightFront.setVelocity(0);
 
                 return false;
             }
@@ -335,10 +341,10 @@ public final class      MecanumDrive {
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
 
-            leftFront.setPower(leftFrontPower);
-            leftBack.setPower(leftBackPower);
-            rightBack.setPower(rightBackPower);
-            rightFront.setPower(rightFrontPower);
+            leftFront.setVelocity(wheelVels.leftFront.get(0) / PARAMS.inPerTick);
+            leftBack.setVelocity(wheelVels.leftBack.get(0) / PARAMS.inPerTick);
+            rightBack.setVelocity(wheelVels.rightBack.get(0) / PARAMS.inPerTick);
+            rightFront.setVelocity(wheelVels.rightFront.get(0) / PARAMS.inPerTick);
 
             p.put("x", localizer.getPose().position.x);
             p.put("y", localizer.getPose().position.y);
@@ -394,10 +400,10 @@ public final class      MecanumDrive {
             }
 
             if (t >= turn.duration) {
-                leftFront.setPower(0);
-                leftBack.setPower(0);
-                rightBack.setPower(0);
-                rightFront.setPower(0);
+                leftFront.setVelocity(0);
+                leftBack.setVelocity(0);
+                rightBack.setVelocity(0);
+                rightFront.setVelocity(0);
 
                 return false;
             }
@@ -426,10 +432,10 @@ public final class      MecanumDrive {
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
 
-            leftFront.setPower(feedforward.compute(wheelVels.leftFront) / voltage);
-            leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
-            rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
-            rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
+            leftFront.setVelocity(wheelVels.leftFront.get(0) / PARAMS.inPerTick);
+            leftBack.setVelocity(wheelVels.leftBack.get(0) / PARAMS.inPerTick);
+            rightBack.setVelocity(wheelVels.rightBack.get(0) / PARAMS.inPerTick);
+            rightFront.setVelocity(wheelVels.rightFront.get(0) / PARAMS.inPerTick);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
