@@ -75,7 +75,7 @@ public class Shooter implements Runnable{
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
-//        this.rightDam = hardwareMap.get(Servo.class, "rightDam");
+        //this.rightDam = hardwareMap.get(Servo.class, "rightDam");
         this.loadedColors = colorSensors.readAllColors();
 
         this.shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -189,10 +189,10 @@ public class Shooter implements Runnable{
 
     public void update() {
         // TATE PID
-        double p = PIDControl(SPINNER_SPEED_NEAR, shooterLeft.getVelocity());
-        shooterLeft.setPower(p);
-        p = PIDControl(SPINNER_SPEED_NEAR, shooterRight.getVelocity());
-        shooterRight.setPower(-p);
+//        double p = PIDControl(SPINNER_SPEED_NEAR, shooterLeft.getVelocity());
+//        shooterLeft.setPower(p);
+//        p = PIDControl(SPINNER_SPEED_NEAR, shooterRight.getVelocity());
+//        shooterRight.setPower(-p);
 
         long elapsed = System.currentTimeMillis() - stateStartTime;
         switch (state) {
@@ -301,13 +301,13 @@ public class Shooter implements Runnable{
     }
 
     public void setDamUp() {
-//        rightDam.setPosition(R_DAM_UP_POS);
+        //rightDam.setPosition(R_DAM_UP_POS);
         isDamUp = true;
     }
 
     public void setDamDown() {
 
-//        rightDam.setPosition(R_DAM_DOWN_POS);
+        //rightDam.setPosition(R_DAM_DOWN_POS);
         isDamUp = false;
     }
 
