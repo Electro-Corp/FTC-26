@@ -19,8 +19,9 @@ public class PedroTestSarah extends OpMode {
         DRIVE_STARTPOS_SHOOT_POS,
         LOOK_AT_APRILTAG,
         TURN_TO_SHOOT,
-        SHOOT_PRELOAD,
-        GRAB_MORE_ARTIFACTS_ONE
+        SHOOT,
+        ALIGN_ARTIFACTS_ROW_ONE,
+        COLLECT_ARTIFACTS_ROW_ONE
     }
 
     PathState pathState;
@@ -28,10 +29,10 @@ public class PedroTestSarah extends OpMode {
     private final Pose startPose = new Pose(123.9052132701422, 123.50710900473929, Math.toRadians(36));
     private final Pose aprilTagPose = new Pose(87.651, 87.974, Math.toRadians(95));
     private final Pose shootPose = new Pose(87.651, 87.974, Math.toRadians(45));
-    private final Pose turnToGrabOne = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(0));
-    private final Pose grabOneArtifact = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(0));
+    private final Pose alignRowOnePose = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(180));
+    private final Pose collectRowOnePose = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(180));
 
-    private PathChain driveStartPosShootPos, driveGrabArtifactOne;
+    private PathChain driveStartPosShootPos, driveAlignRowOne, driveCollectRowOne;
 
     public void buildPaths(){
         //put in coordinates for starting pose > ending pose
@@ -39,11 +40,14 @@ public class PedroTestSarah extends OpMode {
                 .addPath(new BezierLine(startPose, aprilTagPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), aprilTagPose.getHeading())
                 .build();
-        driveGrabArtifactOne = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, turnToGrabOne))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), turnToGrabOne.getHeading())
-                .addPath(new BezierLine(turnToGrabOne, grabOneArtifact))
-                .build(); //test, idk if the two paths will work or if I need to add another setlinerHeadingInterpolaiton thingy or create two seperate paths
+        driveAlignRowOne = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, alignRowOnePose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), alignRowOnePose.getHeading())
+                .build();
+        driveCollectRowOne = follower.pathBuilder()
+                .addPath(new BezierLine(alignRowOnePose, collectRowOnePose))
+                .setLinearHeadingInterpolation(alignRowOnePose.getHeading(), collectRowOnePose.getHeading())
+                .build();
     }
 
     public void statePathUpdate() {
@@ -62,20 +66,26 @@ public class PedroTestSarah extends OpMode {
             case TURN_TO_SHOOT:
                 if (!follower.isTurning()) {
                     telemetry.addLine("Done turning to shoot heading");
-                    setPathState(PathState.SHOOT_PRELOAD);
+                    setPathState(PathState.SHOOT);
                 }
                 break;
-            case SHOOT_PRELOAD:
+            case SHOOT:
                 if (pathTimer.getElapsedTimeSeconds() > 1) {
-                    telemetry.addLine("done with Pose 2");
-                    follower.followPath(driveGrabArtifactOne, true);
-                    setPathState(PathState.GRAB_MORE_ARTIFACTS_ONE);
+                    follower.followPath(driveAlignRowOne, true);
+                    setPathState(PathState.ALIGN_ARTIFACTS_ROW_ONE);
                 }
                 break;
-            case GRAB_MORE_ARTIFACTS_ONE:
-                if(!follower.isBusy()){
-                    telemetry.addLine("done with Pose 3");
+            case ALIGN_ARTIFACTS_ROW_ONE:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveCollectRowOne, true);
+                    setPathState(PathState.COLLECT_ARTIFACTS_ROW_ONE);
                 }
+                break;
+            case COLLECT_ARTIFACTS_ROW_ONE:
+                if (!follower.isBusy()) {
+                    telemetry.addLine("done collecting row one");
+                }
+                break;
             default:
                 telemetry.addLine("No state commanded");
                 break;
