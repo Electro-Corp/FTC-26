@@ -25,7 +25,12 @@ public class PedroTestSarah extends OpMode {
         DRIVE_TO_ROW_ONE,
         DRIVE_COLLECT_ROW_ONE,
         DRIVE_SHOOT_ROW_ONE,
-        SHOOT_ROW_ONE
+        SHOOT_ROW_ONE,
+        DRIVE_TO_ROW_TWO,
+        DRIVE_COLLECT_ROW_TWO,
+        DRIVE_SHOOT_ROW_TWO,
+        SHOOT_ROW_TWO,
+        PARK
     }
 
     PathState pathState;
@@ -35,8 +40,11 @@ public class PedroTestSarah extends OpMode {
     private final Pose shootPose = new Pose(87.651, 87.974, Math.toRadians(45));
     private final Pose rowOnePose = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(180));
     private final Pose collectRowOnePose = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(180));
+    private final Pose rowTwoPose = new Pose(92.81516587, 59.20379146, Math.toRadians(180));
+    private final Pose collectRowTwoPose = new Pose(129.573459, 59.5450236, Math.toRadians(180));
+    private final Pose parkPose = new Pose(90, 120, Math.toRadians(45));
 
-    private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne;
+    private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne, driveToRowTwo, driveCollectRowTwo, driveShootRowTwo, drivePark;
 
     public void buildPaths(){
         //put in coordinates for starting pose > ending pose
@@ -55,6 +63,22 @@ public class PedroTestSarah extends OpMode {
         driveShootRowOne = follower.pathBuilder()
                 .addPath(new BezierLine(collectRowOnePose, shootPose))
                 .setLinearHeadingInterpolation(collectRowOnePose.getHeading(), shootPose.getHeading())
+                .build();
+        driveToRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, rowTwoPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), rowTwoPose.getHeading())
+                .build();
+        driveCollectRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(rowTwoPose, collectRowTwoPose))
+                .setLinearHeadingInterpolation(rowTwoPose.getHeading(), collectRowTwoPose.getHeading())
+                .build();
+        driveShootRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(collectRowTwoPose, shootPose))
+                .setLinearHeadingInterpolation(collectRowTwoPose.getHeading(), shootPose.getHeading())
+                .build();
+        drivePark = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, parkPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), parkPose.getHeading())
                 .build();
     }
 
@@ -108,7 +132,36 @@ public class PedroTestSarah extends OpMode {
                 break;
             case SHOOT_ROW_ONE:
                 if (pathTimer.getElapsedTimeSeconds() > 1) {
-                    telemetry.addLine("done shooting row one");
+                    follower.followPath(driveToRowTwo, true);
+                    setPathState(PathState.DRIVE_TO_ROW_TWO);
+                }
+                break;
+            case DRIVE_TO_ROW_TWO:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveCollectRowTwo, false);
+                    setPathState(PathState.DRIVE_COLLECT_ROW_TWO);
+                }
+                break;
+            case DRIVE_COLLECT_ROW_TWO:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveShootRowTwo, true);
+                    setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
+                }
+                break;
+            case DRIVE_SHOOT_ROW_TWO:
+                if (!follower.isBusy()) {
+                    setPathState(PathState.SHOOT_ROW_TWO);
+                }
+                break;
+            case SHOOT_ROW_TWO:
+                if (pathTimer.getElapsedTimeSeconds() > 1) {
+                    follower.followPath(drivePark, true);
+                    setPathState(PathState.PARK);
+                }
+                break;
+            case PARK:
+                if (!follower.isBusy()) {
+                    telemetry.addLine("parked");
                 }
                 break;
             default:
