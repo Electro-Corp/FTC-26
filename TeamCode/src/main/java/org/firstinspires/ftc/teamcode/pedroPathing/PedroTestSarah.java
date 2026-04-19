@@ -7,12 +7,36 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+
+import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+
+import java.util.Random;
 
 @Autonomous (name="Most Amazingest Auto Everrrrrrr", group = "Autonomous")
 public class PedroTestSarah extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opModeTimer;
+
+    private TestBrain tBrain;
+    private Shooter shooter;
+    private ColorSensors colorSensors;
+    private Intake intake;
+    private Thread shooterThread;
+
+    private Pattern pattern;
+    private int shotCount = 0;
+    private boolean[] fired = new boolean[3];
+    private boolean shootPhaseInitialized = false;
+
+    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
+    private static final double NEAR_SHOOT_SPEED = -1220;
 
     public enum PathState {
         //START POSITION_END POSITION
@@ -94,7 +118,18 @@ public class PedroTestSarah extends OpMode {
                 }
                 break;
             case WAIT_AT_APRILTAG:
+//                if (pattern == null) {
+//                    for (int i = 21; i <= 23; i++) {
+//                        if (tBrain.isIdOnScreen(i)) {
+//                            pattern = Pattern.fromNum(i);
+//                            break;
+//                        }
+//                    }
+//                }
                 if (pathTimer.getElapsedTimeSeconds() > 0.5) {
+//                    if (pattern == null) {
+//                        pattern = Pattern.fromNum(new Random().nextInt(3) + 21);
+//                    }
                     setPathState(PathState.TURN_TO_SHOOT);
                 }
                 break;
@@ -108,8 +143,9 @@ public class PedroTestSarah extends OpMode {
                 }
                 break;
             case SHOOT_PRELOADED:
-                if (pathTimer.getElapsedTimeSeconds() > 1) {
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
                     follower.followPath(driveToRowOne, true);
+//                    intake.go();
                     setPathState(PathState.DRIVE_TO_ROW_ONE);
                 }
                 break;
@@ -122,6 +158,7 @@ public class PedroTestSarah extends OpMode {
             case DRIVE_COLLECT_ROW_ONE:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowOne, true);
+//                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_ONE);
                 }
                 break;
@@ -131,8 +168,9 @@ public class PedroTestSarah extends OpMode {
                 }
                 break;
             case SHOOT_ROW_ONE:
-                if (pathTimer.getElapsedTimeSeconds() > 1) {
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
                     follower.followPath(driveToRowTwo, true);
+//                    intake.go();
                     setPathState(PathState.DRIVE_TO_ROW_TWO);
                 }
                 break;
@@ -145,6 +183,7 @@ public class PedroTestSarah extends OpMode {
             case DRIVE_COLLECT_ROW_TWO:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowTwo, true);
+//                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
                 }
                 break;
@@ -154,7 +193,7 @@ public class PedroTestSarah extends OpMode {
                 }
                 break;
             case SHOOT_ROW_TWO:
-                if (pathTimer.getElapsedTimeSeconds() > 1) {
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
                     follower.followPath(drivePark, true);
                     setPathState(PathState.PARK);
                 }
@@ -175,13 +214,76 @@ public class PedroTestSarah extends OpMode {
         pathTimer.resetTimer();
     }
 
+    // Non-blocking version of AutoRoot.shootThree(). Returns true once all 3 balls have fired.
+    private boolean tryShootThree() {
+        if (!shootPhaseInitialized) {
+            shooter.spinUp(false, true);
+            shooter.setDamDown();
+            shooter.updateLoadedColors();
+            shotCount = 0;
+            fired = new boolean[3];
+            shootPhaseInitialized = true;
+            return false;
+        }
+        if (shotCount < 3) {
+            Shooter.ShooterState s = shooter.getState();
+            if (s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD) {
+                fireNextFromPattern();
+                shotCount++;
+            }
+            return false;
+        }
+        shooter.stopShoot();
+        shooter.kickersWait();
+        shooter.setDamUp();
+        shootPhaseInitialized = false;
+        return true;
+    }
+
+    private void fireNextFromPattern() {
+        BallColor targetColor = pattern != null ? pattern.getColorAtIndex(shotCount) : null;
+
+        int indexToShoot = -1;
+        if (targetColor != null) {
+            for (int i = 0; i < 3; i++) {
+                if (!fired[i] && shooter.getLoadedColors()[i] == targetColor) {
+                    indexToShoot = i;
+                    break;
+                }
+            }
+        }
+        if (indexToShoot == -1) {
+            for (int i = 0; i < 3; i++) {
+                if (!fired[i]) { indexToShoot = i; break; }
+            }
+        }
+        if (indexToShoot == -1) return;
+
+        switch (indexToShoot) {
+            case 0: shooter.setShootSpecific(true, false, false); break;
+            case 1: shooter.setShootSpecific(false, true, false); break;
+            case 2: shooter.setShootSpecific(false, false, true); break;
+        }
+        shooter.shootNear();
+        fired[indexToShoot] = true;
+    }
+
     @Override
     public void init() {
         pathState = PathState.INIT;
         pathTimer = new Timer();
         opModeTimer = new Timer();
         follower = Constants.createFollower(hardwareMap);
-        // TODO add in any other init mechanisms
+
+//        tBrain = new TestBrain(hardwareMap);
+//        colorSensors = new ColorSensors(hardwareMap);
+//        shooter = new Shooter(hardwareMap, colorSensors, true);
+//        shooter.setPID(SHOOTER_PID);
+//        shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
+//        intake = new Intake(hardwareMap);
+//
+//        shooterThread = new Thread(shooter);
+//        shooterThread.start();
 
         buildPaths();
         follower.setPose(startPose);
@@ -190,6 +292,7 @@ public class PedroTestSarah extends OpMode {
 
     public void start() {
         opModeTimer.resetTimer();
+//        shooter.spinUp(false, false);
         setPathState(pathState);
     }
 
@@ -203,8 +306,16 @@ public class PedroTestSarah extends OpMode {
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("heading", follower.getHeading());
         telemetry.addData("path time", pathTimer.getElapsedTimeSeconds());
+//        telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
+//        telemetry.addData("shooter state", shooter.getState());
+    }
 
-
-
+    @Override
+    public void stop() {
+//        if (shooter != null) {
+//            shooter.stopShoot();
+//            shooter.stopShooterThread();
+//        }
+//        if (intake != null) intake.stop();
     }
 }
