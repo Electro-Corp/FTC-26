@@ -7,6 +7,16 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+
+import org.firstinspires.ftc.teamcode.camera.TestBrain;
+import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
+import org.firstinspires.ftc.teamcode.subsystems.BallColor;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter;
+
+import java.util.Random;
 
 @Autonomous (name="Most Amazingest Auto Everrrrrrr", group = "Autonomous")
 public class PedroTestSarah extends OpMode {
@@ -14,69 +24,185 @@ public class PedroTestSarah extends OpMode {
     private Follower follower;
     private Timer pathTimer, opModeTimer;
 
+    private TestBrain tBrain;
+    private Shooter shooter;
+    private ColorSensors colorSensors;
+    private Intake intake;
+    private Thread shooterThread;
+
+    private Pattern pattern;
+    private int shotCount = 0;
+    private boolean[] fired = new boolean[3];
+    private boolean shootPhaseInitialized = false;
+
+    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
+    private static final double NEAR_SHOOT_SPEED = -1220;
+
     public enum PathState {
         //START POSITION_END POSITION
-        DRIVE_STARTPOS_SHOOT_POS,
-        LOOK_AT_APRILTAG,
-        SHOOT_PRELOAD,
-        GRAB_MORE_ARTIFACTS_ONE
+        INIT,
+        DRIVE_TO_APRILTAG,
+        WAIT_AT_APRILTAG,
+        TURN_TO_SHOOT,
+        WAIT_FOR_TURN,
+        SHOOT_PRELOADED,
+        DRIVE_TO_ROW_ONE,
+        DRIVE_COLLECT_ROW_ONE,
+        DRIVE_SHOOT_ROW_ONE,
+        SHOOT_ROW_ONE,
+        DRIVE_TO_ROW_TWO,
+        DRIVE_COLLECT_ROW_TWO,
+        DRIVE_SHOOT_ROW_TWO,
+        SHOOT_ROW_TWO,
+        PARK
     }
 
     PathState pathState;
 
     private final Pose startPose = new Pose(123.9052132701422, 123.50710900473929, Math.toRadians(36));
     private final Pose aprilTagPose = new Pose(87.651, 87.974, Math.toRadians(95));
-    private final Pose shootPose = new Pose(99.65876777251184, 98.82464454976305, Math.toRadians(36)); //TODO how to just turn without moving
-    private final Pose turnToGrabOne = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(0));
-    private final Pose grabOneArtifact = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(0));
+    private final Pose shootPose = new Pose(87.651, 87.974, Math.toRadians(45));
+    private final Pose rowOnePose = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(180));
+    private final Pose collectRowOnePose = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(180));
+    private final Pose rowTwoPose = new Pose(92.81516587, 59.20379146, Math.toRadians(180));
+    private final Pose collectRowTwoPose = new Pose(129.573459, 59.5450236, Math.toRadians(180));
+    private final Pose parkPose = new Pose(90, 120, Math.toRadians(45));
 
-    private PathChain driveStartPosShootPos, driveAprilTagShootPos, driveGrabArtifactOne;
+    private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne, driveToRowTwo, driveCollectRowTwo, driveShootRowTwo, drivePark;
 
     public void buildPaths(){
         //put in coordinates for starting pose > ending pose
-        driveStartPosShootPos = follower.pathBuilder()
+        driveToAprilTag = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, aprilTagPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), aprilTagPose.getHeading())
                 .build();
-        driveAprilTagShootPos = follower.pathBuilder()
-                .addPath(new BezierLine(aprilTagPose, shootPose))
-                .setLinearHeadingInterpolation(aprilTagPose.getHeading(), shootPose.getHeading())
+        driveToRowOne = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, rowOnePose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), rowOnePose.getHeading())
                 .build();
-        driveGrabArtifactOne = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, turnToGrabOne))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), turnToGrabOne.getHeading())
-                .addPath(new BezierLine(turnToGrabOne, grabOneArtifact))
-                .build(); //test, idk if the two paths will work or if I need to add another setlinerHeadingInterpolaiton thingy or create two seperate paths
+        driveCollectRowOne = follower.pathBuilder()
+                .addPath(new BezierLine(rowOnePose, collectRowOnePose))
+                .setLinearHeadingInterpolation(rowOnePose.getHeading(), collectRowOnePose.getHeading())
+                .build();
+        driveShootRowOne = follower.pathBuilder()
+                .addPath(new BezierLine(collectRowOnePose, shootPose))
+                .setLinearHeadingInterpolation(collectRowOnePose.getHeading(), shootPose.getHeading())
+                .build();
+        driveToRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, rowTwoPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), rowTwoPose.getHeading())
+                .build();
+        driveCollectRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(rowTwoPose, collectRowTwoPose))
+                .setLinearHeadingInterpolation(rowTwoPose.getHeading(), collectRowTwoPose.getHeading())
+                .build();
+        driveShootRowTwo = follower.pathBuilder()
+                .addPath(new BezierLine(collectRowTwoPose, shootPose))
+                .setLinearHeadingInterpolation(collectRowTwoPose.getHeading(), shootPose.getHeading())
+                .build();
+        drivePark = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, parkPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), parkPose.getHeading())
+                .build();
     }
 
     public void statePathUpdate() {
         switch(pathState){
-            case DRIVE_STARTPOS_SHOOT_POS:
-                follower.followPath(driveStartPosShootPos, true);
-                setPathState(PathState.LOOK_AT_APRILTAG); //reset timer and make new state
+            case INIT:
+                follower.followPath(driveToAprilTag, true);
+                setPathState(PathState.DRIVE_TO_APRILTAG); //reset timer and make new state
                 break;
-            case LOOK_AT_APRILTAG:
-                //check is follower done it's path?
-                //check that 3 seconds has elapsed
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 3) {
-                    telemetry.addLine("Done Path 1");
-                    follower.followPath(driveAprilTagShootPos, true);
-                    setPathState(PathState.SHOOT_PRELOAD);
-                    //transition to next state
+            case DRIVE_TO_APRILTAG:
+                if (!follower.isBusy()) {
+                    setPathState(PathState.WAIT_AT_APRILTAG);
                 }
                 break;
-            case SHOOT_PRELOAD:
-                if (!follower.isBusy() && pathTimer.getElapsedTimeSeconds() > 1) {
-                    telemetry.addLine("done with Pose 2");
-                    follower.followPath(driveGrabArtifactOne, true);
-                    setPathState(PathState.GRAB_MORE_ARTIFACTS_ONE);
-                    //transition to next state
+            case WAIT_AT_APRILTAG:
+//                if (pattern == null) {
+//                    for (int i = 21; i <= 23; i++) {
+//                        if (tBrain.isIdOnScreen(i)) {
+//                            pattern = Pattern.fromNum(i);
+//                            break;
+//                        }
+//                    }
+//                }
+                if (pathTimer.getElapsedTimeSeconds() > 0.5) {
+//                    if (pattern == null) {
+//                        pattern = Pattern.fromNum(new Random().nextInt(3) + 21);
+//                    }
+                    setPathState(PathState.TURN_TO_SHOOT);
                 }
                 break;
-            case GRAB_MORE_ARTIFACTS_ONE:
-                if(!follower.isBusy()){
-                    telemetry.addLine("done with Pose 3");
+            case TURN_TO_SHOOT:
+                follower.turnTo(shootPose.getHeading());
+                setPathState(PathState.WAIT_FOR_TURN);
+                break;
+            case WAIT_FOR_TURN:
+                if (!follower.isTurning()) {
+                    setPathState(PathState.SHOOT_PRELOADED);
                 }
+                break;
+            case SHOOT_PRELOADED:
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                    follower.followPath(driveToRowOne, true);
+//                    intake.go();
+                    setPathState(PathState.DRIVE_TO_ROW_ONE);
+                }
+                break;
+            case DRIVE_TO_ROW_ONE:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveCollectRowOne, false);
+                    setPathState(PathState.DRIVE_COLLECT_ROW_ONE);
+                }
+                break;
+            case DRIVE_COLLECT_ROW_ONE:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveShootRowOne, true);
+//                    shooter.spinUp(false, false);
+                    setPathState(PathState.DRIVE_SHOOT_ROW_ONE);
+                }
+                break;
+            case DRIVE_SHOOT_ROW_ONE:
+                if (!follower.isBusy()) {
+                    setPathState(PathState.SHOOT_ROW_ONE);
+                }
+                break;
+            case SHOOT_ROW_ONE:
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                    follower.followPath(driveToRowTwo, true);
+//                    intake.go();
+                    setPathState(PathState.DRIVE_TO_ROW_TWO);
+                }
+                break;
+            case DRIVE_TO_ROW_TWO:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveCollectRowTwo, false);
+                    setPathState(PathState.DRIVE_COLLECT_ROW_TWO);
+                }
+                break;
+            case DRIVE_COLLECT_ROW_TWO:
+                if (!follower.isBusy()) {
+                    follower.followPath(driveShootRowTwo, true);
+//                    shooter.spinUp(false, false);
+                    setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
+                }
+                break;
+            case DRIVE_SHOOT_ROW_TWO:
+                if (!follower.isBusy()) {
+                    setPathState(PathState.SHOOT_ROW_TWO);
+                }
+                break;
+            case SHOOT_ROW_TWO:
+                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                    follower.followPath(drivePark, true);
+                    setPathState(PathState.PARK);
+                }
+                break;
+            case PARK:
+                if (!follower.isBusy()) {
+                    telemetry.addLine("parked");
+                }
+                break;
             default:
                 telemetry.addLine("No state commanded");
                 break;
@@ -88,13 +214,76 @@ public class PedroTestSarah extends OpMode {
         pathTimer.resetTimer();
     }
 
+    // Non-blocking version of AutoRoot.shootThree(). Returns true once all 3 balls have fired.
+    private boolean tryShootThree() {
+        if (!shootPhaseInitialized) {
+            shooter.spinUp(false, true);
+            shooter.setDamDown();
+            shooter.updateLoadedColors();
+            shotCount = 0;
+            fired = new boolean[3];
+            shootPhaseInitialized = true;
+            return false;
+        }
+        if (shotCount < 3) {
+            Shooter.ShooterState s = shooter.getState();
+            if (s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD) {
+                fireNextFromPattern();
+                shotCount++;
+            }
+            return false;
+        }
+        shooter.stopShoot();
+        shooter.kickersWait();
+        shooter.setDamUp();
+        shootPhaseInitialized = false;
+        return true;
+    }
+
+    private void fireNextFromPattern() {
+        BallColor targetColor = pattern != null ? pattern.getColorAtIndex(shotCount) : null;
+
+        int indexToShoot = -1;
+        if (targetColor != null) {
+            for (int i = 0; i < 3; i++) {
+                if (!fired[i] && shooter.getLoadedColors()[i] == targetColor) {
+                    indexToShoot = i;
+                    break;
+                }
+            }
+        }
+        if (indexToShoot == -1) {
+            for (int i = 0; i < 3; i++) {
+                if (!fired[i]) { indexToShoot = i; break; }
+            }
+        }
+        if (indexToShoot == -1) return;
+
+        switch (indexToShoot) {
+            case 0: shooter.setShootSpecific(true, false, false); break;
+            case 1: shooter.setShootSpecific(false, true, false); break;
+            case 2: shooter.setShootSpecific(false, false, true); break;
+        }
+        shooter.shootNear();
+        fired[indexToShoot] = true;
+    }
+
     @Override
     public void init() {
-        pathState = PathState.DRIVE_STARTPOS_SHOOT_POS;
+        pathState = PathState.INIT;
         pathTimer = new Timer();
         opModeTimer = new Timer();
         follower = Constants.createFollower(hardwareMap);
-        // TODO add in any other init mechanisms
+
+//        tBrain = new TestBrain(hardwareMap);
+//        colorSensors = new ColorSensors(hardwareMap);
+//        shooter = new Shooter(hardwareMap, colorSensors, true);
+//        shooter.setPID(SHOOTER_PID);
+//        shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
+//        intake = new Intake(hardwareMap);
+//
+//        shooterThread = new Thread(shooter);
+//        shooterThread.start();
 
         buildPaths();
         follower.setPose(startPose);
@@ -103,6 +292,7 @@ public class PedroTestSarah extends OpMode {
 
     public void start() {
         opModeTimer.resetTimer();
+//        shooter.spinUp(false, false);
         setPathState(pathState);
     }
 
@@ -116,8 +306,16 @@ public class PedroTestSarah extends OpMode {
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("heading", follower.getHeading());
         telemetry.addData("path time", pathTimer.getElapsedTimeSeconds());
+//        telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
+//        telemetry.addData("shooter state", shooter.getState());
+    }
 
-
-
+    @Override
+    public void stop() {
+//        if (shooter != null) {
+//            shooter.stopShoot();
+//            shooter.stopShooterThread();
+//        }
+//        if (intake != null) intake.stop();
     }
 }
