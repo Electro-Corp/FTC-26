@@ -35,8 +35,8 @@ public class Shooter implements Runnable{
     public static final double M_KICKER_SHOOT = 0.4175;
     public static final double R_KICKER_WAIT = 0.543;
     public static final double R_KICKER_SHOOT = 0.723;
-    public static final double R_DAM_UP_POS = 0.101;
-    public static final double R_DAM_DOWN_POS = 0.5125;
+    public static final double L_DAM_UP_POS = 0.101;
+    public static final double L_DAM_DOWN_POS = 0.5125;
 
     private static final float COLOR_GAIN = 30.5f;
 
@@ -59,6 +59,7 @@ public class Shooter implements Runnable{
     private final Servo leftKicker;
     private final Servo midKicker;
     private final Servo rightKicker;
+    private final Servo leftDam;
     private BallColor[] loadedColors;
     private final boolean readColorsOnce; //AUTO only reads the color once
 
@@ -75,7 +76,9 @@ public class Shooter implements Runnable{
         this.leftKicker = hardwareMap.get(Servo.class, "lKick");
         this.midKicker = hardwareMap.get(Servo.class, "mKick");
         this.rightKicker = hardwareMap.get(Servo.class,"rKick");
+        this.leftDam = hardwareMap.get(Servo.class, "leftDam");
         //this.rightDam = hardwareMap.get(Servo.class, "rightDam");
+
         this.loadedColors = colorSensors.readAllColors();
 
         this.shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -301,13 +304,12 @@ public class Shooter implements Runnable{
     }
 
     public void setDamUp() {
-        //rightDam.setPosition(R_DAM_UP_POS);
+        leftDam.setPosition(L_DAM_UP_POS);
         isDamUp = true;
     }
 
     public void setDamDown() {
-
-        //rightDam.setPosition(R_DAM_DOWN_POS);
+        leftDam.setPosition(L_DAM_DOWN_POS);
         isDamUp = false;
     }
 
