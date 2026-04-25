@@ -4,7 +4,6 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -16,8 +15,23 @@ import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
-@Autonomous (name="Auto Pedro", group = "Autonomous")
-public class AutoPedro extends OpMode {
+public abstract class AutoPedro extends OpMode {
+
+    private static final double FIELD_WIDTH = 144.0;
+
+    /** Returns true if this opmode is for the Blue alliance. */
+    protected abstract boolean isBlue();
+
+    /**
+     * Pose constructor that mirrors across the field's vertical center for Blue.
+     * Red uses the literal coordinates; Blue gets x → (144 - x) and heading → (π - heading).
+     */
+    protected Pose pose(double x, double y, double headingRadians) {
+        if (isBlue()) {
+            return new Pose(FIELD_WIDTH - x, y, Math.PI - headingRadians);
+        }
+        return new Pose(x, y, headingRadians);
+    }
 
     private Follower follower;
     private Timer pathTimer, opModeTimer;
@@ -57,15 +71,16 @@ public class AutoPedro extends OpMode {
 
     PathState pathState;
 
-    private final Pose startPose = new Pose(124, 123.5, Math.toRadians(36));
-    private final Pose aprilTagPose = new Pose(95, 95, Math.toRadians(120));
-    private final Pose shootPose = new Pose(95, 95, Math.toRadians(45));
-    private final Pose rowOnePose = new Pose(95, 84, Math.toRadians(180));
-    private final Pose collectRowOnePose = new Pose(125, 84, Math.toRadians(180));
-    private final Pose rowTwoPose = new Pose(93, 57, Math.toRadians(180));
-    private final Pose collectRowTwoPose = new Pose(130, 57, Math.toRadians(180));
-    private final Pose rowTwoWaypointPose = new Pose(110, 60, Math.toRadians(180));
-    private final Pose parkPose = new Pose(100, 120, Math.toRadians(45));
+    // All poses are in relationship to RED. They are then mirrored if they are for the blue side
+    private final Pose startPose = pose(124, 123.5, Math.toRadians(36));
+    private final Pose aprilTagPose = pose(95, 95, Math.toRadians(120));
+    private final Pose shootPose = pose(95, 95, Math.toRadians(45));
+    private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
+    private final Pose collectRowOnePose = pose(125, 84, Math.toRadians(180));
+    private final Pose rowTwoPose = pose(93, 57, Math.toRadians(180));
+    private final Pose collectRowTwoPose = pose(130, 57, Math.toRadians(180));
+    private final Pose rowTwoWaypointPose = pose(110, 60, Math.toRadians(180));
+    private final Pose parkPose = pose(100, 120, Math.toRadians(45));
 
     private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne, driveToRowTwo, driveCollectRowTwo, driveShootRowTwo, drivePark;
 
