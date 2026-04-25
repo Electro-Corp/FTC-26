@@ -59,14 +59,15 @@ public class PedroTestSarah extends OpMode {
 
     PathState pathState;
 
-    private final Pose startPose = new Pose(123.9052132701422, 123.50710900473929, Math.toRadians(36));
-    private final Pose aprilTagPose = new Pose(87.651, 87.974, Math.toRadians(95));
-    private final Pose shootPose = new Pose(87.651, 87.974, Math.toRadians(45));
-    private final Pose rowOnePose = new Pose(94.521327014218, 83.75355450236967, Math.toRadians(180));
-    private final Pose collectRowOnePose = new Pose(129.5734597156398, 84.12322274881517, Math.toRadians(180));
-    private final Pose rowTwoPose = new Pose(92.81516587, 59.20379146, Math.toRadians(180));
-    private final Pose collectRowTwoPose = new Pose(129.573459, 59.5450236, Math.toRadians(180));
-    private final Pose parkPose = new Pose(90, 120, Math.toRadians(45));
+    private final Pose startPose = new Pose(124, 123.5, Math.toRadians(36));
+    private final Pose aprilTagPose = new Pose(95, 95, Math.toRadians(120));
+    private final Pose shootPose = new Pose(95, 95, Math.toRadians(45));
+    private final Pose rowOnePose = new Pose(95, 84, Math.toRadians(180));
+    private final Pose collectRowOnePose = new Pose(125, 84, Math.toRadians(180));
+    private final Pose rowTwoPose = new Pose(93, 57, Math.toRadians(180));
+    private final Pose collectRowTwoPose = new Pose(130, 57, Math.toRadians(180));
+    private final Pose rowTwoWaypointPose = new Pose(110, 60, Math.toRadians(180));
+    private final Pose parkPose = new Pose(100, 120, Math.toRadians(45));
 
     private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne, driveToRowTwo, driveCollectRowTwo, driveShootRowTwo, drivePark;
 
@@ -97,8 +98,10 @@ public class PedroTestSarah extends OpMode {
                 .setLinearHeadingInterpolation(rowTwoPose.getHeading(), collectRowTwoPose.getHeading())
                 .build();
         driveShootRowTwo = follower.pathBuilder()
-                .addPath(new BezierLine(collectRowTwoPose, shootPose))
-                .setLinearHeadingInterpolation(collectRowTwoPose.getHeading(), shootPose.getHeading())
+                .addPath(new BezierLine(collectRowTwoPose, rowTwoWaypointPose))
+                .setLinearHeadingInterpolation(collectRowTwoPose.getHeading(), rowTwoWaypointPose.getHeading())
+                .addPath(new BezierLine(rowTwoWaypointPose, shootPose))
+                .setLinearHeadingInterpolation(rowTwoWaypointPose.getHeading(), shootPose.getHeading())
                 .build();
         drivePark = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, parkPose))
@@ -138,7 +141,7 @@ public class PedroTestSarah extends OpMode {
                 setPathState(PathState.WAIT_FOR_TURN);
                 break;
             case WAIT_FOR_TURN:
-                if (!follower.isTurning()) {
+                if (!follower.isTurning() && pathTimer.getElapsedTimeSeconds() > 1) {
                     setPathState(PathState.SHOOT_PRELOADED);
                 }
                 break;
@@ -304,7 +307,7 @@ public class PedroTestSarah extends OpMode {
         telemetry.addData("path state", pathState.toString());
         telemetry.addData("X", follower.getPose().getX());
         telemetry.addData("Y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getHeading());
+        telemetry.addData("heading", Math.toDegrees(follower.getHeading()));
         telemetry.addData("path time", pathTimer.getElapsedTimeSeconds());
 //        telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
 //        telemetry.addData("shooter state", shooter.getState());

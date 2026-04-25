@@ -4,10 +4,11 @@ import com.pedropathing.control.FilteredPIDFCoefficients;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
-import com.pedropathing.ftc.FollowerBuilder;
+import com.pedropathing.ftc.drivetrains.Mecanum;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.Encoder;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
+import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
 import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -54,10 +55,10 @@ public class Constants {
             1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
-        return new FollowerBuilder(followerConstants, hardwareMap)
-                .pinpointLocalizer(localizerConstants)
-                .pathConstraints(pathConstraints)
-                .mecanumDrivetrain(driveConstants)
-                .build();
+        return new FixedFollower(
+                followerConstants,
+                new PinpointLocalizer(hardwareMap, localizerConstants),
+                new Mecanum(hardwareMap, driveConstants),
+                pathConstraints);
     }
 }
