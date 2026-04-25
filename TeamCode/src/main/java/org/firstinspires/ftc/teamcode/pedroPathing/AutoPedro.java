@@ -16,10 +16,8 @@ import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
-import java.util.Random;
-
-@Autonomous (name="Most Amazingest Auto Everrrrrrr", group = "Autonomous")
-public class PedroTestSarah extends OpMode {
+@Autonomous (name="Auto Pedro", group = "Autonomous")
+public class AutoPedro extends OpMode {
 
     private Follower follower;
     private Timer pathTimer, opModeTimer;
