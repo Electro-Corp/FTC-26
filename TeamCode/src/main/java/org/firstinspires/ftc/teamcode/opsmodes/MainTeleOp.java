@@ -15,6 +15,8 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
 import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
@@ -37,6 +39,12 @@ public abstract class MainTeleOp extends LinearOpMode {
     private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
+
+    private GoBildaPinpointDriver pinpoint = null;
+
+    /** Toggle between field-centric and robot-centric driving. */
+    private boolean fieldCentric = false;
+    private static final double START_HEADING_DEG = 35.0;
 
 
     private final boolean rrEnabled = false;
@@ -86,6 +94,12 @@ public abstract class MainTeleOp extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
 
+        // Field-centric heading source. Robot is positioned at START_HEADING_DEG in field
+        // coordinates at TeleOp init. Press gamepad1.back to re-assert this heading later.
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.recalibrateIMU();
+        pinpoint.setHeading(Math.toRadians(START_HEADING_DEG), AngleUnit.RADIANS);
+
         // Aiming
         tBrain = new TestBrain(hardwareMap);
 
@@ -120,7 +134,15 @@ public abstract class MainTeleOp extends LinearOpMode {
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
 
+        boolean backHeld = false;
         while (opModeIsActive()){
+            pinpoint.update();
+            if (gamepad1.back && !backHeld) {
+                pinpoint.recalibrateIMU();
+                pinpoint.setHeading(Math.toRadians(START_HEADING_DEG), AngleUnit.RADIANS);
+            }
+            backHeld = gamepad1.back;
+
             updateDriveMotors();
 
             telemetry.addData("READY TO FIRE?", (Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity()));
@@ -226,6 +248,18 @@ public abstract class MainTeleOp extends LinearOpMode {
             yaw -= 0.3 * -1;
         if (gamepad1.left_bumper) {
             yaw += 0.3 * -1;
+        }
+
+        // Field-centric: treat (lateral, axial) as field-frame intent, then rotate into the
+        // robot frame using the current heading from the Pinpoint IMU.
+        if (fieldCentric) {
+            double heading = pinpoint.getHeading(AngleUnit.RADIANS);
+            double cos = Math.cos(heading);
+            double sin = Math.sin(heading);
+            double newAxial   = lateral * cos + axial * sin;
+            double newLateral = lateral * sin - axial * cos;
+            axial = newAxial;
+            lateral = newLateral;
         }
 
         double leftFrontPower = axial + lateral + yaw;
