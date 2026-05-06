@@ -65,6 +65,7 @@ public abstract class MainTeleOp extends LinearOpMode {
     private String readError = "NONE";
     private boolean xPrev = false;
     private boolean xCurr = false;
+    private boolean startPrev = false;
     private boolean autoAim = true;
 
     private boolean shootThreeSpeed = false;
@@ -145,6 +146,7 @@ public abstract class MainTeleOp extends LinearOpMode {
 
             updateDriveMotors();
 
+            telemetry.addData("DRIVE MODE", fieldCentric ? "FIELD CENTRIC" : "ROBOT CENTRIC");
             telemetry.addData("READY TO FIRE?", (Math.abs(shooter.SPINNER_SPEED_NEAR) - 10 < shooter.getVelocity() && Math.abs(shooter.SPINNER_SPEED_NEAR) + 10 > shooter.getVelocity()));
             telemetry.addData("SHOOT THREE MODE", shootThreeSpeed);
             telemetry.addLine("=========================================");
@@ -252,8 +254,10 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Field-centric: treat (lateral, axial) as field-frame intent, then rotate into the
         // robot frame using the current heading from the Pinpoint IMU.
+        // Red drivers face +X (east), blue face -X (west), each ±90° from the field Y axis.
         if (fieldCentric) {
             double heading = pinpoint.getHeading(AngleUnit.RADIANS);
+            heading += GetSideMultiplier() * Math.PI / 2;
             double cos = Math.cos(heading);
             double sin = Math.sin(heading);
             double newAxial   = lateral * cos + axial * sin;
@@ -389,6 +393,11 @@ public abstract class MainTeleOp extends LinearOpMode {
             else autoAim = true;
         }
         xPrev = xCurr;
+
+        if (gamepad1.start && !startPrev) {
+            fieldCentric = !fieldCentric;
+        }
+        startPrev = gamepad1.start;
 
         shooter.update();
     }

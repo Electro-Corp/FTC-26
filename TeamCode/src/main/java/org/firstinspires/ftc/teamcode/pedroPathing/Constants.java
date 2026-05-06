@@ -19,21 +19,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 // See Web Browser Panels here: http://192.168.43.1:8001/
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(5)
-            .forwardZeroPowerAcceleration(-36.35)
-            .lateralZeroPowerAcceleration(-66.57)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.07, 0, 0.005, 0.025))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0, 0.002, 0.035))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.6,0.0,0.0001,2,0.1));
+            .mass(13.88)
+            .forwardZeroPowerAcceleration(-45.07)
+            .lateralZeroPowerAcceleration(-78.5)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.0, 0.05))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.32, 0, 0.002, 0.035))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01,0.0,0.0,0.1,0.4));
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(4)
-            .strafePodX(0)
+            .forwardPodY(3.5)
+            .strafePodX(6.75)
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
             .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -41,17 +41,17 @@ public class Constants {
             .rightRearMotorName("rightBack")
             .leftRearMotorName("leftBack")
             .leftFrontMotorName("leftFront")
-            .xVelocity(70.9)
-            .yVelocity(56.7)
-            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE);
+            .xVelocity(65.65)
+            .yVelocity(50.38)
+            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
 
     public static PathConstraints pathConstraints = new PathConstraints(
             0.99,
             100,
-            5,
+            1,
             1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
