@@ -5,12 +5,15 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
 import java.util.List;
@@ -21,10 +24,8 @@ public class LimelightAlign extends LinearOpMode {
     // Limelight
     Limelight3A limelight;
 
-    // Roadrunner
-    MecanumDrive mecanumDrive;
-
-
+    // PedroPath
+    private Follower follower;
     @Override
     public void runOpMode() throws InterruptedException {
         initHardware();
@@ -37,15 +38,16 @@ public class LimelightAlign extends LinearOpMode {
             if(res != null && res.isValid()){
                 double tX = res.getTx();
 
-                TrajectoryActionBuilder trajectory = mecanumDrive.actionBuilder(mecanumDrive.localizer.getPose())
-                        .turn(Math.toRadians(tX));
-                //runTrajectory(trajectory);
+                follower.followPath(follower.pathBuilder()
+                        .addPath(new BezierLine(follower.getPose(), follower.getPose()))
+                        .setLinearHeadingInterpolation(follower.getPose().getHeading(), follower.getPose().getHeading() + Math.toRadians(tX))
+                        .build());
 
                 telemetry.addData("Target X", tX);
 //                    telemetry.addData("Target Y", res.getTy());
 //                    telemetry.addData("Target Area", res.getTa());
             }
-
+            follower.update();
             telemetry.update();
         }
 
@@ -53,16 +55,11 @@ public class LimelightAlign extends LinearOpMode {
 
     private void initHardware(){
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        mecanumDrive = new MecanumDrive(hardwareMap, new Pose2d(new Vector2d(0, 0), 0));
+        follower = Constants.createFollower(hardwareMap);
 
         // Limelight config
         limelight.setPollRateHz(100);
         limelight.start();
         limelight.pipelineSwitch(0);
-    }
-
-    private void runTrajectory(TrajectoryActionBuilder t){
-        Action currentAction = t.build();
-        Actions.runBlocking(currentAction);
     }
 }
