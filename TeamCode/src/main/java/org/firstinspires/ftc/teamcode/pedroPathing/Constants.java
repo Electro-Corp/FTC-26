@@ -23,8 +23,9 @@ public class Constants {
             .forwardZeroPowerAcceleration(-45.07)
             .lateralZeroPowerAcceleration(-78.5)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.0, 0.05))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.32, 0, 0.002, 0.05))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01,0.0,0.0,0.1,0.4));
+            .headingPIDFCoefficients(new PIDFCoefficients(0.32, 0.01, 0.002, 0.05))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01,0.0,0.0,0.1,0.4))
+            .turnHeadingErrorThreshold(Math.toRadians(2)); //set higher if rotation intermittently hangs
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-3.5)
@@ -51,8 +52,8 @@ public class Constants {
     public static PathConstraints pathConstraints = new PathConstraints(
             0.99,
             100,
-            1,
-            1);
+            3,
+            3);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FixedFollower(

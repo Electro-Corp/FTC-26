@@ -154,7 +154,7 @@ public abstract class AutoPedro extends OpMode {
                 setPathState(PathState.WAIT_FOR_TURN);
                 break;
             case WAIT_FOR_TURN:
-                if (!follower.isTurning() && pathTimer.getElapsedTimeSeconds() > 1) {
+                if (!follower.isTurning()) {
                     setPathState(PathState.SHOOT_PRELOADED);
                 }
                 break;
