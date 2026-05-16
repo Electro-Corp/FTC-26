@@ -46,6 +46,11 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean fieldCentric = false;
     private static final double START_HEADING_DEG = 35.0;
 
+    // Heading tracking: integrate pinpoint deltas so the field-centric reference
+    // is anchored at game start and is unaffected by mode switches or Pinpoint resets.
+    private double lastPinpointHeadingRad;
+    private double fieldHeadingRad;
+
 
     private final boolean rrEnabled = false;
 
@@ -100,6 +105,8 @@ public abstract class MainTeleOp extends LinearOpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.recalibrateIMU();
         pinpoint.setHeading(Math.toRadians(START_HEADING_DEG), AngleUnit.RADIANS);
+        lastPinpointHeadingRad = Math.toRadians(START_HEADING_DEG);
+        fieldHeadingRad        = Math.toRadians(START_HEADING_DEG);
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
@@ -138,9 +145,22 @@ public abstract class MainTeleOp extends LinearOpMode {
         boolean backHeld = false;
         while (opModeIsActive()){
             pinpoint.update();
+
+            // Integrate pinpoint heading deltas into our own tracker.
+            // This keeps fieldHeadingRad anchored at game start regardless of mode
+            // switches, accidental back-button presses, or Pinpoint IMU resets.
+            double rawHeading = pinpoint.getHeading(AngleUnit.RADIANS);
+            double delta = rawHeading - lastPinpointHeadingRad;
+            while (delta >  Math.PI) delta -= 2 * Math.PI;
+            while (delta < -Math.PI) delta += 2 * Math.PI;
+            fieldHeadingRad += delta;
+            lastPinpointHeadingRad = rawHeading;
+
             if (gamepad1.back && !backHeld) {
                 pinpoint.recalibrateIMU();
                 pinpoint.setHeading(Math.toRadians(START_HEADING_DEG), AngleUnit.RADIANS);
+                lastPinpointHeadingRad = Math.toRadians(START_HEADING_DEG);
+                fieldHeadingRad        = Math.toRadians(START_HEADING_DEG);
             }
             backHeld = gamepad1.back;
 
@@ -256,7 +276,7 @@ public abstract class MainTeleOp extends LinearOpMode {
         // robot frame using the current heading from the Pinpoint IMU.
         // Red drivers face +X (east), blue face -X (west), each ±90° from the field Y axis.
         if (fieldCentric) {
-            double heading = pinpoint.getHeading(AngleUnit.RADIANS);
+            double heading = fieldHeadingRad;
             heading += GetSideMultiplier() * Math.PI / 2;
             double cos = Math.cos(heading);
             double sin = Math.sin(heading);

@@ -49,7 +49,7 @@ public abstract class AutoPedro extends OpMode {
     private boolean shootPhaseInitialized = false;
 
     private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
-    private static final double NEAR_SHOOT_SPEED = -1220;
+    private static final double NEAR_SHOOT_SPEED = -1270;
 
     public enum PathState {
         //START POSITION_END POSITION
@@ -79,9 +79,9 @@ public abstract class AutoPedro extends OpMode {
     private final Pose aprilTagPose = pose(95, 95, Math.toRadians(120));
     private final Pose shootPose = pose(95, 95, Math.toRadians(40));
     private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
-    private final Pose collectRowOnePose = pose(125, 84, Math.toRadians(180));
+    private final Pose collectRowOnePose = pose(128, 84, Math.toRadians(180));
     private final Pose rowTwoPose = pose(93, 57, Math.toRadians(180));
-    private final Pose collectRowTwoPose = pose(130, 57, Math.toRadians(180));
+    private final Pose collectRowTwoPose = pose(134, 57, Math.toRadians(180));
     private final Pose rowTwoWaypointPose = pose(110, 60, Math.toRadians(180));
     private final Pose parkPose = pose(100, 120, Math.toRadians(45));
 
