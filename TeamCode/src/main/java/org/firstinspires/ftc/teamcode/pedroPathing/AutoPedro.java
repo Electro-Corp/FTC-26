@@ -50,6 +50,7 @@ public abstract class AutoPedro extends OpMode {
 
     private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
     private static final double NEAR_SHOOT_SPEED = -1270;
+    private static final double TURN_TIMEOUT_SECONDS = 2.0;
 
     public enum PathState {
         //START POSITION_END POSITION
@@ -157,7 +158,7 @@ public abstract class AutoPedro extends OpMode {
                 setPathState(PathState.WAIT_FOR_TURN);
                 break;
             case WAIT_FOR_TURN:
-                if (!follower.isTurning()) {
+                if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
                     setPathState(PathState.SHOOT_PRELOADED);
                 }
                 break;
@@ -188,7 +189,7 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case ALIGN_ROW_ONE:
-                if (!follower.isTurning()) {
+                if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
                     setPathState(PathState.SHOOT_ROW_ONE);
                 }
                 break;
@@ -219,7 +220,7 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case ALIGN_ROW_TWO:
-                if (!follower.isTurning()) {
+                if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
                     setPathState(PathState.SHOOT_ROW_TWO);
                 }
                 break;
