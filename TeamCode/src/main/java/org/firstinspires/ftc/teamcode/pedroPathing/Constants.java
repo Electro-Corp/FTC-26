@@ -23,7 +23,7 @@ public class Constants {
             .forwardZeroPowerAcceleration(-45.07)
             .lateralZeroPowerAcceleration(-78.5)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.13, 0, 0.0, 0.05))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.8, 0.02, 0.05, 0.05))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0.01, 0.012, 0.05))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.015,0.0,0.0,0.1,0.4))
             .turnHeadingErrorThreshold(Math.toRadians(3)); //set higher if rotation intermittently hangs
 
