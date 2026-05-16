@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
+import java.util.Random;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -134,18 +135,18 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case WAIT_AT_APRILTAG:
-//                if (pattern == null) {
-//                    for (int i = 21; i <= 23; i++) {
-//                        if (tBrain.isIdOnScreen(i)) {
-//                            pattern = Pattern.fromNum(i);
-//                            break;
-//                        }
-//                    }
-//                }
+                if (pattern == null) {
+                    for (int i = 21; i <= 23; i++) {
+                        if (tBrain.isIdOnScreen(i)) {
+                            pattern = Pattern.fromNum(i);
+                            break;
+                        }
+                    }
+                }
                 if (pathTimer.getElapsedTimeSeconds() > 0.5) {
-//                    if (pattern == null) {
-//                        pattern = Pattern.fromNum(new Random().nextInt(3) + 21);
-//                    }
+                    if (pattern == null) {
+                        pattern = Pattern.fromNum(new Random().nextInt(3) + 21);
+                    }
                     setPathState(PathState.TURN_TO_SHOOT);
                 }
                 break;
@@ -159,9 +160,9 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case SHOOT_PRELOADED:
-                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                if (tryShootThree()) {
                     follower.followPath(driveToRowOne, true);
-//                    intake.go();
+                    intake.go();
                     setPathState(PathState.DRIVE_TO_ROW_ONE);
                 }
                 break;
@@ -174,7 +175,7 @@ public abstract class AutoPedro extends OpMode {
             case DRIVE_COLLECT_ROW_ONE:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowOne, true);
-//                    shooter.spinUp(false, false);
+                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_ONE);
                 }
                 break;
@@ -184,9 +185,9 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case SHOOT_ROW_ONE:
-                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                if (tryShootThree()) {
                     follower.followPath(driveToRowTwo, true);
-//                    intake.go();
+                    intake.go();
                     setPathState(PathState.DRIVE_TO_ROW_TWO);
                 }
                 break;
@@ -199,7 +200,7 @@ public abstract class AutoPedro extends OpMode {
             case DRIVE_COLLECT_ROW_TWO:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowTwo, true);
-//                    shooter.spinUp(false, false);
+                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
                 }
                 break;
@@ -209,7 +210,7 @@ public abstract class AutoPedro extends OpMode {
                 }
                 break;
             case SHOOT_ROW_TWO:
-                if (pathTimer.getElapsedTimeSeconds() > 1 /*tryShootThree()*/) {
+                if (tryShootThree()) {
                     follower.followPath(drivePark, true);
                     setPathState(PathState.PARK);
                 }
@@ -291,15 +292,15 @@ public abstract class AutoPedro extends OpMode {
         opModeTimer = new Timer();
         follower = Constants.createFollower(hardwareMap);
 
-//        tBrain = new TestBrain(hardwareMap);
-//        colorSensors = new ColorSensors(hardwareMap);
-//        shooter = new Shooter(hardwareMap, colorSensors, true);
-//        shooter.setPID(SHOOTER_PID);
-//        shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
-//        intake = new Intake(hardwareMap);
-//
-//        shooterThread = new Thread(shooter);
-//        shooterThread.start();
+        tBrain = new TestBrain(hardwareMap);
+        colorSensors = new ColorSensors(hardwareMap);
+        shooter = new Shooter(hardwareMap, colorSensors, true);
+        shooter.setPID(SHOOTER_PID);
+        shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
+        intake = new Intake(hardwareMap);
+
+        shooterThread = new Thread(shooter);
+        shooterThread.start();
 
         buildPaths();
         follower.setPose(startPose);
@@ -308,7 +309,7 @@ public abstract class AutoPedro extends OpMode {
 
     public void start() {
         opModeTimer.resetTimer();
-//        shooter.spinUp(false, false);
+        shooter.spinUp(false, false);
         setPathState(pathState);
     }
 
@@ -322,16 +323,16 @@ public abstract class AutoPedro extends OpMode {
         telemetry.addData("Y", follower.getPose().getY());
         telemetry.addData("heading", Math.toDegrees(follower.getHeading()));
         telemetry.addData("path time", pathTimer.getElapsedTimeSeconds());
-//        telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
-//        telemetry.addData("shooter state", shooter.getState());
+        telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
+        telemetry.addData("shooter state", shooter != null ? shooter.getState() : "null");
     }
 
     @Override
     public void stop() {
-//        if (shooter != null) {
-//            shooter.stopShoot();
-//            shooter.stopShooterThread();
-//        }
-//        if (intake != null) intake.stop();
+        if (shooter != null) {
+            shooter.stopShoot();
+            shooter.stopShooterThread();
+        }
+        if (intake != null) intake.stop();
     }
 }
