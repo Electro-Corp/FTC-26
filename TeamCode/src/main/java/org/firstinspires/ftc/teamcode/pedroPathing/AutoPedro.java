@@ -62,10 +62,12 @@ public abstract class AutoPedro extends OpMode {
         DRIVE_TO_ROW_ONE,
         DRIVE_COLLECT_ROW_ONE,
         DRIVE_SHOOT_ROW_ONE,
+        ALIGN_ROW_ONE,
         SHOOT_ROW_ONE,
         DRIVE_TO_ROW_TWO,
         DRIVE_COLLECT_ROW_TWO,
         DRIVE_SHOOT_ROW_TWO,
+        ALIGN_ROW_TWO,
         SHOOT_ROW_TWO,
         PARK
     }
@@ -75,7 +77,7 @@ public abstract class AutoPedro extends OpMode {
     // All poses are in relationship to RED. They are then mirrored if they are for the blue side
     private final Pose startPose = pose(124, 123.5, Math.toRadians(36));
     private final Pose aprilTagPose = pose(95, 95, Math.toRadians(120));
-    private final Pose shootPose = pose(95, 95, Math.toRadians(45));
+    private final Pose shootPose = pose(95, 95, Math.toRadians(40));
     private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
     private final Pose collectRowOnePose = pose(125, 84, Math.toRadians(180));
     private final Pose rowTwoPose = pose(93, 57, Math.toRadians(180));
@@ -181,6 +183,12 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case DRIVE_SHOOT_ROW_ONE:
                 if (!follower.isBusy()) {
+                    follower.turnTo(shootPose.getHeading());
+                    setPathState(PathState.ALIGN_ROW_ONE);
+                }
+                break;
+            case ALIGN_ROW_ONE:
+                if (!follower.isTurning()) {
                     setPathState(PathState.SHOOT_ROW_ONE);
                 }
                 break;
@@ -206,6 +214,12 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case DRIVE_SHOOT_ROW_TWO:
                 if (!follower.isBusy()) {
+                    follower.turnTo(shootPose.getHeading());
+                    setPathState(PathState.ALIGN_ROW_TWO);
+                }
+                break;
+            case ALIGN_ROW_TWO:
+                if (!follower.isTurning()) {
                     setPathState(PathState.SHOOT_ROW_TWO);
                 }
                 break;
@@ -248,6 +262,11 @@ public abstract class AutoPedro extends OpMode {
                 fireNextFromPattern();
                 shotCount++;
             }
+            return false;
+        }
+        // Wait for the last ball's kicker to finish its full cycle before stopping
+        Shooter.ShooterState s = shooter.getState();
+        if (s != Shooter.ShooterState.SPIN_UP_HOLD && s != Shooter.ShooterState.STOPPED) {
             return false;
         }
         shooter.stopShoot();

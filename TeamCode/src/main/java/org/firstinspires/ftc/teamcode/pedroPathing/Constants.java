@@ -22,10 +22,10 @@ public class Constants {
             .mass(13.88)
             .forwardZeroPowerAcceleration(-45.07)
             .lateralZeroPowerAcceleration(-78.5)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.0, 0.05))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.32, 0.01, 0.002, 0.05))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.01,0.0,0.0,0.1,0.4))
-            .turnHeadingErrorThreshold(Math.toRadians(2)); //set higher if rotation intermittently hangs
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.13, 0, 0.0, 0.05))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0.01, 0.012, 0.05))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.015,0.0,0.0,0.1,0.4))
+            .turnHeadingErrorThreshold(Math.toRadians(3)); //set higher if rotation intermittently hangs
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(-3.5)
