@@ -61,7 +61,7 @@ public class Shooter implements Runnable{
     private final Servo rightKicker;
     private final Servo leftDam;
     private BallColor[] loadedColors;
-    private final boolean readColorsOnce; //AUTO only reads the color once
+    public final boolean readColorsOnce; //AUTO only reads the color once
 
     private ShooterState state = ShooterState.STOPPED;
     private long stateStartTime = 0;
