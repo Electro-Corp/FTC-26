@@ -11,6 +11,7 @@ public class Limelight {
 
     private boolean isTeleOp;
     private boolean isRed;
+    private int id = 0;
 
     public enum PipelineSwitcher {
         BLUE(0), RED(1), OBELISK(2);
@@ -61,10 +62,9 @@ public class Limelight {
     public int getID() {
         LLResult result = limelight.getLatestResult();
         List<LLResultTypes.FiducialResult> fiducials = (List<LLResultTypes.FiducialResult>) result.getFiducialResults();
-        int id;
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
             id = fiducial.getFiducialId(); // The ID number of the fiducial
-        return id;
         }
+        return id;
     }
 }
