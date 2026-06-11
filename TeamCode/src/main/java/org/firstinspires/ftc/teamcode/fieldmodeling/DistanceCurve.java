@@ -38,6 +38,11 @@ public class DistanceCurve {
         sortByDistance();
     }
 
+    /** Removes every logged sample. Caller is responsible for persisting via write(). */
+    public void clear() {
+        points.clear();
+    }
+
     private void sortByDistance() {
         Collections.sort(points, Comparator.comparingDouble(p -> p.distance));
     }

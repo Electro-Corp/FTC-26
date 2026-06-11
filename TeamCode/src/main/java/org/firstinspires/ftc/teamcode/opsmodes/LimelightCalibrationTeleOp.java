@@ -55,6 +55,13 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
     /** Hard timeout in ms while waiting for {@link #CALIBRATION_FRAMES} frames. */
     public static long CALIBRATION_TIMEOUT_MS = 750;
 
+    /**
+     * How long gamepad1.back must be held before the curve is wiped. The hold
+     * guards against accidental presses that would otherwise destroy a tuning
+     * session's worth of data.
+     */
+    public static long CLEAR_HOLD_MS = 3000;
+
     // ---- Hardware ----
     private DcMotorEx leftFrontDrive, rightFrontDrive, leftBackDrive, rightBackDrive;
 
@@ -72,6 +79,12 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
     private boolean speedUpHeld = false;
     private boolean speedDownHeld = false;
     private boolean pipelineHeld = false;
+
+    /**
+     * Wall-clock time when gamepad1.back was first pressed in the current hold,
+     * or -1 when the button is not held. Used to enforce {@link #CLEAR_HOLD_MS}.
+     */
+    private long clearHoldStartMs = -1;
 
     /** Last toast-style message to surface in telemetry after a log action. */
     private String logStatus = "no samples logged yet";
@@ -148,6 +161,15 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
             telemetry.addLine("================ CALIBRATION ===============");
             telemetry.addData("Curve points", curve.size());
             telemetry.addData("Last log", logStatus);
+
+            // Show a countdown while gamepad1.back is held so the operator can
+            // see how much longer they need to hold to wipe the curve.
+            if (clearHoldStartMs > 0 && clearHoldStartMs != Long.MAX_VALUE) {
+                long remaining = CLEAR_HOLD_MS - (System.currentTimeMillis() - clearHoldStartMs);
+                if (remaining > 0) {
+                    telemetry.addData("Clearing in", "%.1fs", remaining / 1000.0);
+                }
+            }
 
             // Mirror everything important to FTC Dashboard charts so we can
             // graph distance vs speed live during a tuning session.
@@ -234,6 +256,7 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
      *
      *   gamepad1
      *     start         → log current (distance, speed) sample
+     *     back (hold 3s)→ clear the entire curve and rewrite the file empty
      *     right_bumper  → cycle Limelight pipeline (BLUE → RED → OBELISK → BLUE)
      *     x             → hold to auto-aim at the visible AprilTag
      *
@@ -329,6 +352,33 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         if (gamepad1.startWasPressed()) {
             logCurrentSample();
         }
+
+        // ---- Hold-to-clear (gamepad1.back held for CLEAR_HOLD_MS) ----
+        // Tracking the press start time avoids using gamepad1.backWasPressed(),
+        // which fires once per press and gives us no way to require a hold.
+        if (gamepad1.back) {
+            if (clearHoldStartMs < 0) {
+                clearHoldStartMs = System.currentTimeMillis();
+            } else if (System.currentTimeMillis() - clearHoldStartMs >= CLEAR_HOLD_MS) {
+                clearCurve();
+                // Reset to a sentinel that won't re-trigger until the button is
+                // released and pressed again (handled in the else branch below).
+                clearHoldStartMs = Long.MAX_VALUE;
+            }
+        } else {
+            clearHoldStartMs = -1;
+        }
+    }
+
+    /**
+     * Wipe every logged sample from memory and from disk. Surfaces a status
+     * message so the operator gets visible confirmation in telemetry.
+     */
+    private void clearCurve() {
+        int previousSize = curve.size();
+        curve.clear();
+        curve.write();
+        logStatus = String.format("CLEARED — removed %d samples", previousSize);
     }
 
     /**
