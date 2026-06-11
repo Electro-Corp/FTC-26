@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.sun.tools.javac.util.List;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class Limelight {
     Limelight3A limelight;
@@ -12,6 +15,8 @@ public class Limelight {
     private boolean isTeleOp;
     private boolean isRed;
     private int id = 0;
+    private Pose3D botPose;
+    private LLResult llResult;
 
     public enum PipelineSwitcher {
         BLUE(0), RED(1), OBELISK(2);
@@ -43,6 +48,8 @@ public class Limelight {
     }
 
     public void update() {
+        llResult = limelight.getLatestResult();
+
         switch (pipeline) {
             case BLUE:
                 break;
@@ -66,5 +73,34 @@ public class Limelight {
             id = fiducial.getFiducialId(); // The ID number of the fiducial
         }
         return id;
+    }
+
+    public double getTx() {
+        if (llResult != null && llResult.isValid()) {
+            return llResult.getTx();
+        } else {
+            return 1000;
+        }
+    }
+
+    public double getTy() {
+        if (llResult != null && llResult.isValid()) {
+            return llResult.getTy();
+        } else {
+            return 1000;
+        }
+    }
+
+    public double getTa() {
+        if (llResult != null && llResult.isValid()) {
+            return llResult.getTa();
+        } else {
+            return 1000;
+        }
+    }
+
+    public boolean angleAlign() {
+        llResult.getTx();
+        return false;
     }
 }
