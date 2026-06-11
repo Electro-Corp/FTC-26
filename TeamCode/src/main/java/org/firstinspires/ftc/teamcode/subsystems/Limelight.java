@@ -67,6 +67,12 @@ public class Limelight {
         return pipeline;
     }
 
+    public PipelineSwitcher nextPipeline() {
+        if (getPipeline() == PipelineSwitcher.BLUE) return PipelineSwitcher.RED;
+        else if (getPipeline() == PipelineSwitcher.RED) return PipelineSwitcher.OBELISK;
+        else return PipelineSwitcher.BLUE;
+    }
+
     public void update() {
         llResult = limelight.getLatestResult();
 

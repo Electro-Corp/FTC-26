@@ -342,7 +342,7 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         //      bumper briefly nudges yaw + cycles the pipeline; sustained hold
         //      keeps yawing without spamming pipeline switches. ----
         if (gamepad1.right_bumper && !pipelineHeld) {
-            limelight.switchPipeline(limelight.getPipeline().next());
+            limelight.switchPipeline(limelight.nextPipeline());
             pipelineHeld = true;
         } else if (!gamepad1.right_bumper) {
             pipelineHeld = false;
