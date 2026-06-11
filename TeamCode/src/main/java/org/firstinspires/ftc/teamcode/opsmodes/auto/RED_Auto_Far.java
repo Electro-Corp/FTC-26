@@ -20,6 +20,6 @@ public class RED_Auto_Far extends AutoRoot{
 
     @Override
     protected boolean isNear() {
-        return true;
+        return false;
     }
 }
