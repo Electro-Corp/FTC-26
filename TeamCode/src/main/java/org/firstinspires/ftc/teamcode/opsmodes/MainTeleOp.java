@@ -355,9 +355,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             shooter.spinUp(fast);
             //shooter.setDamDown();
         }
-        if(gamepad2.b){
-            shooter.reverseHumanPlayer(fast);
-        }
+
         // Uncomment later
 //        if(gamepad2.x){
 //            rotateToFire();
