@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
+import org.firstinspires.ftc.teamcode.camera.BallColorPipeline;
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
 import java.util.Random;
@@ -38,6 +39,7 @@ public abstract class AutoPedro extends OpMode {
     private Timer pathTimer, opModeTimer;
 
     private TestBrain tBrain;
+    private BallColorPipeline ballCam;
     private Shooter shooter;
     private ColorSensors colorSensors;
     private Intake intake;
@@ -47,9 +49,10 @@ public abstract class AutoPedro extends OpMode {
     private int shotCount = 0;
     private boolean[] fired = new boolean[3];
     private boolean shootPhaseInitialized = false;
+    private BallColor[] loadedColors = {BallColor.UNKNOWN, BallColor.UNKNOWN, BallColor.UNKNOWN};
 
     private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
-    private static final double NEAR_SHOOT_SPEED = -1270;
+    private static final double NEAR_SHOOT_SPEED = -1320;
     private static final double TURN_TIMEOUT_SECONDS = 2.0;
     // Seconds after leaving the collect position before spinning up (lowering the dam).
     // Gives balls time to settle before the dam drops. Tune between 0.5 and 1.0.
@@ -259,7 +262,7 @@ public abstract class AutoPedro extends OpMode {
         if (!shootPhaseInitialized) {
             shooter.spinUp(false, true);
             shooter.setDamDown();
-            shooter.updateLoadedColors();
+            loadedColors = ballCam.getDetectedColors();
             shotCount = 0;
             fired = new boolean[3];
             shootPhaseInitialized = true;
@@ -291,7 +294,7 @@ public abstract class AutoPedro extends OpMode {
         int indexToShoot = -1;
         if (targetColor != null) {
             for (int i = 0; i < 3; i++) {
-                if (!fired[i] && shooter.getLoadedColors()[i] == targetColor) {
+                if (!fired[i] && loadedColors[i] == targetColor) {
                     indexToShoot = i;
                     break;
                 }
@@ -321,6 +324,7 @@ public abstract class AutoPedro extends OpMode {
         follower = Constants.createFollower(hardwareMap);
 
         tBrain = new TestBrain(hardwareMap);
+        ballCam = new BallColorPipeline(hardwareMap);
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
         shooter.setPID(SHOOTER_PID);
@@ -354,6 +358,7 @@ public abstract class AutoPedro extends OpMode {
         telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
         telemetry.addData("shooter state", shooter != null ? shooter.getState() : "null");
         telemetry.addData("shooter velocity", shooter != null ? shooter.getVelocity() : "null");
+        telemetry.addData("ball colors", "%s | %s | %s", loadedColors[0], loadedColors[1], loadedColors[2]);
     }
 
     @Override
@@ -363,5 +368,6 @@ public abstract class AutoPedro extends OpMode {
             shooter.stopShooterThread();
         }
         if (intake != null) intake.stop();
+        if (ballCam != null) ballCam.close();
     }
 }
