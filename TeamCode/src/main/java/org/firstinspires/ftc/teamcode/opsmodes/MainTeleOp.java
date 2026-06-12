@@ -19,6 +19,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.teamcode.fieldmodeling.DataLogger;
+import org.firstinspires.ftc.teamcode.fieldmodeling.DistanceCurve;
 import org.firstinspires.ftc.teamcode.fieldmodeling.FieldDataPoints;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
@@ -63,6 +64,27 @@ public abstract class MainTeleOp extends LinearOpMode {
     private ColorSensors colorSensors;
     private Intake intake;
     private Shooter shooter;
+
+    /**
+     * Limelight + calibration curve for distance-based shooter speed selection.
+     * Pipeline is chosen at init based on alliance (RED → pipeline RED, BLUE → pipeline BLUE).
+     */
+    private Limelight limelight;
+    private DistanceCurve distanceCurve;
+
+    /**
+     * Driver-controlled toggle for distance-based speed lookup. ON by default; press
+     * gamepad1.left_stick_button to flip. When OFF the shooter falls back to the
+     * hard-coded SPINNER_SPEED_NEAR = -1300 used historically.
+     */
+    private boolean distanceSpeedEnabled = true;
+    private boolean distanceToggleHeld = false;
+
+    /** Last computed target speed for telemetry (negative = wired-negative motor convention). */
+    private double lastTargetSpeed = -1300;
+
+    /** Static fallback used when the curve is empty or no AprilTag is visible. */
+    private static final double FALLBACK_NEAR_SPEED = -1300;
 
     public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12.5);
 
@@ -137,6 +159,19 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Init field
         fieldMap = DataLogger.read();
+
+        // Limelight: pick the pipeline that matches our alliance so we lock onto
+        // the goal AprilTag for our side. GetSideMultiplier() returns +1 for RED,
+        // -1 for BLUE.
+        Limelight.PipelineSwitcher allianceLane = (GetSideMultiplier() > 0)
+                ? Limelight.PipelineSwitcher.RED
+                : Limelight.PipelineSwitcher.BLUE;
+        limelight = new Limelight(hardwareMap, allianceLane);
+
+        // Load the calibration curve once — it doesn't change during the match.
+        // If the file is missing the curve will be empty and we fall back to
+        // FALLBACK_NEAR_SPEED on every update.
+        distanceCurve = DistanceCurve.read();
     }
 
     @Override
@@ -180,6 +215,22 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
             telemetry.addData("Limelight tx (deg)", limelight.getTx());
+
+            // Distance-based shooter speed status. "Source" lets the driver see
+            // at a glance whether the curve is actually being used or we're
+            // falling back (toggle off, no target, empty curve, etc.).
+            String speedSource;
+            if (!distanceSpeedEnabled) speedSource = "TOGGLE OFF (fallback)";
+            else if (distanceCurve == null || distanceCurve.size() == 0) speedSource = "EMPTY CURVE (fallback)";
+            else if (limelight == null || !limelight.hasTarget()) speedSource = "NO TARGET (fallback)";
+            else speedSource = "CURVE";
+            telemetry.addData("Speed source", speedSource);
+            telemetry.addData("Curve points", distanceCurve == null ? 0 : distanceCurve.size());
+            if (limelight != null && limelight.hasTarget()) {
+                telemetry.addData("Limelight distance (in)", "%.2f", limelight.getDistance());
+            }
+            telemetry.addData("Target speed", "%.0f", lastTargetSpeed);
+
             if(rrEnabled) {
                 telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
             }
@@ -204,12 +255,20 @@ public abstract class MainTeleOp extends LinearOpMode {
 
             telemetry.addLine(getCurrentPoseString());
 
-            // Update speed with position
-            if(rrEnabled)
+            // ---- Update shooter target speed ----
+            // Three sources of truth, in priority order:
+            //   1. RoadRunner pose-keyed field map (rrEnabled, currently false in
+            //      practice — kept for backwards compatibility).
+            //   2. Limelight distance-keyed calibration curve (default path now).
+            //   3. Hard-coded FALLBACK_NEAR_SPEED if neither is available.
+            if (rrEnabled) {
                 shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
-            else shooter.SPINNER_SPEED_NEAR = -1300;
+            } else {
+                shooter.SPINNER_SPEED_NEAR = computeTargetSpeed();
+            }
             if(shootThreeSpeed) shooter.SPINNER_SPEED_NEAR -= 60;
             //else shooter.SPINNER_SPEED_NEAR -= 10;
+            lastTargetSpeed = shooter.SPINNER_SPEED_NEAR;
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());
@@ -420,6 +479,15 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         startPrev = gamepad1.start;
 
+        // Driver toggle: distance-based shooter speed on/off. Edge-detected so
+        // a held button doesn't flap the flag every loop iteration.
+        if (gamepad1.left_stick_button && !distanceToggleHeld) {
+            distanceSpeedEnabled = !distanceSpeedEnabled;
+            distanceToggleHeld = true;
+        } else if (!gamepad1.left_stick_button) {
+            distanceToggleHeld = false;
+        }
+
         shooter.update();
     }
 
@@ -430,6 +498,31 @@ public abstract class MainTeleOp extends LinearOpMode {
         }else{
             return "none";
         }
+    }
+
+    /**
+     * Pick the shooter target speed for this loop iteration.
+     *
+     * Order of precedence:
+     *   - If the driver disabled distance-based speed (left_stick_button), or the
+     *     curve is empty, or the Limelight has no target, return the static
+     *     fallback speed. This guarantees the shooter is always usable even when
+     *     vision drops out.
+     *   - Otherwise interpolate the calibration curve at the Limelight-reported
+     *     distance.
+     *
+     * The returned value is negative (matching the wired-negative shooter motor
+     * convention) so callers can write it directly into SPINNER_SPEED_NEAR.
+     */
+    private double computeTargetSpeed() {
+        if (!distanceSpeedEnabled) return FALLBACK_NEAR_SPEED;
+        if (distanceCurve == null || distanceCurve.size() == 0) return FALLBACK_NEAR_SPEED;
+        if (limelight == null || !limelight.hasTarget()) return FALLBACK_NEAR_SPEED;
+
+        double distance = limelight.getDistance();
+        if (Double.isNaN(distance)) return FALLBACK_NEAR_SPEED;
+
+        return distanceCurve.getSpeedAtDistance(distance);
     }
 
     public Pose2d getAutoPose() throws Exception {
