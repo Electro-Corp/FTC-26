@@ -29,11 +29,6 @@ public class Intake {
 
     public void go(){
         intakeMotor.setPower(speed);
-        if(this.shooter != null){
-            if(this.shooter.getState() == Shooter.ShooterState.STOPPED){
-                this.shooter.reverse(false);
-            }
-        }
     }
 
     public void reverse(){

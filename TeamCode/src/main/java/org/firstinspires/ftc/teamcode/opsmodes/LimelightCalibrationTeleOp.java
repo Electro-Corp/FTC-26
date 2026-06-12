@@ -117,8 +117,8 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         intake = new Intake(hardwareMap, shooter);
 
         // Calibration is most often done against a goal AprilTag — start on
-        // BLUE; gamepad1.right_bumper cycles to RED / OBELISK.
-        limelight = new Limelight(hardwareMap, Limelight.PipelineSwitcher.BLUE);
+        // BLUE; gamepad1.y cycles to RED / OBELISK.
+        limelight = new Limelight(hardwareMap, Limelight.PipelineSwitcher.RED);
 
         // Load existing samples so today's points add to yesterday's curve.
         curve = DistanceCurve.read();
@@ -296,9 +296,6 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         if (gamepad2.right_trigger > 0.2) {
             shooter.spinUp(fast);
         }
-        if (gamepad2.b) {
-            shooter.reverse(fast);
-        }
 
         // Speed nudge: ±5 ticks/s per press, edge-triggered so a held button
         // doesn't ramp the value. Negative because SPINNER_SPEED_NEAR is stored
@@ -341,10 +338,10 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         //      on press). Drive's yaw nudge is fine to coexist — pressing the
         //      bumper briefly nudges yaw + cycles the pipeline; sustained hold
         //      keeps yawing without spamming pipeline switches. ----
-        if (gamepad1.right_bumper && !pipelineHeld) {
+        if (gamepad1.y && !pipelineHeld) {
             limelight.switchPipeline(limelight.nextPipeline());
             pipelineHeld = true;
-        } else if (!gamepad1.right_bumper) {
+        } else if (!gamepad1.y) {
             pipelineHeld = false;
         }
 
