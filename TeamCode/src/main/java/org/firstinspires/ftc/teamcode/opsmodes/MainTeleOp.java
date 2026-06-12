@@ -95,7 +95,6 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean xCurr = false;
     private boolean startPrev = false;
     private boolean autoAim = true;
-    private Limelight limelight;
     public static double LIMELIGHT_AIM_KP = 0.5;
 
     private boolean shootThreeSpeed = false;
