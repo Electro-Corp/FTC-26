@@ -84,7 +84,7 @@ public class DistanceCurve {
 
     public static DistanceCurve read() {
         try (Reader r = new FileReader(FILE_PATH)) {
-            return new DistanceCurve(JsonParser.parseReader(r).getAsJsonObject());
+            return new DistanceCurve(new JsonParser().parse(r).getAsJsonObject());
         } catch (Exception e) {
             return new DistanceCurve();
         }

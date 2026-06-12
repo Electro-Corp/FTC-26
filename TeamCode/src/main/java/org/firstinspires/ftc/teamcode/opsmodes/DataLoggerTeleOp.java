@@ -203,9 +203,7 @@ public class DataLoggerTeleOp extends LinearOpMode {
         if(gamepad2.right_trigger > .2){
             shooter.spinUp(fast);
         }
-        if(gamepad2.b){
-            shooter.reverse(fast);
-        }
+
         // Uncomment later
         if(gamepad2.x){
             shooter.SPINNER_SPEED_NEAR += 1;
