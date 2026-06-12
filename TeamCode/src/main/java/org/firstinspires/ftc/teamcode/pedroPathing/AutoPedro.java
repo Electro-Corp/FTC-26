@@ -51,6 +51,9 @@ public abstract class AutoPedro extends OpMode {
     private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
     private static final double NEAR_SHOOT_SPEED = -1270;
     private static final double TURN_TIMEOUT_SECONDS = 2.0;
+    // Seconds after leaving the collect position before spinning up (lowering the dam).
+    // Gives balls time to settle before the dam drops. Tune between 0.5 and 1.0.
+    private static final double DAM_LOWER_DELAY_SECONDS = 0.5;
 
     public enum PathState {
         //START POSITION_END POSITION
@@ -178,11 +181,13 @@ public abstract class AutoPedro extends OpMode {
             case DRIVE_COLLECT_ROW_ONE:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowOne, true);
-                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_ONE);
                 }
                 break;
             case DRIVE_SHOOT_ROW_ONE:
+                if (pathTimer.getElapsedTimeSeconds() > DAM_LOWER_DELAY_SECONDS) {
+                    shooter.spinUp(false, false);
+                }
                 if (!follower.isBusy()) {
                     follower.turnTo(shootPose.getHeading());
                     setPathState(PathState.ALIGN_ROW_ONE);
@@ -209,11 +214,13 @@ public abstract class AutoPedro extends OpMode {
             case DRIVE_COLLECT_ROW_TWO:
                 if (!follower.isBusy()) {
                     follower.followPath(driveShootRowTwo, true);
-                    shooter.spinUp(false, false);
                     setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
                 }
                 break;
             case DRIVE_SHOOT_ROW_TWO:
+                if (pathTimer.getElapsedTimeSeconds() > DAM_LOWER_DELAY_SECONDS) {
+                    shooter.spinUp(false, false);
+                }
                 if (!follower.isBusy()) {
                     follower.turnTo(shootPose.getHeading());
                     setPathState(PathState.ALIGN_ROW_TWO);
@@ -232,6 +239,7 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case PARK:
                 if (!follower.isBusy()) {
+                    intake.stop();
                     telemetry.addLine("parked");
                 }
                 break;
@@ -345,6 +353,7 @@ public abstract class AutoPedro extends OpMode {
         telemetry.addData("path time", pathTimer.getElapsedTimeSeconds());
         telemetry.addData("pattern", pattern == null ? "null" : pattern.toString());
         telemetry.addData("shooter state", shooter != null ? shooter.getState() : "null");
+        telemetry.addData("shooter velocity", shooter != null ? shooter.getVelocity() : "null");
     }
 
     @Override
