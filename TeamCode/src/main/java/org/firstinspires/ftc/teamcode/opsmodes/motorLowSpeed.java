@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="two motor low speed test")
+//@TeleOp(name="two motor low speed test")
 public class motorLowSpeed extends LinearOpMode {
     private DcMotorEx shooterLeft;
     private DcMotorEx shooterRight;

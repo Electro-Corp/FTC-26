@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
 import com.acmerobotics.roadrunner.Line;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+@Disabled
 @Autonomous(name="Auto SCREAMAGE")
 public class AutoScreamage extends LinearOpMode {
     private DcMotorEx leftFrontDrive = null;

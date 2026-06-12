@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-@TeleOp(name = "ElvinLimeThing")
+//@TeleOp(name = "ElvinLimeThing")
 public class ElvinLimeThing extends OpMode {
     private Limelight3A limelight;
     private IMU imu;

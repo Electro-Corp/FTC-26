@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
 import java.util.List;
 
-@TeleOp
+//@TeleOp
 public class LimelightAlign extends LinearOpMode {
 
     // Limelight

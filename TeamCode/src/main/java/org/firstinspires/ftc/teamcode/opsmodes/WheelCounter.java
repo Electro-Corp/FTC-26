@@ -5,7 +5,7 @@ import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.STOP_AND_RESET_ENC
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-@TeleOp(name="WheelCount", group="TeleOp")
+//@TeleOp(name="WheelCount", group="TeleOp")
 
 public class WheelCounter extends LinearOpMode {
     @Override

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -9,6 +10,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.steelheads.SparkyNav;
+
+@Disabled
 @Autonomous
 public class NinetyDegreeTurn extends OpMode{
     DcMotor motorFrontLeft, motorFrontRight, motorBackLeft, motorBackRight;

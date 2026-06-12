@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 
-@TeleOp(name="RoadRunner Test", group="TeleOp")
+//@TeleOp(name="RoadRunner Test", group="TeleOp")
 public class Rotate_Test extends LinearOpMode {
 
     @Override

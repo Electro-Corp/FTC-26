@@ -27,7 +27,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @Config
-@TeleOp(name="New Shooter TeleOp")
+//@TeleOp(name="New Shooter TeleOp")
 public class MainTeleOp_NewShooter extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 

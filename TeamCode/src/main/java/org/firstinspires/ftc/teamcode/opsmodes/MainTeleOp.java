@@ -24,6 +24,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
@@ -72,6 +73,8 @@ public abstract class MainTeleOp extends LinearOpMode {
     private boolean xCurr = false;
     private boolean startPrev = false;
     private boolean autoAim = true;
+    private Limelight limelight;
+    public static double LIMELIGHT_AIM_KP = 0.5;
 
     private boolean shootThreeSpeed = false;
 
@@ -110,6 +113,9 @@ public abstract class MainTeleOp extends LinearOpMode {
 
         // Aiming
         tBrain = new TestBrain(hardwareMap);
+        limelight = new Limelight(hardwareMap, GetSideMultiplier() > 0
+                ? Limelight.PipelineSwitcher.RED
+                : Limelight.PipelineSwitcher.BLUE);
 
         try{
             initPose = getAutoPose();
@@ -173,6 +179,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
             telemetry.addData("Shooter Vel", shooter.getVelocity());
+            telemetry.addData("Limelight tx (deg)", limelight.getTx());
             if(rrEnabled) {
                 telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
             }
@@ -272,6 +279,10 @@ public abstract class MainTeleOp extends LinearOpMode {
             yaw += 0.3 * -1;
         }
 
+        if (autoAim && gamepad1.y && limelight.hasTarget()) {
+            yaw += limelight.getYawCorrection(LIMELIGHT_AIM_KP);
+        }
+
         // Field-centric: treat (lateral, axial) as field-frame intent, then rotate into the
         // robot frame using the current heading from the Pinpoint IMU.
         // Red drivers face +X (east), blue face -X (west), each ±90° from the field Y axis.
@@ -323,10 +334,6 @@ public abstract class MainTeleOp extends LinearOpMode {
 
     boolean shooting = false, gateHeld = false, aHeld = false;
     private void readGamepad(){
-        if(gamepad1.y){
-            rotateToFire();
-        }
-
         //control intake, gamepad 2 left trigger is forward and left bumper is reverse
         if(gamepad2.left_trigger >= .2) {
             intake.setSpeed(-gamepad2.left_trigger);
@@ -344,7 +351,6 @@ public abstract class MainTeleOp extends LinearOpMode {
         shooting = shooter.isShooting();
         //shooter
         if(gamepad2.right_bumper /*&& !shooting*/) { //shoot far
-            rotateToFire();
             //shooter.kickersWait();
             shooter.setToShootAll();
             if(fast)
@@ -374,7 +380,6 @@ public abstract class MainTeleOp extends LinearOpMode {
         }
         // Manual shoot three
         if(gamepad2.dpad_left){
-            rotateToFire();
             // Left
             shooter.setShootSpecific(true, false, false);
             // Ugly but
@@ -383,7 +388,6 @@ public abstract class MainTeleOp extends LinearOpMode {
             else shooter.shootNear();
         }
         if(gamepad2.dpad_up){
-            rotateToFire();
             // Center
             shooter.setShootSpecific(false, true, false);
             // Ugly but
@@ -392,7 +396,6 @@ public abstract class MainTeleOp extends LinearOpMode {
             else shooter.shootNear();
         }
         if(gamepad2.dpad_right){
-            rotateToFire();
             // Right
             shooter.setShootSpecific(false, false, true);
             // Ugly but
@@ -418,16 +421,6 @@ public abstract class MainTeleOp extends LinearOpMode {
         startPrev = gamepad1.start;
 
         shooter.update();
-    }
-
-    public void rotateToFire(){
-        if (autoAim && rrEnabled) {
-            Pose2d og = drive.localizer.getPose();
-            Pose2d mapping = new Pose2d(new Vector2d(og.position.x, og.position.y * GetSideMultiplier()), og.heading.toDouble());
-            TrajectoryActionBuilder traj = drive.actionBuilder(drive.localizer.getPose())
-                    .turnTo(((fieldMap.getStateAtPose(mapping).heading * GetSideMultiplier())));
-            Actions.runBlocking(traj.build());
-        }
     }
 
     public String getCurrentPoseString() {

@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
+@Disabled
 @Autonomous(name="Z_BLUE Auto Far")
 public class BLUE_Auto_Far extends AutoRoot{
     @Override

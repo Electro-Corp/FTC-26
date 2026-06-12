@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 @Config
-@TeleOp(name="Shooting PID tune")
+//@TeleOp(name="Shooting PID tune")
 public class ShootingOpMode extends LinearOpMode {
     public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12);
 

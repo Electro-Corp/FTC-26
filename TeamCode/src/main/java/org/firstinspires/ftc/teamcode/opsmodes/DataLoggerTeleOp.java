@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
 @Config
-@TeleOp(name="LoggingTeleOp")
+//@TeleOp(name="LoggingTeleOp")
 public class DataLoggerTeleOp extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 

@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.camera.AprilTagBrain;
 import org.firstinspires.ftc.teamcode.camera.TestBrain;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
-@TeleOp(name="traingle")
+//@TeleOp(name="traingle")
 public class Triangulate extends LinearOpMode {
     TestBrain testBrain;
     @Override

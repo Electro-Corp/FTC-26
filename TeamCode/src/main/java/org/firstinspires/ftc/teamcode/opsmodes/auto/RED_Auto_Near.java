@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.opsmodes.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
+@Disabled
 @Autonomous(name="A_RED Auto Near")
 public class RED_Auto_Near extends AutoRoot{
 
