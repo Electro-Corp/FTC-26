@@ -269,6 +269,12 @@ public abstract class MainTeleOp extends LinearOpMode {
             //else shooter.SPINNER_SPEED_NEAR -= 10;
             lastTargetSpeed = shooter.SPINNER_SPEED_NEAR;
 
+            // Push the freshly-computed speed onto the flywheels every loop. Without
+            // this the motors hold whatever velocity was latched at the most recent
+            // spinUp()/shootNear() call, so distance-based updates stay invisible
+            // until the operator re-triggers a shoot command.
+            shooter.retargetVelocity();
+
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Shooter Vel", shooter.getVelocity());
             packet.put("Target Vel", -(shooter.SPINNER_SPEED_NEAR));

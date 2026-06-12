@@ -156,6 +156,31 @@ public class Shooter implements Runnable{
         spinUp(fast, true);
     }
 
+    /**
+     * Re-apply SPINNER_SPEED_NEAR to the flywheel motors. Call this every loop iteration
+     * when the upstream code is mutating SPINNER_SPEED_NEAR continuously (e.g. from a
+     * Limelight distance lookup) — the original spinUp/shootNear/shootFar methods only
+     * latch the velocity once at state-transition time, so without this method the
+     * motors keep spinning at whatever speed was first commanded.
+     *
+     * No-op unless the shooter is in a state where the flywheels should be spinning
+     * forward — STOPPED / REVERSE / WAIT_FOR_KICKER are intentionally skipped so we
+     * don't fight other commands.
+     */
+    public void retargetVelocity() {
+        switch (state) {
+            case SPIN_UP_HOLD:
+            case WAITING_FOR_SPIN_UP:
+            case SHOOTING:
+                shooterLeft.setVelocity(SPINNER_SPEED_NEAR);
+                shooterRight.setVelocity(-SPINNER_SPEED_NEAR);
+                break;
+            default:
+                // STOPPED / REVERSE / REVERSE_HUMAN_PLAYER — leave velocity alone.
+                break;
+        }
+    }
+
     public void spinUp(boolean fast, boolean hold){
         holdSpin = hold;
         setState(ShooterState.SPIN_UP_HOLD);

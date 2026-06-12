@@ -32,7 +32,8 @@ re-deriving the design.
 | File | Status | What changed |
 |---|---|---|
 | `opsmodes/LimelightCalibrationTeleOp.java` | **new** | The calibration TeleOp itself. |
-| `opsmodes/MainTeleOp.java` | modified | Initializes a `Limelight` on the alliance pipeline and loads the `DistanceCurve`. Replaces the hard-coded `SPINNER_SPEED_NEAR = -1300` with a curve lookup gated by a driver toggle (`gamepad1.left_stick_button`, default ON) and falls back to -1300 when the curve is empty / no target / toggle off. Adds telemetry showing the speed source, curve size, current Limelight distance, and target speed. |
+| `opsmodes/MainTeleOp.java` | modified | Initializes a `Limelight` on the alliance pipeline and loads the `DistanceCurve`. Replaces the hard-coded `SPINNER_SPEED_NEAR = -1300` with a curve lookup gated by a driver toggle (`gamepad1.left_stick_button`, default ON) and falls back to -1300 when the curve is empty / no target / toggle off. Calls `shooter.retargetVelocity()` every loop so live distance changes are pushed to the flywheels continuously, not only at the next spinUp/shoot trigger. Adds telemetry showing the speed source, curve size, current Limelight distance, and target speed. |
+| `subsystems/Shooter.java` | modified | Added `retargetVelocity()` which re-applies `SPINNER_SPEED_NEAR` to the flywheels when the shooter is in a forward-spinning state (`SPIN_UP_HOLD`, `WAITING_FOR_SPIN_UP`, `SHOOTING`). No-op in `STOPPED` / `REVERSE` so it doesn't fight other commands. |
 | `subsystems/Limelight.java` | modified | Existing `getID()`, `PipelineSwitcher`, `update()`, `switchPipeline()` preserved verbatim. `getTx`/`getTy`/`getTa` rewritten to read fresh frames (NaN on no target). Added `getDistance()`, `sampleAveraged()`, `getYawCorrection()`, `hasTarget()`, `nextPipeline()`, a `Sample` data class, and a `(HardwareMap, PipelineSwitcher)` constructor that bypasses the auto-pipeline-switching logic. |
 | `fieldmodeling/DistanceDataPoint.java` | **new** | Plain `(distance, speed)` struct + `toJSON()`. |
 | `fieldmodeling/DistanceCurve.java` | **new** | Reads/writes `LogParams-Distance.txt`. Linear interpolation between sorted points, clamped at endpoints. `clear()` for the wipe button. |
@@ -127,6 +128,16 @@ extend it). The integration adds:
   4-step fallback chain above and writes the result to
   `shooter.SPINNER_SPEED_NEAR`. The pre-existing `shootThreeSpeed` -60
   offset still applies on top of whichever source was chosen.
+- **Continuous flywheel update.** Immediately after writing
+  `SPINNER_SPEED_NEAR`, the loop calls `shooter.retargetVelocity()` which
+  re-applies the new value to both flywheel motors. Without this the
+  motors latch whatever velocity was set at the most recent
+  `spinUp()`/`shootNear()` call, so distance-based updates would stay
+  invisible until the operator triggered a new shoot command — exactly
+  the bug we hit on first test (first shot from close-up locked in a low
+  speed; moving to the far end didn't speed the wheels up). The
+  retarget method is a no-op when the shooter is `STOPPED` / `REVERSE`
+  so it can't fight other commands.
 - **Telemetry.** A "Speed source" line shows one of
   `CURVE` / `TOGGLE OFF (fallback)` / `EMPTY CURVE (fallback)` / `NO TARGET (fallback)`
   so the driver can tell at a glance whether vision is actually steering
