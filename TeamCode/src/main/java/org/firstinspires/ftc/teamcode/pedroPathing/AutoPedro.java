@@ -55,11 +55,14 @@ public abstract class AutoPedro extends OpMode {
     private BallColor[] loadedColors = {BallColor.UNKNOWN, BallColor.UNKNOWN, BallColor.UNKNOWN};
 
     private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
-    private static final double NEAR_SHOOT_SPEED = -1320;
+    private static final double NEAR_SHOOT_SPEED = -1340;
     private static final double TURN_TIMEOUT_SECONDS = 2.0;
     // Seconds after leaving the collect position before spinning up (lowering the dam).
     // Gives balls time to settle before the dam drops. Tune between 0.5 and 1.0.
     private static final double DAM_LOWER_DELAY_SECONDS = 0.5;
+    private static final double SPINUP_SPEED_TOLERANCE = 100;
+    private static final double SPINUP_TIMEOUT_SECONDS = 1.5;
+    private static final long SPINUP_STABLE_MS = 150;
 
     public enum PathState {
         //START POSITION_END POSITION
@@ -68,6 +71,7 @@ public abstract class AutoPedro extends OpMode {
         WAIT_AT_APRILTAG,
         TURN_TO_SHOOT,
         WAIT_FOR_TURN,
+        WAIT_FOR_SPINUP,
         SHOOT_PRELOADED,
         DRIVE_TO_ROW_ONE,
         DRIVE_COLLECT_ROW_ONE,
@@ -83,11 +87,12 @@ public abstract class AutoPedro extends OpMode {
     }
 
     PathState pathState;
+    private PathState stateAfterSpinup = PathState.SHOOT_PRELOADED;
 
     // All poses are in relationship to RED. They are then mirrored if they are for the blue side
     private final Pose startPose = pose(124, 123.5, Math.toRadians(36));
     private final Pose aprilTagPose = pose(95, 95, Math.toRadians(120));
-    private final Pose shootPose = pose(95, 95, Math.toRadians(40));
+    private final Pose shootPose = pose(90, 90, Math.toRadians(40));
     private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
     private final Pose collectRowOnePose = pose(128, 84, Math.toRadians(180));
     private final Pose rowTwoPose = pose(93, 56, Math.toRadians(180));
@@ -172,7 +177,13 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case WAIT_FOR_TURN:
                 if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_PRELOADED);
+                    stateAfterSpinup = PathState.SHOOT_PRELOADED;
+                    setPathState(PathState.WAIT_FOR_SPINUP);
+                }
+                break;
+            case WAIT_FOR_SPINUP:
+                if (isShooterReady() || pathTimer.getElapsedTimeSeconds() > SPINUP_TIMEOUT_SECONDS) {
+                    setPathState(stateAfterSpinup);
                 }
                 break;
             case SHOOT_PRELOADED:
@@ -205,7 +216,8 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case ALIGN_ROW_ONE:
                 if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_ROW_ONE);
+                    stateAfterSpinup = PathState.SHOOT_ROW_ONE;
+                    setPathState(PathState.WAIT_FOR_SPINUP);
                 }
                 break;
             case SHOOT_ROW_ONE:
@@ -238,7 +250,8 @@ public abstract class AutoPedro extends OpMode {
                 break;
             case ALIGN_ROW_TWO:
                 if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_ROW_TWO);
+                    stateAfterSpinup = PathState.SHOOT_ROW_TWO;
+                    setPathState(PathState.WAIT_FOR_SPINUP);
                 }
                 break;
             case SHOOT_ROW_TWO:
@@ -250,6 +263,7 @@ public abstract class AutoPedro extends OpMode {
             case PARK:
                 if (!follower.isBusy()) {
                     intake.stop();
+                    shooter.stopShoot();
                     telemetry.addLine("parked");
                 }
                 break;
@@ -264,9 +278,26 @@ public abstract class AutoPedro extends OpMode {
         pathTimer.resetTimer();
     }
 
+    private long spinupInRangeStart = -1;
+
+    private boolean isShooterReady() {
+        double target = Math.abs(shooter.SPINNER_SPEED_NEAR);
+        double current = Math.abs(shooter.getVelocity());
+        boolean inRange = current >= target - SPINUP_SPEED_TOLERANCE
+                       && current <= target + SPINUP_SPEED_TOLERANCE;
+        if (inRange) {
+            if (spinupInRangeStart < 0) spinupInRangeStart = System.currentTimeMillis();
+            return System.currentTimeMillis() - spinupInRangeStart >= SPINUP_STABLE_MS;
+        } else {
+            spinupInRangeStart = -1;
+            return false;
+        }
+    }
+
     // Non-blocking version of AutoRoot.shootThree(). Returns true once all 3 balls have fired.
     private boolean tryShootThree() {
         if (!shootPhaseInitialized) {
+            intake.stop();
             shooter.spinUp(false, true);
             shooter.setDamDown();
             loadedColors = ballCam.getDetectedColors();
@@ -277,7 +308,8 @@ public abstract class AutoPedro extends OpMode {
         }
         if (shotCount < 3) {
             Shooter.ShooterState s = shooter.getState();
-            if (s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD) {
+            if ((s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD)
+                    && isShooterReady()) {
                 fireNextFromPattern();
                 shotCount++;
             }
@@ -288,8 +320,6 @@ public abstract class AutoPedro extends OpMode {
         if (s != Shooter.ShooterState.SPIN_UP_HOLD && s != Shooter.ShooterState.STOPPED) {
             return false;
         }
-        shooter.stopShoot();
-        shooter.kickersWait();
         shooter.setDamUp();
         shootPhaseInitialized = false;
         return true;
@@ -354,7 +384,7 @@ public abstract class AutoPedro extends OpMode {
         loadedColors = ballCam.getDetectedColors();
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
-        shooter.setPID(SHOOTER_PID);
+        //shooter.setPID(SHOOTER_PID);
         shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
         intake = new Intake(hardwareMap);
 
