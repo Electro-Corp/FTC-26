@@ -219,6 +219,7 @@ public abstract class AutoFarPedro extends OpMode {
 
             case PARK:
                 if (!follower.isBusy()) {
+                    shooter.stopShoot();
                     telemetry.addLine("parked");
                 }
                 break;
@@ -276,8 +277,6 @@ public abstract class AutoFarPedro extends OpMode {
         if (s != Shooter.ShooterState.SPIN_UP_HOLD && s != Shooter.ShooterState.STOPPED) {
             return false;
         }
-        shooter.stopShoot();
-        shooter.kickersWait();
         shooter.setDamUp();
         shootPhaseInitialized = false;
         if (intakeRunning) intake.go();
@@ -343,7 +342,7 @@ public abstract class AutoFarPedro extends OpMode {
         loadedColors = ballCam.getDetectedColors();
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
-        shooter.setPID(SHOOTER_PID);
+        //shooter.setPID(SHOOTER_PID);
         shooter.SPINNER_SPEED_NEAR = FAR_SHOOT_SPEED;
         intake = new Intake(hardwareMap);
 
