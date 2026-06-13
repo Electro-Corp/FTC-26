@@ -4,8 +4,8 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -13,24 +13,20 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 
 import org.firstinspires.ftc.teamcode.camera.BallColorPipeline;
 import org.firstinspires.ftc.teamcode.opsmodes.auto.Pattern;
-import java.util.Random;
 import org.firstinspires.ftc.teamcode.subsystems.BallColor;
 import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 
-public abstract class AutoPedro extends OpMode {
+import java.util.Random;
+
+public abstract class AutoFarPedro extends OpMode {
 
     private static final double FIELD_WIDTH = 144.0;
 
-    /** Returns true if this opmode is for the Blue alliance. */
     protected abstract boolean isBlue();
 
-    /**
-     * Pose constructor that mirrors across the field's vertical center for Blue.
-     * Red uses the literal coordinates; Blue gets x → (144 - x) and heading → (π - heading).
-     */
     protected Pose pose(double x, double y, double headingRadians) {
         if (isBlue()) {
             return new Pose(FIELD_WIDTH - x, y, Math.PI - headingRadians);
@@ -53,81 +49,63 @@ public abstract class AutoPedro extends OpMode {
     private boolean[] fired = new boolean[3];
     private boolean shootPhaseInitialized = false;
     private BallColor[] loadedColors = {BallColor.UNKNOWN, BallColor.UNKNOWN, BallColor.UNKNOWN};
+    private boolean intakeRunning = false;
 
-    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
-    private static final double NEAR_SHOOT_SPEED = -1320;
+    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(20, 0.6, 0.5, 12.5);
+    private static final double FAR_SHOOT_SPEED = -1460;
     private static final double TURN_TIMEOUT_SECONDS = 2.0;
-    // Seconds after leaving the collect position before spinning up (lowering the dam).
-    // Gives balls time to settle before the dam drops. Tune between 0.5 and 1.0.
     private static final double DAM_LOWER_DELAY_SECONDS = 0.5;
+    // How close the flywheel velocity must be to the target before allowing shots.
+    private static final double SPINUP_SPEED_TOLERANCE = 50;
+    private static final double SPINUP_TIMEOUT_SECONDS = 5.0;
 
     public enum PathState {
-        //START POSITION_END POSITION
         INIT,
-        DRIVE_TO_APRILTAG,
-        WAIT_AT_APRILTAG,
-        TURN_TO_SHOOT,
+        WAIT_AT_OBELISK,
+        DRIVE_TO_SHOOT,
         WAIT_FOR_TURN,
+        WAIT_FOR_SPINUP,
         SHOOT_PRELOADED,
-        DRIVE_TO_ROW_ONE,
-        DRIVE_COLLECT_ROW_ONE,
+        TURN_TO_COLLECT,
+        WAIT_FOR_COLLECT_TURN,
+        DRIVE_COLLECT,
         DRIVE_SHOOT_ROW_ONE,
         ALIGN_ROW_ONE,
         SHOOT_ROW_ONE,
-        DRIVE_TO_ROW_TWO,
-        DRIVE_COLLECT_ROW_TWO,
-        DRIVE_SHOOT_ROW_TWO,
-        ALIGN_ROW_TWO,
-        SHOOT_ROW_TWO,
         PARK
     }
 
     PathState pathState;
+    // Which shoot state to enter after the spinup wait completes.
+    private PathState stateAfterSpinup = PathState.SHOOT_PRELOADED;
 
-    // All poses are in relationship to RED. They are then mirrored if they are for the blue side
-    private final Pose startPose = pose(124, 123.5, Math.toRadians(36));
-    private final Pose aprilTagPose = pose(95, 95, Math.toRadians(120));
-    private final Pose shootPose = pose(95, 95, Math.toRadians(40));
-    private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
-    private final Pose collectRowOnePose = pose(128, 84, Math.toRadians(180));
-    private final Pose rowTwoPose = pose(93, 57, Math.toRadians(180));
-    private final Pose collectRowTwoPose = pose(134, 57, Math.toRadians(180));
-    private final Pose rowTwoWaypointPose = pose(110, 60, Math.toRadians(180));
-    private final Pose parkPose = pose(100, 120, Math.toRadians(45));
+    // All coordinates are Red-side. Blue mirrors via pose(): x → (144-x), heading → (π-heading).
+    private final Pose startPose        = pose(86.5,  9.7,  Math.toRadians(90));
+    // Drive destination before the shoot turn — same x,y as shootPose, heading still 90°.
+    private final Pose preTurnPose      = pose(86,    16,   Math.toRadians(90));
+    // Final shoot heading after the in-place turn.
+    private final Pose shootPose        = pose(86,    16,   Math.toRadians(65));
+    // Start of the collect drive — same x,y as shootPose but already facing the row (180°).
+    private final Pose collectStartPose = pose(86,    16,   Math.toRadians(180));
+    private final Pose collectPose      = pose(134.6, 9.5,  Math.toRadians(180));
+    private final Pose parkPose         = pose(95,    25,   Math.toRadians(90));
 
-    private PathChain driveToAprilTag, driveToRowOne, driveCollectRowOne, driveShootRowOne, driveToRowTwo, driveCollectRowTwo, driveShootRowTwo, drivePark;
+    private PathChain driveToShoot, driveCollect, driveShoot, drivePark;
 
-    public void buildPaths(){
-        //put in coordinates for starting pose > ending pose
-        driveToAprilTag = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, aprilTagPose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), aprilTagPose.getHeading())
+    private void buildPaths() {
+        driveToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, preTurnPose))
+                .setLinearHeadingInterpolation(startPose.getHeading(), preTurnPose.getHeading())
                 .build();
-        driveToRowOne = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, rowOnePose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), rowOnePose.getHeading())
+        // Robot is already facing 180° after the in-place turn; hold that heading throughout.
+        driveCollect = follower.pathBuilder()
+                .addPath(new BezierLine(collectStartPose, collectPose))
+                .setConstantHeadingInterpolation(collectPose.getHeading())
                 .build();
-        driveCollectRowOne = follower.pathBuilder()
-                .addPath(new BezierLine(rowOnePose, collectRowOnePose))
-                .setLinearHeadingInterpolation(rowOnePose.getHeading(), collectRowOnePose.getHeading())
-                .build();
-        driveShootRowOne = follower.pathBuilder()
-                .addPath(new BezierLine(collectRowOnePose, shootPose))
-                .setLinearHeadingInterpolation(collectRowOnePose.getHeading(), shootPose.getHeading())
-                .build();
-        driveToRowTwo = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, rowTwoPose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), rowTwoPose.getHeading())
-                .build();
-        driveCollectRowTwo = follower.pathBuilder()
-                .addPath(new BezierLine(rowTwoPose, collectRowTwoPose))
-                .setLinearHeadingInterpolation(rowTwoPose.getHeading(), collectRowTwoPose.getHeading())
-                .build();
-        driveShootRowTwo = follower.pathBuilder()
-                .addPath(new BezierLine(collectRowTwoPose, rowTwoWaypointPose))
-                .setLinearHeadingInterpolation(collectRowTwoPose.getHeading(), rowTwoWaypointPose.getHeading())
-                .addPath(new BezierLine(rowTwoWaypointPose, shootPose))
-                .setLinearHeadingInterpolation(rowTwoWaypointPose.getHeading(), shootPose.getHeading())
+        // Rotate from 180° back to 65° during the return drive.
+        driveShoot = follower.pathBuilder()
+                .addPath(new BezierLine(collectPose, shootPose))
+                .setLinearHeadingInterpolation(collectPose.getHeading(), shootPose.getHeading())
                 .build();
         drivePark = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, parkPose))
@@ -136,17 +114,12 @@ public abstract class AutoPedro extends OpMode {
     }
 
     public void statePathUpdate() {
-        switch(pathState){
+        switch (pathState) {
             case INIT:
-                follower.followPath(driveToAprilTag, true);
-                setPathState(PathState.DRIVE_TO_APRILTAG); //reset timer and make new state
+                setPathState(PathState.WAIT_AT_OBELISK);
                 break;
-            case DRIVE_TO_APRILTAG:
-                if (!follower.isBusy()) {
-                    setPathState(PathState.WAIT_AT_APRILTAG);
-                }
-                break;
-            case WAIT_AT_APRILTAG:
+
+            case WAIT_AT_OBELISK:
                 if (pattern == null) {
                     LLResult llResult = limelight.getLatestResult();
                     if (llResult != null && llResult.isValid()) {
@@ -163,37 +136,58 @@ public abstract class AutoPedro extends OpMode {
                     if (pattern == null) {
                         pattern = Pattern.fromNum(new Random().nextInt(3) + 21);
                     }
-                    setPathState(PathState.TURN_TO_SHOOT);
+                    follower.followPath(driveToShoot, true);
+                    setPathState(PathState.DRIVE_TO_SHOOT);
                 }
                 break;
-            case TURN_TO_SHOOT:
-                follower.turnTo(shootPose.getHeading());
-                setPathState(PathState.WAIT_FOR_TURN);
+
+            case DRIVE_TO_SHOOT:
+                if (!follower.isBusy()) {
+                    follower.turnTo(shootPose.getHeading());
+                    setPathState(PathState.WAIT_FOR_TURN);
+                }
                 break;
+
             case WAIT_FOR_TURN:
                 if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_PRELOADED);
+                    shooter.SPINNER_SPEED_NEAR = FAR_SHOOT_SPEED;
+                    stateAfterSpinup = PathState.SHOOT_PRELOADED;
+                    setPathState(PathState.WAIT_FOR_SPINUP);
                 }
                 break;
+
+            case WAIT_FOR_SPINUP:
+                if (isShooterReady() || pathTimer.getElapsedTimeSeconds() > SPINUP_TIMEOUT_SECONDS) {
+                    setPathState(stateAfterSpinup);
+                }
+                break;
+
             case SHOOT_PRELOADED:
                 if (tryShootThree()) {
-                    follower.followPath(driveToRowOne, true);
-                    intake.go();
-                    setPathState(PathState.DRIVE_TO_ROW_ONE);
+                    setPathState(PathState.TURN_TO_COLLECT);
                 }
                 break;
-            case DRIVE_TO_ROW_ONE:
-                if (!follower.isBusy()) {
-                    follower.followPath(driveCollectRowOne, false);
-                    setPathState(PathState.DRIVE_COLLECT_ROW_ONE);
+
+            case TURN_TO_COLLECT:
+                follower.turnTo(collectStartPose.getHeading());
+                setPathState(PathState.WAIT_FOR_COLLECT_TURN);
+                break;
+
+            case WAIT_FOR_COLLECT_TURN:
+                if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
+                    intakeRunning = true;
+                    follower.followPath(driveCollect, false);
+                    setPathState(PathState.DRIVE_COLLECT);
                 }
                 break;
-            case DRIVE_COLLECT_ROW_ONE:
+
+            case DRIVE_COLLECT:
                 if (!follower.isBusy()) {
-                    follower.followPath(driveShootRowOne, true);
+                    follower.followPath(driveShoot, true);
                     setPathState(PathState.DRIVE_SHOOT_ROW_ONE);
                 }
                 break;
+
             case DRIVE_SHOOT_ROW_ONE:
                 if (pathTimer.getElapsedTimeSeconds() > DAM_LOWER_DELAY_SECONDS) {
                     shooter.spinUp(false, false);
@@ -203,56 +197,30 @@ public abstract class AutoPedro extends OpMode {
                     setPathState(PathState.ALIGN_ROW_ONE);
                 }
                 break;
+
             case ALIGN_ROW_ONE:
                 if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_ROW_ONE);
+                    shooter.SPINNER_SPEED_NEAR = FAR_SHOOT_SPEED;
+                    stateAfterSpinup = PathState.SHOOT_ROW_ONE;
+                    setPathState(PathState.WAIT_FOR_SPINUP);
                 }
                 break;
+
             case SHOOT_ROW_ONE:
                 if (tryShootThree()) {
-                    follower.followPath(driveToRowTwo, true);
-                    intake.go();
-                    setPathState(PathState.DRIVE_TO_ROW_TWO);
-                }
-                break;
-            case DRIVE_TO_ROW_TWO:
-                if (!follower.isBusy()) {
-                    follower.followPath(driveCollectRowTwo, false);
-                    setPathState(PathState.DRIVE_COLLECT_ROW_TWO);
-                }
-                break;
-            case DRIVE_COLLECT_ROW_TWO:
-                if (!follower.isBusy()) {
-                    follower.followPath(driveShootRowTwo, true);
-                    setPathState(PathState.DRIVE_SHOOT_ROW_TWO);
-                }
-                break;
-            case DRIVE_SHOOT_ROW_TWO:
-                if (pathTimer.getElapsedTimeSeconds() > DAM_LOWER_DELAY_SECONDS) {
-                    shooter.spinUp(false, false);
-                }
-                if (!follower.isBusy()) {
-                    follower.turnTo(shootPose.getHeading());
-                    setPathState(PathState.ALIGN_ROW_TWO);
-                }
-                break;
-            case ALIGN_ROW_TWO:
-                if (!follower.isTurning() || pathTimer.getElapsedTimeSeconds() > TURN_TIMEOUT_SECONDS) {
-                    setPathState(PathState.SHOOT_ROW_TWO);
-                }
-                break;
-            case SHOOT_ROW_TWO:
-                if (tryShootThree()) {
+                    intakeRunning = false;
+                    intake.stop();
                     follower.followPath(drivePark, true);
                     setPathState(PathState.PARK);
                 }
                 break;
+
             case PARK:
                 if (!follower.isBusy()) {
-                    intake.stop();
                     telemetry.addLine("parked");
                 }
                 break;
+
             default:
                 telemetry.addLine("No state commanded");
                 break;
@@ -264,7 +232,13 @@ public abstract class AutoPedro extends OpMode {
         pathTimer.resetTimer();
     }
 
-    // Non-blocking version of AutoRoot.shootThree(). Returns true once all 3 balls have fired.
+    private boolean isShooterReady() {
+        double target = Math.abs(shooter.SPINNER_SPEED_NEAR);
+        double current = Math.abs(shooter.getVelocity());
+        return current >= target - SPINUP_SPEED_TOLERANCE;
+    }
+
+    // Non-blocking shoot loop. Returns true once all 3 balls have fired.
     private boolean tryShootThree() {
         if (!shootPhaseInitialized) {
             shooter.spinUp(false, true);
@@ -277,13 +251,14 @@ public abstract class AutoPedro extends OpMode {
         }
         if (shotCount < 3) {
             Shooter.ShooterState s = shooter.getState();
-            if (s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD) {
+            if ((s == Shooter.ShooterState.STOPPED || s == Shooter.ShooterState.SPIN_UP_HOLD)
+                    && isShooterReady()) {
                 fireNextFromPattern();
                 shotCount++;
             }
             return false;
         }
-        // Wait for the last ball's kicker to finish its full cycle before stopping
+        // Wait for the last kicker cycle to finish before stopping.
         Shooter.ShooterState s = shooter.getState();
         if (s != Shooter.ShooterState.SPIN_UP_HOLD && s != Shooter.ShooterState.STOPPED) {
             return false;
@@ -355,7 +330,7 @@ public abstract class AutoPedro extends OpMode {
         colorSensors = new ColorSensors(hardwareMap);
         shooter = new Shooter(hardwareMap, colorSensors, true);
         shooter.setPID(SHOOTER_PID);
-        shooter.SPINNER_SPEED_NEAR = NEAR_SHOOT_SPEED;
+        shooter.SPINNER_SPEED_NEAR = FAR_SHOOT_SPEED;
         intake = new Intake(hardwareMap);
 
         shooterThread = new Thread(shooter);
@@ -363,7 +338,6 @@ public abstract class AutoPedro extends OpMode {
 
         buildPaths();
         follower.setPose(startPose);
-
     }
 
     public void start() {
@@ -375,6 +349,7 @@ public abstract class AutoPedro extends OpMode {
     @Override
     public void loop() {
         follower.update();
+        if (intakeRunning) intake.go();
         statePathUpdate();
 
         telemetry.addData("path state", pathState.toString());
@@ -386,6 +361,7 @@ public abstract class AutoPedro extends OpMode {
         telemetry.addData("Loaded ", colorRow(loadedColors));
         telemetry.addData("shooter state", shooter != null ? shooter.getState() : "null");
         telemetry.addData("shooter velocity", shooter != null ? shooter.getVelocity() : "null");
+        telemetry.addData("shooter target", shooter != null ? shooter.SPINNER_SPEED_NEAR : "null");
     }
 
     @Override

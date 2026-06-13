@@ -31,7 +31,7 @@ public class BallColorCalibration extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        BallColorPipeline pipeline = new BallColorPipeline(hardwareMap);
+        BallColorPipeline pipeline = new BallColorPipeline(hardwareMap, true);
 
         telemetry.addLine("Camera initializing...");
         telemetry.update();
@@ -44,7 +44,7 @@ public class BallColorCalibration extends LinearOpMode {
             int[]  purple       = pipeline.getPurpleCounts();
             double[][] hsv      = pipeline.getCenterHSV();
 
-            String[] slotNames = {"left", "center", "right"};
+            String[] slotNames = {"left", "center (inferred)", "right"};
             for (int i = 0; i < 3; i++) {
                 telemetry.addLine("════ Slot " + i + " (" + slotNames[i] + ") ════");
                 telemetry.addData("  Color   ", colors[i]);

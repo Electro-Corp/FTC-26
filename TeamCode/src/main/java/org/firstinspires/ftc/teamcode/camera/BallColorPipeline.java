@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.camera;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -19,15 +21,13 @@ import org.opencv.imgproc.Imgproc;
  * Downward-facing camera pipeline that classifies each of the 3 ball slots as
  * GREEN, PURPLE, or UNKNOWN using HSV color thresholding.
  *
- * Hardware map name for the camera: "ballCam"
- *
  * The frame is split into 3 equal horizontal strips:
- *   slot 0 = left, slot 1 = centre, slot 2 = right
+ *   slot 0 = left, slot 1 = centre (inferred), slot 2 = right
  * matching the shooter kicker layout (left, middle, right).
  *
- * Tuning: adjust GREEN_* / PURPLE_* constants if detection is unreliable.
- * A calibration opmode (like ColorCalib) that samples HSV values from each
- * ball under competition lighting is the fastest way to dial these in.
+ * Only slots 0 and 2 are directly read; slot 1 is inferred from the constraint
+ * that there are always exactly 1 green and 2 purples loaded.
+ *
  * OpenCV HSV ranges: H 0-180, S 0-255, V 0-255.
  */
 public class BallColorPipeline implements VisionProcessor {
@@ -64,13 +64,25 @@ public class BallColorPipeline implements VisionProcessor {
 
     private final VisionPortal portal;
 
+    /** Standard constructor — live view disabled (required when multiple portals are active). */
     public BallColorPipeline(HardwareMap hardwareMap) {
-        portal = new VisionPortal.Builder()
+        this(hardwareMap, false);
+    }
+
+    /**
+     * @param enableLiveView true to show the camera feed on the Driver Hub.
+     *                       Pass false (or use the single-arg constructor) when
+     *                       another VisionPortal is also active, e.g. TestBrain in auto.
+     */
+    public BallColorPipeline(HardwareMap hardwareMap, boolean enableLiveView) {
+        VisionPortal.Builder builder = new VisionPortal.Builder()
                 .setCamera(hardwareMap.get(WebcamName.class, CAMERA_NAME))
                 .addProcessor(this)
-                .setCameraResolution(new android.util.Size(640, 480))
-                .setLiveViewContainerId(0) // disable live view — required when multiple VisionPortals are active
-                .build();
+                .setCameraResolution(new android.util.Size(640, 480));
+        if (!enableLiveView) {
+            builder.setLiveViewContainerId(0);
+        }
+        portal = builder.build();
     }
 
     @Override
@@ -82,8 +94,10 @@ public class BallColorPipeline implements VisionProcessor {
 
         int slotWidth = frame.width() / 3;
 
-        for (int i = 0; i < 3; i++) {
-            // Sub-matrix view of this slot — no pixel copy, just a window into hsv.
+        // Only read left (0) and right (2) — middle is blocked by robot hardware.
+        int cx, cy;
+        int[] outerSlots = {0, 2};
+        for (int i : outerSlots) {
             Mat slot = new Mat(hsv, new Rect(i * slotWidth, 0, slotWidth, frame.height()));
 
             Core.inRange(slot,
@@ -101,9 +115,8 @@ public class BallColorPipeline implements VisionProcessor {
             greenCounts[i]  = greenPixels;
             purpleCounts[i] = purplePixels;
 
-            // Sample the HSV value at the centre pixel of this slot.
-            int cx = slotWidth / 2;
-            int cy = frame.height() / 2;
+            cx = slotWidth / 2;
+            cy = frame.height() / 2;
             double[] px = hsv.get(cy, i * slotWidth + cx);
             centerHSV[i] = (px != null) ? px : new double[]{0, 0, 0};
 
@@ -115,12 +128,109 @@ public class BallColorPipeline implements VisionProcessor {
                 detectedColors[i] = BallColor.UNKNOWN;
             }
         }
+
+        // Infer from the constraint: always exactly 1 green and 2 purples.
+        boolean leftGreen   = detectedColors[0] == BallColor.GREEN;
+        boolean rightGreen  = detectedColors[2] == BallColor.GREEN;
+        boolean leftPurple  = detectedColors[0] == BallColor.PURPLE;
+        boolean rightPurple = detectedColors[2] == BallColor.PURPLE;
+
+        if (leftGreen) {
+            detectedColors[1] = BallColor.PURPLE;
+            detectedColors[2] = BallColor.PURPLE;
+        } else if (rightGreen) {
+            detectedColors[0] = BallColor.PURPLE;
+            detectedColors[1] = BallColor.PURPLE;
+        } else if (leftPurple && rightPurple) {
+            detectedColors[1] = BallColor.GREEN;
+        } else {
+            detectedColors[1] = BallColor.UNKNOWN;
+        }
         return null;
     }
 
     @Override
     public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight,
-                            float scaleBmpPxToCanvasPixel, float scaleCanvasDensity, Object userContext) {}
+                            float scaleBmpPxToCanvasPixel, float scaleCanvasDensity,
+                            Object userContext) {
+        float slotW    = onscreenWidth / 3f;
+        float pad      = 8  * scaleCanvasDensity;
+        float stroke   = 5  * scaleCanvasDensity;
+        float textLg   = 26 * scaleCanvasDensity;
+        float textSm   = 18 * scaleCanvasDensity;
+
+        Paint fillPaint = new Paint();
+        fillPaint.setStyle(Paint.Style.FILL);
+
+        Paint borderPaint = new Paint();
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(stroke);
+
+        Paint textPaint = new Paint();
+        textPaint.setStyle(Paint.Style.FILL);
+        textPaint.setColor(Color.WHITE);
+
+        String[] slotLabels   = {"LEFT",   "CENTER\n(inferred)", "RIGHT"};
+        boolean[] inferred    = {false, true, false};
+
+        for (int i = 0; i < 3; i++) {
+            float left  = i * slotW;
+            float right = left + slotW;
+
+            int col = colorFor(detectedColors[i]);
+
+            // Semi-transparent fill so the camera image is still visible.
+            fillPaint.setColor(col);
+            fillPaint.setAlpha(70);
+            canvas.drawRect(left, 0, right, onscreenHeight, fillPaint);
+
+            // Solid border.
+            borderPaint.setColor(col);
+            borderPaint.setAlpha(255);
+            canvas.drawRect(left, 0, right, onscreenHeight, borderPaint);
+
+            // Slot name.
+            textPaint.setTextSize(textLg);
+            canvas.drawText(slotLabels[i].split("\n")[0], left + pad, textLg + pad, textPaint);
+            if (inferred[i]) {
+                textPaint.setTextSize(textSm);
+                canvas.drawText("(inferred)", left + pad, textLg + pad + textSm + 2, textPaint);
+                textPaint.setTextSize(textLg);
+            }
+
+            // Detected color name.
+            float nameY = inferred[i] ? textLg + textSm + pad * 3 + 4 : textLg * 2 + pad;
+            canvas.drawText(detectedColors[i].toString(), left + pad, nameY + textLg, textPaint);
+
+            // Pixel counts for directly-read slots only.
+            if (!inferred[i]) {
+                textPaint.setTextSize(textSm);
+                float countsY = nameY + textLg + pad;
+                canvas.drawText("G: " + greenCounts[i],  left + pad, countsY + textSm,          textPaint);
+                canvas.drawText("P: " + purpleCounts[i], left + pad, countsY + textSm * 2 + 4,  textPaint);
+
+                // HSV readout.
+                double[] h = centerHSV[i];
+                canvas.drawText(String.format("H:%.0f S:%.0f V:%.0f", h[0], h[1], h[2]),
+                        left + pad, countsY + textSm * 3 + 8, textPaint);
+                textPaint.setTextSize(textLg);
+            }
+        }
+
+        // Dividing lines between slots.
+        Paint linePaint = new Paint();
+        linePaint.setStyle(Paint.Style.STROKE);
+        linePaint.setColor(Color.WHITE);
+        linePaint.setStrokeWidth(2 * scaleCanvasDensity);
+        canvas.drawLine(slotW,     0, slotW,     onscreenHeight, linePaint);
+        canvas.drawLine(2 * slotW, 0, 2 * slotW, onscreenHeight, linePaint);
+    }
+
+    private static int colorFor(BallColor c) {
+        if (c == BallColor.GREEN)  return Color.rgb(0, 210, 0);
+        if (c == BallColor.PURPLE) return Color.rgb(150, 0, 255);
+        return Color.GRAY;
+    }
 
     /** Snapshot of the latest color classification for all 3 slots. */
     public BallColor[] getDetectedColors() {
