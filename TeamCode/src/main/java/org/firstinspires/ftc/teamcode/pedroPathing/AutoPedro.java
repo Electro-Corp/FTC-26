@@ -90,8 +90,8 @@ public abstract class AutoPedro extends OpMode {
     private final Pose shootPose = pose(95, 95, Math.toRadians(40));
     private final Pose rowOnePose = pose(95, 84, Math.toRadians(180));
     private final Pose collectRowOnePose = pose(128, 84, Math.toRadians(180));
-    private final Pose rowTwoPose = pose(93, 57, Math.toRadians(180));
-    private final Pose collectRowTwoPose = pose(134, 57, Math.toRadians(180));
+    private final Pose rowTwoPose = pose(93, 56, Math.toRadians(180));
+    private final Pose collectRowTwoPose = pose(134, 56, Math.toRadians(180));
     private final Pose rowTwoWaypointPose = pose(110, 60, Math.toRadians(180));
     private final Pose parkPose = pose(100, 120, Math.toRadians(45));
 

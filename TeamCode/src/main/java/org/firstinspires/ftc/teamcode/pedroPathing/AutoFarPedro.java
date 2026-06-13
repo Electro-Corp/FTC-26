@@ -51,13 +51,15 @@ public abstract class AutoFarPedro extends OpMode {
     private BallColor[] loadedColors = {BallColor.UNKNOWN, BallColor.UNKNOWN, BallColor.UNKNOWN};
     private boolean intakeRunning = false;
 
-    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(20, 0.6, 0.5, 12.5);
-    private static final double FAR_SHOOT_SPEED = -1460;
+    private static final PIDFCoefficients SHOOTER_PID = new PIDFCoefficients(30, 0.3, 0.5, 12.5);
+    private static final double FAR_SHOOT_SPEED = -1500;
     private static final double TURN_TIMEOUT_SECONDS = 2.0;
     private static final double DAM_LOWER_DELAY_SECONDS = 0.5;
     // How close the flywheel velocity must be to the target before allowing shots.
     private static final double SPINUP_SPEED_TOLERANCE = 50;
     private static final double SPINUP_TIMEOUT_SECONDS = 5.0;
+    // Milliseconds velocity must stay within tolerance before a shot is allowed.
+    private static final long SPINUP_STABLE_MS = 250;
 
     public enum PathState {
         INIT,
@@ -232,15 +234,26 @@ public abstract class AutoFarPedro extends OpMode {
         pathTimer.resetTimer();
     }
 
+    private long spinupInRangeStart = -1;
+
     private boolean isShooterReady() {
         double target = Math.abs(shooter.SPINNER_SPEED_NEAR);
         double current = Math.abs(shooter.getVelocity());
-        return current >= target - SPINUP_SPEED_TOLERANCE;
+        boolean inRange = current >= target - SPINUP_SPEED_TOLERANCE
+                       && current <= target + SPINUP_SPEED_TOLERANCE;
+        if (inRange) {
+            if (spinupInRangeStart < 0) spinupInRangeStart = System.currentTimeMillis();
+            return System.currentTimeMillis() - spinupInRangeStart >= SPINUP_STABLE_MS;
+        } else {
+            spinupInRangeStart = -1;
+            return false;
+        }
     }
 
     // Non-blocking shoot loop. Returns true once all 3 balls have fired.
     private boolean tryShootThree() {
         if (!shootPhaseInitialized) {
+            intake.stop();
             shooter.spinUp(false, true);
             shooter.setDamDown();
             loadedColors = ballCam.getDetectedColors();
@@ -267,6 +280,7 @@ public abstract class AutoFarPedro extends OpMode {
         shooter.kickersWait();
         shooter.setDamUp();
         shootPhaseInitialized = false;
+        if (intakeRunning) intake.go();
         return true;
     }
 
