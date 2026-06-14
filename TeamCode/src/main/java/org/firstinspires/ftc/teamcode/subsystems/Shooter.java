@@ -250,8 +250,7 @@ public class Shooter implements Runnable{
                 break;
         }
 
-        if(state == ShooterState.STOPPED || state == ShooterState.REVERSE || state == ShooterState.WAITING_FOR_SPIN_UP) setDamUp();
-        else if (state == ShooterState.SPIN_UP_HOLD && !readColorsOnce) setDamUp();
+        if(state == ShooterState.STOPPED || state == ShooterState.REVERSE || state == ShooterState.WAITING_FOR_SPIN_UP || state == ShooterState.SPIN_UP_HOLD) setDamUp();
         else setDamDown();
     }
 
