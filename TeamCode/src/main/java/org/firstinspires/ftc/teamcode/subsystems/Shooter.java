@@ -280,7 +280,6 @@ public class Shooter implements Runnable{
         // but pinned down for the duration of an active firing session.
         if (state == ShooterState.STOPPED
                 || state == ShooterState.REVERSE
-                || state == ShooterState.REVERSE_HUMAN_PLAYER
                 || state == ShooterState.WAITING_FOR_SPIN_UP
                 || (state == ShooterState.SPIN_UP_HOLD && !firingSessionActive)) {
             setDamUp();
