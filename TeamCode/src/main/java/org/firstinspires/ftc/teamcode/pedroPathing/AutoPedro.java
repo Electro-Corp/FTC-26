@@ -210,6 +210,11 @@ public abstract class AutoPedro extends OpMode {
                     shooter.spinUp(false, false);
                 }
                 if (!follower.isBusy()) {
+                    // Stop intake the moment we begin aligning so it doesn't run during
+                    // the turn or the shooting phase. It will resume after the shot
+                    // sequence completes via the intake.go() call when transitioning to
+                    // the next collect path.
+                    intake.stop();
                     follower.turnTo(shootPose.getHeading());
                     setPathState(PathState.ALIGN_ROW_ONE);
                 }
@@ -244,6 +249,9 @@ public abstract class AutoPedro extends OpMode {
                     shooter.spinUp(false, false);
                 }
                 if (!follower.isBusy()) {
+                    // Same intake-stop-on-align pattern as row one. Row two is the
+                    // last shooting phase, so intake doesn't need to resume.
+                    intake.stop();
                     follower.turnTo(shootPose.getHeading());
                     setPathState(PathState.ALIGN_ROW_TWO);
                 }

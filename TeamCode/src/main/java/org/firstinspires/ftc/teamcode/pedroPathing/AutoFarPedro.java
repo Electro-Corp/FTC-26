@@ -195,6 +195,12 @@ public abstract class AutoFarPedro extends OpMode {
                     shooter.spinUp(false, false);
                 }
                 if (!follower.isBusy()) {
+                    // Stop intake the moment we begin aligning so it doesn't run
+                    // during the turn or the shooting phase. Clear the intakeRunning
+                    // flag too — the loop() block re-asserts intake.go() while it's
+                    // true, which would override the stop() within one tick.
+                    intakeRunning = false;
+                    intake.stop();
                     follower.turnTo(shootPose.getHeading());
                     setPathState(PathState.ALIGN_ROW_ONE);
                 }
