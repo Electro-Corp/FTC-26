@@ -68,6 +68,15 @@ public class Shooter implements Runnable{
 
     private boolean holdSpin = false;
 
+    /**
+     * Tracks whether we are inside an active firing session. Set true when a
+     * shoot command transitions us out of SPIN_UP_HOLD; cleared by stopShoot().
+     * While true, the dam stays DOWN even during the brief SPIN_UP_HOLD windows
+     * between successive shots, so we don't waste time raising and lowering it
+     * for every ball in a 3-shot sequence.
+     */
+    private boolean firingSessionActive = false;
+
     public Shooter(HardwareMap hardwareMap, ColorSensors colorSensors, boolean readColorsOnce) {
         this.colorSensors = colorSensors;
         this.readColorsOnce = readColorsOnce;
@@ -111,6 +120,7 @@ public class Shooter implements Runnable{
     }
 
     public void shootDistance(double distance) {
+        firingSessionActive = true;
         if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
@@ -122,6 +132,7 @@ public class Shooter implements Runnable{
     }
 
     public void shootFar() {
+        firingSessionActive = true;
         if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
@@ -134,6 +145,7 @@ public class Shooter implements Runnable{
 
     public void stopShoot(){
         holdSpin = false;
+        firingSessionActive = false;
         shooterLeft.setPower(0.0);
         shooterRight.setPower(0.0);
         kickersWait();
@@ -141,6 +153,7 @@ public class Shooter implements Runnable{
     }
 
     public void shootNear() {
+        firingSessionActive = true;
         if (state != ShooterState.SPIN_UP_HOLD){
             setState(ShooterState.WAITING_FOR_SPIN_UP);
         }
@@ -250,9 +263,30 @@ public class Shooter implements Runnable{
                 break;
         }
 
-        if(state == ShooterState.STOPPED || state == ShooterState.REVERSE || state == ShooterState.WAITING_FOR_SPIN_UP) setDamUp();
-        else if (state == ShooterState.SPIN_UP_HOLD && !readColorsOnce) setDamUp();
-        else setDamDown();
+        // Dam policy:
+        //   Up   while idle / reversing / intaking / pre-spin-up holds BEFORE the
+        //        first shot of a session. Keeps balls from dribbling into the
+        //        flywheel during intake.
+        //   Down once a firing session has started — stays down through the brief
+        //        SPIN_UP_HOLD windows between successive shots so we don't waste
+        //        time raising and lowering the dam between every ball in a 3-shot
+        //        sequence. Cleared by stopShoot().
+        //
+        // History: previously SPIN_UP_HOLD only raised the dam when readColorsOnce
+        // was false (TeleOp), which meant in auto the dam stayed DOWN the whole
+        // match — balls fed prematurely during intake. Earlier fix raised it in
+        // SPIN_UP_HOLD unconditionally, which then bounced it up between shots.
+        // The firingSessionActive flag is the third revision: dam-up by default,
+        // but pinned down for the duration of an active firing session.
+        if (state == ShooterState.STOPPED
+                || state == ShooterState.REVERSE
+                || state == ShooterState.REVERSE_HUMAN_PLAYER
+                || state == ShooterState.WAITING_FOR_SPIN_UP
+                || (state == ShooterState.SPIN_UP_HOLD && !firingSessionActive)) {
+            setDamUp();
+        } else {
+            setDamDown();
+        }
     }
 
     public boolean isShooting(){
@@ -353,6 +387,7 @@ public class Shooter implements Runnable{
     }
 
     private boolean shootColor(BallColor color, double speed) {
+        firingSessionActive = true;
         // Choose live readings or static loaded colors
         BallColor[] colors = readColorsOnce ? loadedColors : new BallColor[]{
                 colorSensors.readLeftColor(),
