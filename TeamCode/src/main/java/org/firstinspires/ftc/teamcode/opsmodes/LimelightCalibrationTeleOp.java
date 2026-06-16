@@ -29,10 +29,17 @@ import org.firstinspires.ftc.teamcode.subsystems.Shooter;
  *      is only a convenience for getting consistent shots — it is NOT required
  *      to log a sample.
  *   3. Spin up the shooter (gamepad2.right_trigger) and nudge the speed with
- *      gamepad2.x (+5) and gamepad2.a (-5) until shots land where you want.
- *   4. Press gamepad1.start to log a (distance, speed) sample. The OpMode
- *      averages 20 frames before writing so each sample is stable. The file is
- *      /sdcard/LogParams-Distance.txt and is read by DistanceCurve.
+ *      gamepad2.x (+5) until shots land where you want. (gamepad2.a is now the
+ *      mode toggle — see step 4. The −5 nudge handler is commented out; restore
+ *      it on a free button if you need to step speed down.)
+ *   4. Press gamepad2.a to toggle between SINGLE-shot and THREE-SHOT calibration
+ *      modes. Mode determines which file gamepad1.start writes to:
+ *        SINGLE     → /sdcard/LogParams-Distance.txt
+ *        THREE-SHOT → /sdcard/LogParams-Distance-ThreeShot.txt
+ *      Mode resets to SINGLE on every OpMode start.
+ *   5. Press gamepad1.start to log a (distance, speed) sample to the active
+ *      mode's file. The OpMode averages 20 frames before writing so each sample
+ *      is stable.
  *
  * This OpMode mirrors DataLoggerTeleOp for full robot functionality (drive,
  * intake, shooter spin/shoot/reverse, manual three-position firing, PID tuning
@@ -70,7 +77,21 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
     private Shooter shooter;
     private Limelight limelight;
 
-    private DistanceCurve curve;
+    /**
+     * Two parallel curves: one for single-ball shots, one for the "fire all three
+     * at once" flow. The active curve (selected by {@link #threeShootMode}) is
+     * what gamepad1.start logs to and gamepad1.back clears. Both are loaded at
+     * init so toggling the mode mid-session doesn't cost a disk read.
+     */
+    private DistanceCurve singleShotCurve;
+    private DistanceCurve threeShotCurve;
+
+    /**
+     * Active calibration target. false = single-shot curve (default at start of
+     * every OpMode), true = three-shot curve. Toggle with gamepad2.a.
+     */
+    private boolean threeShootMode = false;
+    private boolean threeShootToggleHeld = false;
 
     private final ElapsedTime runtime = new ElapsedTime();
     private final FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -120,8 +141,15 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
         // BLUE; gamepad1.y cycles to RED / OBELISK.
         limelight = new Limelight(hardwareMap, Limelight.PipelineSwitcher.RED);
 
-        // Load existing samples so today's points add to yesterday's curve.
-        curve = DistanceCurve.read();
+        // Load existing samples for both modes so today's points add to yesterday's
+        // curve. Each curve remembers its own file path internally.
+        singleShotCurve = DistanceCurve.read(DistanceCurve.FILE_PATH);
+        threeShotCurve  = DistanceCurve.read(DistanceCurve.THREE_SHOT_FILE_PATH);
+    }
+
+    /** Returns the curve currently selected by {@link #threeShootMode}. */
+    private DistanceCurve activeCurve() {
+        return threeShootMode ? threeShotCurve : singleShotCurve;
     }
 
     @Override
@@ -159,7 +187,9 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
             }
 
             telemetry.addLine("================ CALIBRATION ===============");
-            telemetry.addData("Curve points", curve.size());
+            telemetry.addData("Mode", threeShootMode ? "THREE-SHOT (gamepad2.a to flip)" : "SINGLE (gamepad2.a to flip)");
+            telemetry.addData("Single-shot points", singleShotCurve.size());
+            telemetry.addData("Three-shot points", threeShotCurve.size());
             telemetry.addData("Last log", logStatus);
 
             // Show a countdown while gamepad1.back is held so the operator can
@@ -307,11 +337,25 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
             speedUpHeld = false;
         }
 
-        if (gamepad2.a && !speedDownHeld) {
-            shooter.SPINNER_SPEED_NEAR += 5; // less negative → slower
-            speedDownHeld = true;
+        // Speed-decrease handler used to live here (gamepad2.a → +5 ticks/s).
+        // It was commented out when gamepad2.a was repurposed as the three-shoot
+        // mode toggle. If you need a "−5" again, pick a free button (left/right
+        // stick button on gamepad2 are unused) and uncomment.
+        // if (gamepad2.a && !speedDownHeld) {
+        //     shooter.SPINNER_SPEED_NEAR += 5; // less negative → slower
+        //     speedDownHeld = true;
+        // } else if (!gamepad2.a) {
+        //     speedDownHeld = false;
+        // }
+
+        // Three-shoot mode toggle. Edge-detected: a held press only flips once.
+        // Mode determines which file gamepad1.start logs to and which curve
+        // gamepad1.back clears. Mode resets to false at OpMode start.
+        if (gamepad2.a && !threeShootToggleHeld) {
+            threeShootMode = !threeShootMode;
+            threeShootToggleHeld = true;
         } else if (!gamepad2.a) {
-            speedDownHeld = false;
+            threeShootToggleHeld = false;
         }
 
         // Manual three-position firing.
@@ -372,16 +416,21 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
      * message so the operator gets visible confirmation in telemetry.
      */
     private void clearCurve() {
-        int previousSize = curve.size();
-        curve.clear();
-        curve.write();
-        logStatus = String.format("CLEARED — removed %d samples", previousSize);
+        DistanceCurve target = activeCurve();
+        int previousSize = target.size();
+        target.clear();
+        target.write();
+        logStatus = String.format(
+                "CLEARED %s — removed %d samples",
+                threeShootMode ? "THREE-SHOT" : "SINGLE",
+                previousSize);
     }
 
     /**
      * Capture an averaged Limelight sample at the robot's current position and
      * pair it with the current SPINNER_SPEED_NEAR. The pair is appended to the
-     * in-memory curve and immediately persisted to /sdcard/LogParams-Distance.txt.
+     * in-memory curve and immediately persisted to whichever file the active
+     * mode points at (single-shot or three-shot).
      */
     private void logCurrentSample() {
         Limelight.Sample sample = limelight.sampleAveraged(
@@ -392,12 +441,14 @@ public class LimelightCalibrationTeleOp extends LinearOpMode {
             return;
         }
 
+        DistanceCurve target = activeCurve();
         double speed = shooter.SPINNER_SPEED_NEAR;
-        curve.addPoint(new DistanceDataPoint(sample.distance, speed));
-        curve.write();
+        target.addPoint(new DistanceDataPoint(sample.distance, speed));
+        target.write();
 
         logStatus = String.format(
-                "logged d=%.2f in, speed=%.0f (avg %d frames)",
+                "logged %s d=%.2f in, speed=%.0f (avg %d frames)",
+                threeShootMode ? "THREE-SHOT" : "SINGLE",
                 sample.distance, speed, sample.frames);
     }
 }

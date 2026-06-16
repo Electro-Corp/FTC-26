@@ -70,7 +70,10 @@ public abstract class MainTeleOp extends LinearOpMode {
      * Pipeline is chosen at init based on alliance (RED → pipeline RED, BLUE → pipeline BLUE).
      */
     private Limelight limelight;
+    /** Single-shot calibration curve (the historical default). */
     private DistanceCurve distanceCurve;
+    /** Three-shot calibration curve, used when {@link #shootThreeSpeed} is on. */
+    private DistanceCurve threeShotCurve;
 
     /**
      * Driver-controlled toggle for distance-based speed lookup. ON by default; press
@@ -170,7 +173,8 @@ public abstract class MainTeleOp extends LinearOpMode {
         // Load the calibration curve once — it doesn't change during the match.
         // If the file is missing the curve will be empty and we fall back to
         // FALLBACK_NEAR_SPEED on every update.
-        distanceCurve = DistanceCurve.read();
+        distanceCurve  = DistanceCurve.read(DistanceCurve.FILE_PATH);
+        threeShotCurve = DistanceCurve.read(DistanceCurve.THREE_SHOT_FILE_PATH);
     }
 
     @Override
@@ -218,13 +222,16 @@ public abstract class MainTeleOp extends LinearOpMode {
             // Distance-based shooter speed status. "Source" lets the driver see
             // at a glance whether the curve is actually being used or we're
             // falling back (toggle off, no target, empty curve, etc.).
+            DistanceCurve activeCurveForTelemetry = shootThreeSpeed ? threeShotCurve : distanceCurve;
             String speedSource;
             if (!distanceSpeedEnabled) speedSource = "TOGGLE OFF (fallback)";
-            else if (distanceCurve == null || distanceCurve.size() == 0) speedSource = "EMPTY CURVE (fallback)";
+            else if (activeCurveForTelemetry == null || activeCurveForTelemetry.size() == 0) speedSource = "EMPTY CURVE (fallback)";
             else if (limelight == null || !limelight.hasTarget()) speedSource = "NO TARGET (fallback)";
             else speedSource = "CURVE";
             telemetry.addData("Speed source", speedSource);
-            telemetry.addData("Curve points", distanceCurve == null ? 0 : distanceCurve.size());
+            telemetry.addData("Fire mode", shootThreeSpeed ? "THREE-SHOT" : "SINGLE");
+            telemetry.addData("Single-shot points", distanceCurve == null ? 0 : distanceCurve.size());
+            telemetry.addData("Three-shot points", threeShotCurve == null ? 0 : threeShotCurve.size());
             if (limelight != null && limelight.hasTarget()) {
                 telemetry.addData("Limelight distance (in)", "%.2f", limelight.getDistance());
             }
@@ -263,10 +270,13 @@ public abstract class MainTeleOp extends LinearOpMode {
             if (rrEnabled) {
                 shooter.SPINNER_SPEED_NEAR = fieldMap.getStateAtPose(drive.localizer.getPose()).speed;
             } else {
+                // computeTargetSpeed() picks the right curve based on shootThreeSpeed
+                // (see method body). Previously this branch always used the single-shot
+                // curve and the next line added -60 as a heuristic fudge for three-shot
+                // mode; now the three-shot curve carries that adjustment as real
+                // calibration data.
                 shooter.SPINNER_SPEED_NEAR = computeTargetSpeed();
             }
-            if(shootThreeSpeed) shooter.SPINNER_SPEED_NEAR -= 60;
-            //else shooter.SPINNER_SPEED_NEAR -= 10;
             lastTargetSpeed = shooter.SPINNER_SPEED_NEAR;
 
             // Push the freshly-computed speed onto the flywheels every loop. Without
@@ -521,13 +531,20 @@ public abstract class MainTeleOp extends LinearOpMode {
      */
     private double computeTargetSpeed() {
         if (!distanceSpeedEnabled) return FALLBACK_NEAR_SPEED;
-        if (distanceCurve == null || distanceCurve.size() == 0) return FALLBACK_NEAR_SPEED;
         if (limelight == null || !limelight.hasTarget()) return FALLBACK_NEAR_SPEED;
 
         double distance = limelight.getDistance();
         if (Double.isNaN(distance)) return FALLBACK_NEAR_SPEED;
 
-        return distanceCurve.getSpeedAtDistance(distance);
+        // Pick the curve that matches the active firing mode. shootThreeSpeed
+        // toggles via gamepad2.a (handled in readGamepad). If the chosen curve
+        // is empty (e.g. three-shot hasn't been calibrated yet), fall back to
+        // FALLBACK_NEAR_SPEED — we don't fall back to the other curve because
+        // its speeds aren't valid for this firing pattern.
+        DistanceCurve activeCurve = shootThreeSpeed ? threeShotCurve : distanceCurve;
+        if (activeCurve == null || activeCurve.size() == 0) return FALLBACK_NEAR_SPEED;
+
+        return activeCurve.getSpeedAtDistance(distance);
     }
 
     public Pose2d getAutoPose() throws Exception {

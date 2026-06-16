@@ -15,13 +15,31 @@ import java.util.Comparator;
 import java.util.List;
 
 public class DistanceCurve {
+    /** Default file path: single-shot calibration curve. */
     public static final String FILE_PATH = "/sdcard/LogParams-Distance.txt";
+
+    /** Three-shot calibration curve (gamepad2.right_bumper "fire all three" flow). */
+    public static final String THREE_SHOT_FILE_PATH = "/sdcard/LogParams-Distance-ThreeShot.txt";
+
+    /** File path this instance reads/writes. Defaults to {@link #FILE_PATH}. */
+    private final String filePath;
 
     private final List<DistanceDataPoint> points = new ArrayList<>();
 
-    public DistanceCurve() {}
+    public DistanceCurve() {
+        this(FILE_PATH);
+    }
+
+    public DistanceCurve(String filePath) {
+        this.filePath = filePath;
+    }
 
     public DistanceCurve(JsonObject wrapper) {
+        this(wrapper, FILE_PATH);
+    }
+
+    public DistanceCurve(JsonObject wrapper, String filePath) {
+        this.filePath = filePath;
         JsonArray array = wrapper.getAsJsonArray("data");
         if (array == null) return;
         for (JsonElement e : array) {
@@ -82,16 +100,27 @@ public class DistanceCurve {
         return wrapper;
     }
 
+    /** Default-path read: loads the single-shot curve from {@link #FILE_PATH}. */
     public static DistanceCurve read() {
-        try (Reader r = new FileReader(FILE_PATH)) {
-            return new DistanceCurve(new JsonParser().parse(r).getAsJsonObject());
+        return read(FILE_PATH);
+    }
+
+    /**
+     * Read a curve from an arbitrary file path. Used to maintain multiple
+     * curves (e.g. single-shot vs three-shot) in the same OpMode. If the file
+     * is missing or unreadable, returns an empty curve bound to that path so
+     * subsequent write() calls go to the right place.
+     */
+    public static DistanceCurve read(String filePath) {
+        try (Reader r = new FileReader(filePath)) {
+            return new DistanceCurve(new JsonParser().parse(r).getAsJsonObject(), filePath);
         } catch (Exception e) {
-            return new DistanceCurve();
+            return new DistanceCurve(filePath);
         }
     }
 
     public void write() {
-        try (Writer w = new FileWriter(FILE_PATH)) {
+        try (Writer w = new FileWriter(filePath)) {
             w.write(toJSON().toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
