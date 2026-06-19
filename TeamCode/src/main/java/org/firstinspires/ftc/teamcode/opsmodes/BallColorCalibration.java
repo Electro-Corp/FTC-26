@@ -55,13 +55,13 @@ public class BallColorCalibration extends LinearOpMode {
 
             telemetry.addLine("════ CURRENT THRESHOLDS ════");
             telemetry.addData("Green  H", "%.0f ± %.0f  (%.0f – %.0f)",
-                    BallColorPipeline.GREEN_H,  BallColorPipeline.H_RANGE,
-                    BallColorPipeline.GREEN_H  - BallColorPipeline.H_RANGE,
-                    BallColorPipeline.GREEN_H  + BallColorPipeline.H_RANGE);
-            telemetry.addData("Purple H", "%.0f ± %.0f  (%.0f – %.0f)",
-                    BallColorPipeline.PURPLE_H, BallColorPipeline.H_RANGE,
-                    BallColorPipeline.PURPLE_H - BallColorPipeline.H_RANGE,
-                    BallColorPipeline.PURPLE_H + BallColorPipeline.H_RANGE);
+                    BallColorPipeline.GREEN_H, BallColorPipeline.GREEN_RANGE,
+                    BallColorPipeline.GREEN_H - BallColorPipeline.GREEN_RANGE,
+                    BallColorPipeline.GREEN_H + BallColorPipeline.GREEN_RANGE);
+            telemetry.addData("Purple H", "wrap ± %.0f  (0–%.0f and %.0f–180)",
+                    BallColorPipeline.PURPLE_RANGE,
+                    BallColorPipeline.PURPLE_RANGE,
+                    180 - BallColorPipeline.PURPLE_RANGE);
             telemetry.addData("Sat min / Val min", "%.0f / %.0f",
                     BallColorPipeline.SAT_MIN, BallColorPipeline.VAL_MIN);
             telemetry.addData("Min pixels", BallColorPipeline.MIN_PIXELS);

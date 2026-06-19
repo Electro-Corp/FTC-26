@@ -33,9 +33,12 @@ import org.opencv.imgproc.Imgproc;
 public class BallColorPipeline implements VisionProcessor {
 
     // ── HSV thresholds ────────────────────────────────────────────────────────
-    public static double GREEN_H  = 80;
-    public static double PURPLE_H = 130;
-    public static double H_RANGE  = 25;   // each color matches H ± H_RANGE
+    // OpenCV HSV scale: H 0-180, S 0-255, V 0-255 (hue is circular: 0 == 180).
+    public static double GREEN_H     = 120;  // green balls read ~120
+    public static double GREEN_RANGE = 25;
+    // Purple wraps around the 0/180 boundary (reads ~20 and ~160).
+    // We split into [0, PURPLE_RANGE] and [180-PURPLE_RANGE, 180] then OR them.
+    public static double PURPLE_RANGE = 35;
     // Saturation and value minimums shared by both colors (rejects grey/white).
     public static double SAT_MIN = 60;
     public static double VAL_MIN = 60;
@@ -52,9 +55,10 @@ public class BallColorPipeline implements VisionProcessor {
     };
 
     // Reused across frames to avoid per-frame allocation.
-    private final Mat hsv        = new Mat();
-    private final Mat greenMask  = new Mat();
-    private final Mat purpleMask = new Mat();
+    private final Mat hsv          = new Mat();
+    private final Mat greenMask    = new Mat();
+    private final Mat purpleMask   = new Mat();
+    private final Mat purpleMask2  = new Mat();
 
     // Debug stats — populated each frame, read by the calibration OpMode.
     private final int[]      greenCounts  = new int[3];
@@ -101,13 +105,19 @@ public class BallColorPipeline implements VisionProcessor {
             Mat slot = new Mat(hsv, new Rect(i * slotWidth, 0, slotWidth, frame.height()));
 
             Core.inRange(slot,
-                    new Scalar(GREEN_H  - H_RANGE, SAT_MIN, VAL_MIN),
-                    new Scalar(GREEN_H  + H_RANGE, 255,     255),
+                    new Scalar(GREEN_H - GREEN_RANGE, SAT_MIN, VAL_MIN),
+                    new Scalar(GREEN_H + GREEN_RANGE, 255,     255),
                     greenMask);
+            // Purple wraps around the hue boundary: catch [0, RANGE] and [180-RANGE, 180].
             Core.inRange(slot,
-                    new Scalar(PURPLE_H - H_RANGE, SAT_MIN, VAL_MIN),
-                    new Scalar(PURPLE_H + H_RANGE, 255,     255),
+                    new Scalar(0,                    SAT_MIN, VAL_MIN),
+                    new Scalar(PURPLE_RANGE,         255,     255),
                     purpleMask);
+            Core.inRange(slot,
+                    new Scalar(180 - PURPLE_RANGE,   SAT_MIN, VAL_MIN),
+                    new Scalar(180,                  255,     255),
+                    purpleMask2);
+            Core.bitwise_or(purpleMask, purpleMask2, purpleMask);
 
             int greenPixels  = Core.countNonZero(greenMask);
             int purplePixels = Core.countNonZero(purpleMask);

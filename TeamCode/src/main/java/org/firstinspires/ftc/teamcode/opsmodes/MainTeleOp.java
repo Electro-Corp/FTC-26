@@ -89,6 +89,9 @@ public abstract class MainTeleOp extends LinearOpMode {
     /** Static fallback used when the curve is empty or no AprilTag is visible. */
     private static final double FALLBACK_NEAR_SPEED = -1300;
 
+    /** Added to the computed speed every loop to compensate for consistent undershooting. */
+    private static final double SHOOTER_SPEED_OFFSET = -50;
+
     public static PIDFCoefficients pid = new PIDFCoefficients(30,0.3,0.5,12.5);
 
 
@@ -216,7 +219,6 @@ public abstract class MainTeleOp extends LinearOpMode {
             telemetry.addLine("=========================================");
             telemetry.addData("Shooter State", shooter.getState());
             telemetry.addData("LOADED",  "%s %s %s", colorSensors.readLeftColor(), colorSensors.readMidColor(), colorSensors.readRightColor());
-            telemetry.addData("Shooter Vel", shooter.getVelocity());
             telemetry.addData("Limelight tx (deg)", limelight.getTx());
 
             // Distance-based shooter speed status. "Source" lets the driver see
@@ -235,7 +237,7 @@ public abstract class MainTeleOp extends LinearOpMode {
             if (limelight != null && limelight.hasTarget()) {
                 telemetry.addData("Limelight distance (in)", "%.2f", limelight.getDistance());
             }
-            telemetry.addData("Target speed", "%.0f", lastTargetSpeed);
+            telemetry.addData("Speed (actual | target)", "%.0f | %.0f", shooter.getVelocity(), Math.abs(lastTargetSpeed));
 
             if(rrEnabled) {
                 telemetry.addData("Estimated values", "%f | (%f, %f, %f)", shooter.SPINNER_SPEED_NEAR, fieldMap.getStateAtPose(drive.localizer.getPose()).posX, fieldMap.getStateAtPose(drive.localizer.getPose()).posY, Math.toDegrees(fieldMap.getStateAtPose(drive.localizer.getPose()).heading));
@@ -277,6 +279,7 @@ public abstract class MainTeleOp extends LinearOpMode {
                 // calibration data.
                 shooter.SPINNER_SPEED_NEAR = computeTargetSpeed();
             }
+            shooter.SPINNER_SPEED_NEAR += SHOOTER_SPEED_OFFSET;
             lastTargetSpeed = shooter.SPINNER_SPEED_NEAR;
 
             // Push the freshly-computed speed onto the flywheels every loop. Without
@@ -393,12 +396,6 @@ public abstract class MainTeleOp extends LinearOpMode {
             leftBackPower *= 0.5;
             rightBackPower *= 0.5;
         }
-
-        telemetry.addData("LF", leftFrontPower);
-        telemetry.addData("RF", rightFrontPower);
-        telemetry.addData("LB", leftBackPower);
-        telemetry.addData("RB", rightBackPower);
-
 
         leftFrontDrive.setPower(leftFrontPower);
         rightFrontDrive.setPower(rightFrontPower);
